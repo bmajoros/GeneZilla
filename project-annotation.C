@@ -9,6 +9,7 @@
 #include "BOOM/CommandLine.H"
 #include "BOOM/CigarString.H"
 #include "BOOM/GffReader.H"
+#include "Labeling.H"
 using namespace std;
 using namespace BOOM;
 
