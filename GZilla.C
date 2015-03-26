@@ -1,6 +1,6 @@
 /****************************************************************
  GeneZilla
- Copyright (C)2013 William H. Majoros (martiandna@gmail.com).
+ Copyright (C)2015 William H. Majoros (martiandna@gmail.com).
  This is OPEN SOURCE SOFTWARE governed by the Gnu General Public
  License (GPL) version 3, as described at www.opensource.org.
  ****************************************************************/

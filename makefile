@@ -2602,3 +2602,24 @@ $(OBJ)/TrellisLink.o:\
 	$(CC) $(CFLAGS) -o $(OBJ)/TrellisLink.o -c \
 		TrellisLink.C
 #---------------------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/project-annotation.o:\
+		project-annotation.C
+	$(CC) $(CFLAGS) -o $(OBJ)/project-annotation.o -c \
+		project-annotation.C
+#---------------------------------------------------------
+project-annotation: \
+		$(OBJ)/project-annotation.o
+	$(CC) $(LDFLAGS) -o project-annotation \
+		$(OBJ)/project-annotation.o \
+		$(LIBS)
+#---------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/Labeling.o:\
+		Labeling.C\
+		Labeling.H
+	$(CC) $(CFLAGS) -o $(OBJ)/Labeling.o -c \
+		Labeling.C
+#---------------------------------------------------------
