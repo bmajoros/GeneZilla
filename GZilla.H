@@ -53,6 +53,7 @@
 
 class GeneZilla
 {
+protected:
   bool useSignalScores, useContentScores, useDurationScores, prohibitPTCs;
 public:
   void omitSignalScores() { useSignalScores=false; }
@@ -67,7 +68,7 @@ public:
   GeneZilla(const BOOM::String &PROGRAM_NAME,const BOOM::String &VERSION,
 	   EdgeFactory &,int &transcriptId);
   virtual ~GeneZilla();
-  int main(int argc,char *argv[]);
+  virtual int main(int argc,char *argv[]);
   virtual BOOM::Stack<SignalPtr> * processChunk(const Sequence &seq,
 				      const BOOM::String &seqStr,
 				      const BOOM::String &isoFilename,

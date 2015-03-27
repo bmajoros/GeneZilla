@@ -66,11 +66,13 @@ void Signal::dropSignalScores()
 
 void Signal::dropContentScores() 
 {
+#ifdef EXPLICIT_GRAPHS
   BOOM::Set<Edge*>::iterator cur=edgesIn.begin(), end=edgesIn.end();
   for(; cur!=end ; ++cur) {
     Edge *edge=*cur;
     edge->dropScores();
   }
+#endif
 }
 
 

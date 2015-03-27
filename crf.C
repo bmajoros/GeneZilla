@@ -60,37 +60,26 @@ int main(int argc,char *argv[])
 void AppMain(int argc,char *argv[])
 {
   // Process command line
-  BOOM::CommandLine cmd(argc,argv,"s:i:c:o:I:tP:SCDOl:p:");
-  if(cmd.numArgs()!=2)
+  BOOM::CommandLine cmd(argc,argv,"SCD");
+  if(cmd.numArgs()!=5)
     throw BOOM::String(
-    "\ncrf <*.iso> <*.fasta> [options]\n\
+    "\ncrf <*.iso> <label.matrix> <lambda> <priorlabels.txt> <*.fasta>\n\
        options:\n\
-          -l <file> : use labeling file as prior (requires -p)\n\
-          -p <file> : parameter file for labeling prior\n\
-          -s <N> : ignore sequences in FASTA shorter than N bases\n\
-          -i <file> : load isochore predictions from file\n\
-          -c <file> : load CpG island predictions from file\n\
-          -o <file> : write ORF graph into file\n\
-          -t : use only one left and right terminus in the ORF graph\n\
-          -I <file> : dump the intergenic prefix-sum array into file\n\
-          -P <dir> : use RNA-seq data from pileup\n\
           -S : omit signal scores\n\
           -C : omit content scores\n\
           -D : omit duration scores\n\
-          -O : allow in-frame stop codons\n\
 ");
   BOOM::String isochoreFilename=cmd.arg(0);
-  BOOM::String fastaFilename=cmd.arg(1);
+  String matrixFile=cmd.arg(1);
+  float lambda=cmd.arg(2).asFloat();
+  String labelFile=cmd.arg(3);
+  BOOM::String fastaFilename=cmd.arg(4);
+
+  Labeling priorLabels(labelFile);
+
   alphabet=DnaAlphabet::global();
   int minSeqLen=
     (cmd.option('s') ? cmd.optParm('s').asInt() : 1);
-  ofstream osGraph;
-  bool dumpGraph;
-  if(cmd.option('o')) {
-    osGraph.open(cmd.optParm('o').c_str());
-    dumpGraph=true;
-  }
-  else dumpGraph=false;
   String psaName;
   if(cmd.option('I')) psaName=cmd.optParm('I');
   bool haveEvidence=cmd.option('P');
@@ -108,16 +97,13 @@ void AppMain(int argc,char *argv[])
     edgeFactory=new FilteredEdgeFactory(NULL);
   }
   else edgeFactory=new EdgeFactory;
-  GeneZilla genezilla(PROGRAM_NAME,VERSION,*edgeFactory,transcriptId);
-#ifdef EXPLICIT_GRAPHS
-  if(cmd.option('t')) genezilla.useOneTerminusOnly();
-#endif
-  if(cmd.option('i')) genezilla.loadIsochoreBoundaries(cmd.optParm('i'));
-  if(cmd.option('c')) genezilla.loadCpGislands(cmd.optParm('c'));
-  if(cmd.option('S')) genezilla.omitSignalScores();
-  if(cmd.option('C')) genezilla.omitContentScores();
-  if(cmd.option('D')) genezilla.omitDurationScores();
-  if(cmd.option('O')) genezilla.allowPTCs();
+  CRF crf(PROGRAM_NAME,VERSION,*edgeFactory,transcriptId,priorLabels);
+  if(cmd.option('i')) crf.loadIsochoreBoundaries(cmd.optParm('i'));
+  if(cmd.option('c')) crf.loadCpGislands(cmd.optParm('c'));
+  if(cmd.option('S')) crf.omitSignalScores();
+  if(cmd.option('C')) crf.omitContentScores();
+  if(cmd.option('D')) crf.omitDurationScores();
+  if(cmd.option('O')) crf.allowPTCs();
   EvidenceFilter *evidence=NULL;
   while(fastaReader.nextSequence(defline,seqString))
     {
@@ -129,24 +115,11 @@ void AppMain(int argc,char *argv[])
       BOOM::FastaReader::parseDefline(defline,contigId,remainder);
       cerr<<"processing substrate "<<contigId<<"..."<<endl;
 
-      // Load RNA evidence for this substrate
-      if(haveEvidence) {
-	WigBinary *wig=new WigBinary(evidenceDir+'/'+contigId+".pileup");
-	RnaJunctions *junctions=
-	  new RnaJunctions(evidenceDir+'/'+contigId+".junctions");
-	delete evidence;
-	evidence=new EvidenceFilter(minSupport,wig,junctions);
-	static_cast<FilteredEdgeFactory*>(edgeFactory)->setEvidence(evidence);
-	genezilla.setEvidenceFilter(evidence);
-	
-	genezilla.setEvidenceFilter(NULL); // ###
-
-      }
-
       // Predict genes and get path
+      ofstream osGraph;
       BOOM::Stack<SignalPtr> *path=
-	genezilla.processChunk(seq,seqString,isochoreFilename,contigId,
-			       osGraph,dumpGraph,psaName);
+	crf.processChunk(seq,seqString,isochoreFilename,contigId,
+			       osGraph,false,psaName);
 
       // Don't need the path; just delete it (this will also delete the
       // signal objects in it, since we use "smart pointers")

@@ -5,6 +5,8 @@
  License (GPL) version 3, as described at www.opensource.org.
  ****************************************************************/
 #include <iostream>
+#include "BOOM/File.H"
+#include "BOOM/Map.H"
 #include "Labeling.H"
 using namespace std;
 using namespace BOOM;
@@ -24,11 +26,55 @@ ostream &operator<<(ostream &os,GeneModelLabel lab)
 }
 
 
+struct GeneModelLabelMap {
+  static Map<String,GeneModelLabel> m;
+  GeneModelLabelMap() {
+    m["N"]=LABEL_INTERGENIC;
+    m["I"]=LABEL_INTRON;
+    m["E0"]=LABEL_EXON_0;
+    m["E1"]=LABEL_EXON_1;
+    m["E2"]=LABEL_EXON_2;
+  }
+};
+Map<String,GeneModelLabel> GeneModelLabelMap::m;
+
+
+
+GeneModelLabel strToLabel(const String &s)
+{
+  if(GeneModelLabelMap::m.isDefined(s)) return GeneModelLabelMap::m[s];
+  throw s+" : unknown gene model label in strToLabel()";
+}
+
+
 
 Labeling::Labeling(int length)
   : A(length)
 {
   // ctor
+}
+
+
+
+Labeling::Labeling(const String &filename)
+{
+  load(filename);
+}
+
+
+
+void Labeling::load(const String &filename)
+{
+  Vector<GeneModelLabel> V;
+  File f(filename);
+  while(!f.eof()) {
+    String line=f.getline();
+    line.trimWhitespace();
+    if(line.isEmpty()) continue;
+    GeneModelLabel label=strToLabel(line);
+    V.push_back(label);
+  }
+  A=V;
 }
 
 

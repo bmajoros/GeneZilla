@@ -20,10 +20,14 @@ enum GeneModelLabel {
   LABEL_EXON_2
 };
 ostream &operator<<(ostream &,GeneModelLabel);
+GeneModelLabel strToLabel(const String &);
 
 class Labeling {
 public:
   Labeling(int length);
+  Labeling(const String &filename);
+  Labeling() {}
+  void load(const String &filename);
   GeneModelLabel &operator[](int);
   Array1D<GeneModelLabel> &asArray();
   void printOn(ostream &) const;

@@ -60,13 +60,11 @@ int main(int argc,char *argv[])
 void AppMain(int argc,char *argv[])
 {
   // Process command line
-  BOOM::CommandLine cmd(argc,argv,"s:i:c:o:I:tP:SCDOl:p:");
+  BOOM::CommandLine cmd(argc,argv,"s:i:c:o:I:tP:SCDO");
   if(cmd.numArgs()!=2)
     throw BOOM::String(
     "\ngenezilla <*.iso> <*.fasta> [options]\n\
        options:\n\
-          -l <file> : use labeling file as prior (requires -p)\n\
-          -p <file> : parameter file for labeling prior\n\
           -s <N> : ignore sequences in FASTA shorter than N bases\n\
           -i <file> : load isochore predictions from file\n\
           -c <file> : load CpG island predictions from file\n\
