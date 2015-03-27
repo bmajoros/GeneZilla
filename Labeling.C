@@ -10,6 +10,21 @@ using namespace std;
 using namespace BOOM;
 
 
+ostream &operator<<(ostream &os,GeneModelLabel lab)
+{
+  switch(lab)
+    {
+    case LABEL_NONE:       os<<"?"; break;
+    case LABEL_INTERGENIC: os<<"N"; break;
+    case LABEL_INTRON:     os<<"I"; break;
+    case LABEL_EXON_0:     os<<"E0"; break;
+    case LABEL_EXON_1:     os<<"E1"; break;
+    case LABEL_EXON_2:     os<<"E2"; break;
+    }
+}
+
+
+
 Labeling::Labeling(int length)
   : A(length)
 {
@@ -28,6 +43,22 @@ GeneModelLabel &Labeling::operator[](int i)
 Array1D<GeneModelLabel> &Labeling::asArray()
 {
   return A;
+}
+
+
+
+void Labeling::printOn(ostream &os) const
+{
+  int L=A.size();
+  for(int i=0 ; i<L ; ++i) os<<A[i]<<endl;
+}
+
+
+
+ostream &operator<<(ostream &os,const Labeling &lab)
+{
+  lab.printOn(os);
+  return os;
 }
 
 

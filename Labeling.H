@@ -12,21 +12,26 @@ using namespace std;
 using namespace BOOM;
 
 enum GeneModelLabel {
+  LABEL_NONE,
   LABEL_INTERGENIC,
   LABEL_INTRON,
   LABEL_EXON_0,
   LABEL_EXON_1,
   LABEL_EXON_2
 };
+ostream &operator<<(ostream &,GeneModelLabel);
 
 class Labeling {
 public:
   Labeling(int length);
   GeneModelLabel &operator[](int);
   Array1D<GeneModelLabel> &asArray();
+  void printOn(ostream &) const;
+  int length() const { return A.size(); }
 private:
   Array1D<GeneModelLabel> A;
 };
+ostream &operator<<(ostream &,const Labeling &);
 
 #endif
 

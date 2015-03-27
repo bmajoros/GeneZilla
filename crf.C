@@ -1,11 +1,11 @@
 /****************************************************************
- genezilla.C
- Copyright (C)2013 William H. Majoros (martiandna@gmail.com).
+ crf.C
+ Copyright (C)2015 William H. Majoros (martiandna@gmail.com).
  This is OPEN SOURCE SOFTWARE governed by the Gnu General Public
  License (GPL) version 3, as described at www.opensource.org.
  ****************************************************************/
-#include "GZilla.H"
-#include "genezilla.H"
+#include "CRF.H"
+#include "crf.H"
 #include "EdgeFactory.H"
 #include "BOOM/FastaReader.H"
 #include "BOOM/Constants.H"
@@ -19,8 +19,8 @@ using namespace std;
 #error Please edit the file genezilla.H, comment out the definition of FORCE_SPECIFIC_SIGNALS, issue a "make clean", and recompile this project
 #endif
 
-static const char *PROGRAM_NAME="genezilla";
-static const char *VERSION="1.2";
+static const char *PROGRAM_NAME="genezilla-CRF";
+static const char *VERSION="0.1";
 Alphabet alphabet;
 int frame; // ### CAUTION: this is required by older code; to be removed
 
@@ -63,7 +63,7 @@ void AppMain(int argc,char *argv[])
   BOOM::CommandLine cmd(argc,argv,"s:i:c:o:I:tP:SCDOl:p:");
   if(cmd.numArgs()!=2)
     throw BOOM::String(
-    "\ngenezilla <*.iso> <*.fasta> [options]\n\
+    "\ncrf <*.iso> <*.fasta> [options]\n\
        options:\n\
           -l <file> : use labeling file as prior (requires -p)\n\
           -p <file> : parameter file for labeling prior\n\

@@ -1,4 +1,4 @@
-# Copyright (C)2013 William H. Majoros (martiandna@gmail.com).
+# Copyright (C)2015 William H. Majoros (martiandna@gmail.com).
 # This is OPEN SOURCE SOFTWARE governed by the Gnu General Public
 # License (GPL) version 3, as described at www.opensource.org.
 CC		= g++
@@ -21,6 +21,7 @@ all: \
 	BOOM \
 	obj \
 	genezilla \
+	crf \
 	reweight-graph \
 	n-best \
 	get-bias-model \
@@ -310,6 +311,23 @@ $(OBJ)/GZilla.o:\
 	$(CC) $(CFLAGS) -o $(OBJ)/GZilla.o -c \
 		GZilla.C
 #---------------------------------------------------------
+$(OBJ)/crf.o:\
+		crf.H \
+		crf.C \
+		Propagator.H \
+		SignalQueue.H \
+		$(BOOM)/Histogram.H \
+		Signal.H
+	$(CC) $(CFLAGS) -o $(OBJ)/crf.o -c \
+		crf.C
+#---------------------------------------------------------
+$(OBJ)/CRF.o:\
+		$(BOOM)/Histogram.H \
+		CRF.H \
+		CRF.C
+	$(CC) $(CFLAGS) -o $(OBJ)/CRF.o -c \
+		CRF.C
+#---------------------------------------------------------
 $(OBJ)/TopologyLoader.o:\
 		TopologyLoader.H \
 		TopologyLoader.C
@@ -500,6 +518,110 @@ genezilla: \
 		$(OBJ)/Isochore.o \
 		$(OBJ)/IsochoreTable.o \
 		$(OBJ)/genezilla.o \
+		$(OBJ)/BranchAcceptor.o \
+		$(OBJ)/ThreePeriodicIMM.o \
+		$(OBJ)/IMM.o \
+		$(OBJ)/EdgeFactory.o \
+		$(OBJ)/MddTree.o \
+		$(OBJ)/Partition.o \
+		$(OBJ)/TreeNode.o \
+		$(OBJ)/GarbageCollector.o \
+		$(OBJ)/Edge.o \
+		$(OBJ)/TopologyLoader.o \
+		$(OBJ)/WAM.o \
+		$(OBJ)/WWAM.o \
+		$(OBJ)/TataCapModel.o \
+		$(OBJ)/TataCapSignal.o \
+		$(OBJ)/MarkovChainCompiler.o \
+		$(OBJ)/Fast3PMC.o \
+		$(OBJ)/FastMarkovChain.o \
+		$(OBJ)/ThreePeriodicMarkovChain.o \
+		$(OBJ)/DiscreteDistribution.o \
+		$(OBJ)/Transitions.o \
+		$(OBJ)/EmpiricalDistribution.o \
+		$(OBJ)/GeometricDistribution.o \
+		$(OBJ)/NoncodingQueue.o \
+		$(OBJ)/IntronQueue.o \
+		$(OBJ)/SignalType.o \
+		$(OBJ)/ContentType.o \
+		$(OBJ)/ModelBuilder.o \
+		$(OBJ)/ScoreAnalyzer.o \
+		$(OBJ)/ContentSensor.o \
+		$(OBJ)/MarkovChain.o \
+		$(OBJ)/WMM.o \
+		$(OBJ)/SignalQueue.o \
+		$(OBJ)/SignalSensor.o \
+		$(OBJ)/Propagator.o \
+		$(OBJ)/Signal.o \
+		$(OBJ)/SignalTypeProperties.o \
+		$(OBJ)/GZilla.o \
+		$(LIBDIRS) $(LIBS)
+#---------------------------------------------------------
+crf: \
+		$(OBJ)/EvidenceFilter.o \
+		$(OBJ)/RnaJunction.o \
+		$(OBJ)/RnaJunctions.o \
+		$(OBJ)/ParseGraph.o \
+		$(OBJ)/GffPathFromParseGraph.o \
+		$(OBJ)/SignalComparator.o \
+		$(OBJ)/NthOrderStringIterator.o \
+		$(OBJ)/TrainingSequence.o \
+		$(OBJ)/SignalPeptideSensor.o \
+		$(OBJ)/CodonTree.o \
+		$(OBJ)/Isochore.o \
+		$(OBJ)/IsochoreTable.o \
+		$(OBJ)/crf.o \
+		$(OBJ)/BranchAcceptor.o \
+		$(OBJ)/ThreePeriodicIMM.o \
+		$(OBJ)/IMM.o \
+		$(OBJ)/EdgeFactory.o \
+		$(OBJ)/MddTree.o \
+		$(OBJ)/Partition.o \
+		$(OBJ)/TreeNode.o \
+		$(OBJ)/GarbageCollector.o \
+		$(OBJ)/Edge.o \
+		$(OBJ)/TopologyLoader.o \
+		$(OBJ)/WAM.o \
+		$(OBJ)/WWAM.o \
+		$(OBJ)/TataCapModel.o \
+		$(OBJ)/TataCapSignal.o \
+		$(OBJ)/MarkovChainCompiler.o \
+		$(OBJ)/Fast3PMC.o \
+		$(OBJ)/FastMarkovChain.o \
+		$(OBJ)/ThreePeriodicMarkovChain.o \
+		$(OBJ)/DiscreteDistribution.o \
+		$(OBJ)/Transitions.o \
+		$(OBJ)/EmpiricalDistribution.o \
+		$(OBJ)/GeometricDistribution.o \
+		$(OBJ)/NoncodingQueue.o \
+		$(OBJ)/IntronQueue.o \
+		$(OBJ)/SignalType.o \
+		$(OBJ)/ContentType.o \
+		$(OBJ)/ModelBuilder.o \
+		$(OBJ)/ScoreAnalyzer.o \
+		$(OBJ)/ContentSensor.o \
+		$(OBJ)/MarkovChain.o \
+		$(OBJ)/WMM.o \
+		$(OBJ)/SignalQueue.o \
+		$(OBJ)/SignalSensor.o \
+		$(OBJ)/Propagator.o \
+		$(OBJ)/Signal.o \
+		$(OBJ)/SignalTypeProperties.o \
+		$(OBJ)/GZilla.o
+	$(CC) $(LDFLAGS) -o crf \
+		$(OBJ)/EvidenceFilter.o \
+		$(OBJ)/RnaJunction.o \
+		$(OBJ)/RnaJunctions.o \
+		$(OBJ)/ParseGraph.o \
+		$(OBJ)/GffPathFromParseGraph.o \
+		$(OBJ)/SignalComparator.o \
+		$(OBJ)/NthOrderStringIterator.o \
+		$(OBJ)/TrainingSequence.o \
+		$(OBJ)/SignalPeptideSensor.o \
+		$(OBJ)/CodonTree.o \
+		$(OBJ)/Isochore.o \
+		$(OBJ)/IsochoreTable.o \
+		$(OBJ)/crf.o \
 		$(OBJ)/BranchAcceptor.o \
 		$(OBJ)/ThreePeriodicIMM.o \
 		$(OBJ)/IMM.o \
@@ -1439,90 +1561,6 @@ orf-stats: \
 		$(OBJ)/orf-stats.o \
 		$(STATIC) \
 		$(LIBDIRS) $(LIBS)
-#---------------------------------------------
-
-#--------------------------------------------------------
-$(OBJ)/sridhar.o:\
-		sridhar.C
-	$(CC) $(CFLAGS) -o $(OBJ)/sridhar.o -c \
-		sridhar.C
-#---------------------------------------------------------
-sridhar: \
-		$(OBJ)/sridhar.o \
-		$(OBJ)/EdgeFactory.o \
-		$(OBJ)/MddTree.o \
-		$(OBJ)/Partition.o \
-		$(OBJ)/TreeNode.o \
-		$(OBJ)/GarbageCollector.o \
-		$(OBJ)/Edge.o \
-		$(OBJ)/TopologyLoader.o \
-		$(OBJ)/WAM.o \
-		$(OBJ)/WWAM.o \
-		$(OBJ)/TataCapModel.o \
-		$(OBJ)/TataCapSignal.o \
-		$(OBJ)/MarkovChainCompiler.o \
-		$(OBJ)/Fast3PMC.o \
-		$(OBJ)/FastMarkovChain.o \
-		$(OBJ)/ThreePeriodicMarkovChain.o \
-		$(OBJ)/DiscreteDistribution.o \
-		$(OBJ)/Transitions.o \
-		$(OBJ)/EmpiricalDistribution.o \
-		$(OBJ)/GeometricDistribution.o \
-		$(OBJ)/NoncodingQueue.o \
-		$(OBJ)/IntronQueue.o \
-		$(OBJ)/SignalType.o \
-		$(OBJ)/ContentType.o \
-		$(OBJ)/ModelBuilder.o \
-		$(OBJ)/ScoreAnalyzer.o \
-		$(OBJ)/ContentSensor.o \
-		$(OBJ)/MarkovChain.o \
-		$(OBJ)/WMM.o \
-		$(OBJ)/SignalQueue.o \
-		$(OBJ)/SignalSensor.o \
-		$(OBJ)/Propagator.o \
-		$(OBJ)/Signal.o \
-		$(OBJ)/SignalTypeProperties.o \
-		$(OBJ)/GZilla.o
-	$(CC) $(LDFLAGS) -o sridhar \
-		$(OBJ)/sridhar.o \
-		$(OBJ)/EdgeFactory.o \
-		$(OBJ)/MddTree.o \
-		$(OBJ)/Partition.o \
-		$(OBJ)/TreeNode.o \
-		$(OBJ)/GarbageCollector.o \
-		$(OBJ)/Edge.o \
-		$(OBJ)/TopologyLoader.o \
-		$(OBJ)/WAM.o \
-		$(OBJ)/WWAM.o \
-		$(OBJ)/TataCapModel.o \
-		$(OBJ)/TataCapSignal.o \
-		$(OBJ)/MarkovChainCompiler.o \
-		$(OBJ)/Fast3PMC.o \
-		$(OBJ)/FastMarkovChain.o \
-		$(OBJ)/ThreePeriodicMarkovChain.o \
-		$(OBJ)/DiscreteDistribution.o \
-		$(OBJ)/Transitions.o \
-		$(OBJ)/EmpiricalDistribution.o \
-		$(OBJ)/GeometricDistribution.o \
-		$(OBJ)/NoncodingQueue.o \
-		$(OBJ)/IntronQueue.o \
-		$(OBJ)/SignalType.o \
-		$(OBJ)/ContentType.o \
-		$(OBJ)/ModelBuilder.o \
-		$(OBJ)/ScoreAnalyzer.o \
-		$(OBJ)/ContentSensor.o \
-		$(OBJ)/MarkovChain.o \
-		$(OBJ)/WMM.o \
-		$(OBJ)/SignalQueue.o \
-		$(OBJ)/SignalSensor.o \
-		$(OBJ)/Propagator.o \
-		$(OBJ)/Signal.o \
-		$(OBJ)/SignalTypeProperties.o \
-		$(OBJ)/GZilla.o \
-		$(STATIC) \
-		$(LIBDIRS) $(LIBS)
-#---------------------------------------------
-
 #--------------------------------------------------------
 $(OBJ)/entropy.o:\
 		entropy.C
@@ -2610,8 +2648,10 @@ $(OBJ)/project-annotation.o:\
 		project-annotation.C
 #---------------------------------------------------------
 project-annotation: \
+		$(OBJ)/Labeling.o \
 		$(OBJ)/project-annotation.o
 	$(CC) $(LDFLAGS) -o project-annotation \
+		$(OBJ)/Labeling.o \
 		$(OBJ)/project-annotation.o \
 		$(LIBS)
 #---------------------------------------------

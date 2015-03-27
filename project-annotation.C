@@ -5,10 +5,12 @@
  License (GPL) version 3, as described at www.opensource.org.
  ****************************************************************/
 #include <iostream>
+#include <fstream>
 #include "BOOM/String.H"
 #include "BOOM/CommandLine.H"
 #include "BOOM/CigarString.H"
 #include "BOOM/GffReader.H"
+#include "BOOM/FastaReader.H"
 #include "Labeling.H"
 using namespace std;
 using namespace BOOM;
@@ -19,7 +21,13 @@ class Application
 public:
   Application();
   int main(int argc,char *argv[]);
+private:
+  String loadSeq(const String &filename);
+  GeneModelLabel getExonLabel(int phase);
+  void computeLabeling(TranscriptList *,Labeling &);
+  void mapLabeling(Labeling &from,Labeling &to,const String &cigar);
 };
+
 
 
 int main(int argc,char *argv[])
@@ -66,24 +74,90 @@ int Application::main(int argc,char *argv[])
   const String refGffFile=cmd.arg(0);
   const String refFasta=cmd.arg(1);
   const String altFasta=cmd.arg(2);
-  const String CIGAR=cmd.arg(3);const outfile=cmd.arg(4);
-
-  CigarString cigar(CIGAR);
+  const String CIGAR=cmd.arg(3);
+  const String outfile=cmd.arg(4);
+  
+  // Read some data from files
+  String refSeq=loadSeq(refFasta), altSeq=loadSeq(altFasta);
+  int refSeqLen=refSeq.length(), altSeqLen=altSeq.length();
   GffReader gffReader(refGffFile);
   TranscriptList *transcripts=gffReader.loadTranscripts();
-  int numTrans=transcripts.size();
-  if(numTrans!=1) throw "Number of transcripts provided must be exactly 1";
-  for(TranscriptList::iterator cur=transcripts->begin(), end=transcripts->end();
-      cur!=end ; ++cur) {
-    GffTranscript *transcript=*cur;
 
-    char strand=transcript->getStrand();
-    int numExons=transcript->getNumExons();
+  // Compute the reference labeling
+  Labeling refLab(refSeqLen);
+  computeLabeling(transcripts,refLab);
 
-    GffExon &exon=transcript->getIthExon(i);
+  // Project the reference labeling over to the alternate sequence
+  Labeling altLab(altSeqLen);
+  mapLabeling(refLab,altLab,CIGAR);
 
-  }
+  // Generate output
+  ofstream os(outfile.c_str());
+  os<<altLab;
 
   return 0;
+}
+
+
+
+void Application::mapLabeling(Labeling &from,Labeling &to,const String &cig)
+{
+  CigarString cigar(cig);
+  CigarAlignment &align=*cigar.getAlignment();
+  to.asArray().setAllTo(LABEL_NONE);
+  int L=align.length();
+  for(int i=0 ; i<L ; ++i) {
+    int j=align[i];
+    if(j!=CIGAR_UNDEFINED) to[j]=from[i];
+  }
+  delete &align;
+}
+
+
+
+void Application::computeLabeling(TranscriptList *transcripts,
+				  Labeling &refLab)
+{
+  int numTrans=transcripts->size();
+  if(numTrans!=1) throw "Number of transcripts provided must be exactly 1";
+  GffTranscript *transcript=(*transcripts)[0];
+  int begin=transcript->getBegin(), end=transcript->getEnd();
+  char strand=transcript->getStrand();
+  if(strand!='+') throw "only forward-strand features are currently supported";
+  int numExons=transcript->getNumExons();
+  refLab.asArray().setAllTo(LABEL_INTERGENIC);
+  for(int i=begin ; i<end ; ++i) refLab[i]=LABEL_INTRON;
+  int phase=0;
+  for(int i=0 ; i<numExons ; ++i) {
+    GffExon &exon=transcript->getIthExon(i);
+    begin=exon.getBegin(); end=exon.getEnd();
+    for(int j=begin ; j<end ; ++j) {
+      refLab[j]=getExonLabel(phase);
+      phase=(phase+1)%3;
+    }
+  }
+}
+
+
+
+GeneModelLabel Application::getExonLabel(int phase)
+{
+  switch(phase)
+    {
+    case 0: return LABEL_EXON_0;
+    case 1: return LABEL_EXON_1;
+    case 2: return LABEL_EXON_2;
+    default: throw String("bad phase in getExonLabel(): ")+phase;
+    }
+}
+
+
+
+String Application::loadSeq(const String &filename)
+{
+  FastaReader reader(filename);
+  String def, seq;
+  if(!reader.nextSequence(def,seq)) throw filename+" : cannot read file";
+  return seq;
 }
 
