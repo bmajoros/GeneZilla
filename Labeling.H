@@ -12,7 +12,7 @@ using namespace std;
 using namespace BOOM;
 
 enum GeneModelLabel {
-  LABEL_NONE,
+  LABEL_NONE, // represents "none" or "unknown" or "don't care"
   LABEL_INTERGENIC,
   LABEL_INTRON,
   LABEL_EXON_0,

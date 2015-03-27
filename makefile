@@ -558,6 +558,7 @@ genezilla: \
 		$(LIBDIRS) $(LIBS)
 #---------------------------------------------------------
 crf: \
+		$(OBJ)/LabelMatrix.o \
 		$(OBJ)/Labeling.o \
 		$(OBJ)/EvidenceFilter.o \
 		$(OBJ)/RnaJunction.o \
@@ -611,6 +612,7 @@ crf: \
 		$(OBJ)/GZilla.o \
 		$(OBJ)/CRF.o
 	$(CC) $(LDFLAGS) -o crf \
+		$(OBJ)/LabelMatrix.o \
 		$(OBJ)/Labeling.o \
 		$(OBJ)/EvidenceFilter.o \
 		$(OBJ)/RnaJunction.o \
@@ -2643,8 +2645,6 @@ $(OBJ)/TrellisLink.o:\
 		TrellisLink.H
 	$(CC) $(CFLAGS) -o $(OBJ)/TrellisLink.o -c \
 		TrellisLink.C
-#---------------------------------------------------------
-
 #--------------------------------------------------------
 $(OBJ)/project-annotation.o:\
 		project-annotation.C
@@ -2658,12 +2658,16 @@ project-annotation: \
 		$(OBJ)/Labeling.o \
 		$(OBJ)/project-annotation.o \
 		$(LIBS)
-#---------------------------------------------
-
 #--------------------------------------------------------
 $(OBJ)/Labeling.o:\
 		Labeling.C\
 		Labeling.H
 	$(CC) $(CFLAGS) -o $(OBJ)/Labeling.o -c \
 		Labeling.C
+#--------------------------------------------------------
+$(OBJ)/LabelMatrix.o:\
+		LabelMatrix.C\
+		LabelMatrix.H
+	$(CC) $(CFLAGS) -o $(OBJ)/LabelMatrix.o -c \
+		LabelMatrix.C
 #---------------------------------------------------------
