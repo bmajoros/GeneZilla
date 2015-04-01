@@ -2671,3 +2671,11 @@ $(OBJ)/LabelMatrix.o:\
 	$(CC) $(CFLAGS) -o $(OBJ)/LabelMatrix.o -c \
 		LabelMatrix.C
 #---------------------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/SignalLabelingProfile.o:\
+		SignalLabelingProfile.C\
+		SignalLabelingProfile.H
+	$(CC) $(CFLAGS) -o $(OBJ)/SignalLabelingProfile.o -c \
+		SignalLabelingProfile.C
+#---------------------------------------------------------

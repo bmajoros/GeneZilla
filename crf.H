@@ -13,6 +13,7 @@
 #include "SignalType.H"
 #include "ContentType.H"
 #include "Labeling.H"
+#include "LabelMatrix.H"
 
 
 #endif

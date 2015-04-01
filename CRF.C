@@ -14,9 +14,9 @@
 
 CRF::CRF(const BOOM::String &PROGRAM_NAME,
 	 const BOOM::String &VERSION,EdgeFactory &edgeFactory,
-	 int &transcriptId,Labeling &labeling)
+	 int &transcriptId,Labeling &labeling,LabelMatrix &labelMatrix)
   : GeneZilla(PROGRAM_NAME,VERSION,edgeFactory,transcriptId),
-    priorLabels(labeling)
+    priorLabels(labeling), labelMatrix(labelMatrix)
   {
     // ctor
   }

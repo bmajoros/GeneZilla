@@ -76,6 +76,7 @@ void AppMain(int argc,char *argv[])
   BOOM::String fastaFilename=cmd.arg(4);
 
   Labeling priorLabels(labelFile);
+  LabelMatrix labelMatrix(matrixFile);
 
   alphabet=DnaAlphabet::global();
   int minSeqLen=
@@ -97,7 +98,8 @@ void AppMain(int argc,char *argv[])
     edgeFactory=new FilteredEdgeFactory(NULL);
   }
   else edgeFactory=new EdgeFactory;
-  CRF crf(PROGRAM_NAME,VERSION,*edgeFactory,transcriptId,priorLabels);
+  CRF crf(PROGRAM_NAME,VERSION,*edgeFactory,transcriptId,priorLabels,
+	  labelMatrix);
   if(cmd.option('i')) crf.loadIsochoreBoundaries(cmd.optParm('i'));
   if(cmd.option('c')) crf.loadCpGislands(cmd.optParm('c'));
   if(cmd.option('S')) crf.omitSignalScores();

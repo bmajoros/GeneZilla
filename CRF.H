@@ -16,7 +16,7 @@
 class CRF : public GeneZilla {
 public:
   CRF(const BOOM::String &PROGRAM_NAME,const BOOM::String &VERSION,
-      EdgeFactory &,int &transcriptId,Labeling &);
+      EdgeFactory &,int &transcriptId,Labeling &,LabelMatrix &);
   virtual ~CRF();
   virtual int main(int argc,char *argv[]);
   virtual BOOM::Stack<SignalPtr> * processChunk(const Sequence &seq,
@@ -29,6 +29,7 @@ public:
 
 protected:
   Labeling priorLabels;
+  LabelMatrix labelMatrix;
 
   virtual BOOM::Stack<SignalPtr> * mainAlgorithm(const Sequence &,
 						 const BOOM::String &,
