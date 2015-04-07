@@ -138,3 +138,29 @@ void SignalLabelingProfile::initNegAG(int offset,int len)
 
 
 
+int SignalLabelingProfile::getLength() const
+{
+  return M.getSecondDim();
+}
+
+
+
+void SignalLabelingProfile::printOn(ostream &os)
+{
+  int L=getLength();
+  for(int phase=0 ; phase<3 ; ++phase) {
+    for(int pos=0 ; pos<L ; ++pos) os<<M[phase][pos]<<" ";
+    os<<endl;
+  }
+}
+
+
+
+ostream &operator<<(ostream &os,const SignalLabelingProfile &p)
+{
+  p.printOn(os);
+  return os;
+}
+
+
+

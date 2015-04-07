@@ -24,6 +24,8 @@ public:
   SignalLabelingProfile(SignalSensor &);
   SignalLabelingProfile() {}
   GeneModelLabel getLabel(int signalPhase,int windowPos);
+  void printOn(ostream &);
+  int getLength() const;
 protected:
   Array2D<GeneModelLabel> M; // indexed as: [phase][position]
   void init(SignalSensor &);
@@ -36,6 +38,7 @@ protected:
   void initNegGT(int offset,int len);
   void initNegAG(int offset,int len);
 };
+ostream &operator<<(ostream &,const SignalLabelingProfile &);
 
 #endif
 
