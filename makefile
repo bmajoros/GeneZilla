@@ -2768,3 +2768,16 @@ $(OBJ)/SignalLabelingProfile.o:\
 	$(CC) $(CFLAGS) -o $(OBJ)/SignalLabelingProfile.o -c \
 		SignalLabelingProfile.C
 #---------------------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/posmod.o:\
+		posmod.C
+	$(CC) $(CFLAGS) -o $(OBJ)/posmod.o -c \
+		posmod.C
+#---------------------------------------------------------
+posmod: \
+		$(OBJ)/posmod.o
+	$(CC) $(LDFLAGS) -o posmod \
+		$(OBJ)/posmod.o \
+		$(LIBS)
+#---------------------------------------------

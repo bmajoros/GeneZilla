@@ -51,8 +51,8 @@ void SignalLabelingProfile::init(SignalSensor &ss)
 void SignalLabelingProfile::initATG(int offset,int len)
 {
   M.setAllTo(LABEL_INTERGENIC);
-  for(int i=offset ; i<len ; ++i)
-    M[0][i]=getExonLabel((i-offset)%3);
+  for(int i=offset, phase=0 ; i<len ; ++i, phase=(phase+1)%3)
+    M[0][i]=getExonLabel(phase);
 }
 
 
@@ -60,46 +60,96 @@ void SignalLabelingProfile::initATG(int offset,int len)
 void SignalLabelingProfile::initTAG(int offset,int len)
 {
   M.setAllTo(LABEL_INTERGENIC);
-  for(int i=offset ; i<len ; ++i)
-    M[0][i]=getExonLabel(posmod(i-offset)); ###
+  for(int i=offset+2, phase=2 ; i>=0 ; --i, phase=posmod(phase-1))
+    M[0][i]=getExonLabel(phase);
 }
 
 
 
 void SignalLabelingProfile::initGT(int offset,int len)
 {
+  M.setAllTo(LABEL_INTRON);
+  for(int signalPhase=0 ; signalPhase<3 ; ++signalPhase)
+    for(int i=offset-1, phase=posmod(signalPhase-1) ; i>=0 ; 
+	--i, phase=posmod(phase-1))
+      M[signalPhase][i]=getExonLabel(phase);
 }
 
 
 
 void SignalLabelingProfile::initAG(int offset,int len)
 {
+  M.setAllTo(LABEL_INTRON);
+  for(int signalPhase=0 ; signalPhase<3 ; ++signalPhase)
+    for(int i=offset+2, phase=signalPhase ; i<len ; ++i, phase=(phase+1)%3)
+      M[signalPhase][i]=getExonLabel(phase);
 }
 
 
 
 void SignalLabelingProfile::initNegATG(int offset,int len)
 {
+  M.setAllTo(LABEL_INTERGENIC);
+  for(int i=offset+2, phase=0 ; i>=0 ; --i, phase=(phase+1)%3)
+    M[0][i]=getExonLabel(phase);
 }
 
 
 
 void SignalLabelingProfile::initNegTAG(int offset,int len)
 {
+  M.setAllTo(LABEL_INTERGENIC);
+  for(int i=offset, phase=2 ; i<len ; ++i, phase=posmod(phase-1);
+    M[0][i]=getExonLabel(phase);
 }
 
 
 
 void SignalLabelingProfile::initNegGT(int offset,int len)
 {
+  M.setAllTo(LABEL_INTRON);
+  for(int signalPhase=0 ; signalPhase<3 ; ++signalPhase)
+    for(int i=offset+2, phase=signalPhase ; i<len ; ++i, phase=posmod(phase-1);
+	M[signalPhase][i]=getExonLabel(phase);
 }
 
 
 
 void SignalLabelingProfile::initNegAG(int offset,int len)
 {
+  M.setAllTo(LABEL_INTRON);
+  for(int signalPhase=0 ; signalPhase<3 ; ++signalPhase)
+    for(int i=offset-1, phase=signalPhase ; i>=0 ; --i, phase=posmod(phase-1);
+	M[signalPhase][i]=getExonLabel(phase);
 }
 
 
+/*
+
+----ATG----   => signal phase is 0
+    0120120
+
+----TAG----   => signal phase is 0
+2012012
+
+----GT----    => signal phase is 1
+0120
+
+----AG----    => signal phase is 2
+      2012
+
+----CAT----   => signal phase is 2 (reverse-strand start codon)
+0210210
+
+----CTA----   => signal phase is 2 (reverse-strand stop codon)
+    2102102
+
+----AC----    => signal phase is 0 (reverse-strand donor)
+      0210
+
+----CT----    => signal phase is 1 (reverse-strand acceptor)
+2102
+
+ */
 
 
