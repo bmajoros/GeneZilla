@@ -558,6 +558,7 @@ genezilla: \
 		$(LIBDIRS) $(LIBS)
 #---------------------------------------------------------
 crf: \
+		$(OBJ)/SignalLabelingProfile.o \
 		$(OBJ)/LabelMatrix.o \
 		$(OBJ)/Labeling.o \
 		$(OBJ)/EvidenceFilter.o \
@@ -612,6 +613,7 @@ crf: \
 		$(OBJ)/GZilla.o \
 		$(OBJ)/CRF.o
 	$(CC) $(LDFLAGS) -o crf \
+		$(OBJ)/SignalLabelingProfile.o \
 		$(OBJ)/LabelMatrix.o \
 		$(OBJ)/Labeling.o \
 		$(OBJ)/EvidenceFilter.o \
@@ -2759,16 +2761,12 @@ $(OBJ)/LabelMatrix.o:\
 		LabelMatrix.H
 	$(CC) $(CFLAGS) -o $(OBJ)/LabelMatrix.o -c \
 		LabelMatrix.C
-#---------------------------------------------------------
-
 #--------------------------------------------------------
 $(OBJ)/SignalLabelingProfile.o:\
 		SignalLabelingProfile.C\
 		SignalLabelingProfile.H
 	$(CC) $(CFLAGS) -o $(OBJ)/SignalLabelingProfile.o -c \
 		SignalLabelingProfile.C
-#---------------------------------------------------------
-
 #--------------------------------------------------------
 $(OBJ)/posmod.o:\
 		posmod.C
