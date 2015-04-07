@@ -14,9 +14,9 @@
 
 CRF::CRF(const BOOM::String &PROGRAM_NAME,
 	 const BOOM::String &VERSION,EdgeFactory &edgeFactory,
-	 int &transcriptId,Labeling &labeling,LabelMatrix &labelMatrix)
+	 int &transcriptId,LabelMatrix &labelMatrix)
   : GeneZilla(PROGRAM_NAME,VERSION,edgeFactory,transcriptId),
-    priorLabels(labeling), labelMatrix(labelMatrix)
+    labelMatrix(labelMatrix)
   {
     // ctor
   }
@@ -75,13 +75,15 @@ int CRF::main(int argc,char *argv[])
 
 
 BOOM::Stack<SignalPtr> * CRF::processChunk(const Sequence &substrate,
-					const BOOM::String &substrateString,
-					const BOOM::String &isoFilename,
-					const BOOM::String &substrateId,
-						 ostream &osGraph,
-						 bool dumpGraph,
-						 String psaFilename)
+					   const BOOM::String &substrateString,
+					   const BOOM::String &isoFilename,
+					   const BOOM::String &substrateId,
+					   ostream &osGraph,
+					   bool dumpGraph,
+					   String psaFilename,
+					   Labeling &labeling)
 {
+  priorLabels=labeling;
   seq=&substrate;
   seqStr=&substrateString;
   seqLen=substrate.getLength();
@@ -114,6 +116,7 @@ BOOM::Stack<SignalPtr> * CRF::processChunk(const Sequence &substrate,
       // first:
       cerr << "Processing config file..." << endl;
       processIsochoreFile(isoFilename,gcContent);
+      initSignalLabelingProfiles();
     }
   else 
     {
@@ -184,6 +187,8 @@ BOOM::Stack<SignalPtr> * CRF::mainAlgorithm(const Sequence &seq,
 #endif
 	  if(signal)
 	    {
+	      scoreSignalPrior(signal);
+
 	      // Find optimal predecessor for this signal in all 3 phases
 	      linkBack(str,signal);
 
@@ -275,6 +280,34 @@ void CRF::updateAccumulators(const Sequence &seq,
 
 
 
+
+void CRF::scoreSignalPrior(SignalPtr s)
+{
+  SignalType t=s->getSignalType();
+  SignalLabelingProfile &profile=signalLabelingProfiles[t];
+
+  Set<ContentType> &queues=s->belongsInWhichQueues();
+
+  //Propagator &prop=s.getPropagator(ContentType);
+
+
+}
+
+
+
+
+void CRF::initSignalLabelingProfiles()
+{
+  BOOM::Vector<SignalSensor*>::iterator cur=
+    isochore->signalSensors.begin(), end=isochore->signalSensors.end();
+  for(; cur!=end ; ++cur ) {
+    SignalSensor &sensor=**cur;
+    signalLabelingProfiles[sensor.getSignalType()]=
+      SignalLabelingProfile(sensor);
+    cout<<sensor.getSignalType()<<endl;
+    cout<<signalLabelingProfiles[sensor.getSignalType()]<<endl<<endl;
+  }
+}
 
 
 

@@ -34,6 +34,7 @@ enum ContentType
   NEG_FIVE_PRIME_UTR,
   NEG_THREE_PRIME_UTR
 };
+static const int NumContentTypes=17;
 
 ContentType reverseComplement(ContentType);
 ContentType dropStrand(ContentType);

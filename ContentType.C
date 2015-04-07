@@ -7,6 +7,7 @@
 #include "ContentType.H"
 #include "BOOM/Map.H"
 
+
 static BOOM::Map<BOOM::String,ContentType> contentTypeMap;
 static BOOM::Map<BOOM::String,ContentType> longContentTypeMap;
 ContentTypeInitializer ContentTypeInitializer::initializer;

@@ -7,7 +7,7 @@
 #ifndef INCL_CRF_H
 #include "crf.H"
 #include "GZilla.H"
-
+#include "SignalLabelingProfile.H"
 
 /****************************************************************
                             class CRF
@@ -16,7 +16,7 @@
 class CRF : public GeneZilla {
 public:
   CRF(const BOOM::String &PROGRAM_NAME,const BOOM::String &VERSION,
-      EdgeFactory &,int &transcriptId,Labeling &,LabelMatrix &);
+      EdgeFactory &,int &transcriptId,LabelMatrix &);
   virtual ~CRF();
   virtual int main(int argc,char *argv[]);
   virtual BOOM::Stack<SignalPtr> * processChunk(const Sequence &seq,
@@ -25,11 +25,13 @@ public:
 				      const BOOM::String &substrateId,
 				      ostream &osGraph,
 				      bool dumpGraph,
-				      String psaFilename);
+				      String psaFilename,
+				      Labeling &);
 
 protected:
   Labeling priorLabels;
   LabelMatrix labelMatrix;
+  Array1D<SignalLabelingProfile> signalLabelingProfiles;
 
   virtual BOOM::Stack<SignalPtr> * mainAlgorithm(const Sequence &,
 						 const BOOM::String &,
@@ -38,6 +40,8 @@ protected:
 						 String psaFilename);
   virtual void updateAccumulators(const Sequence &,const BOOM::String &,
 				  int pos,Symbol,char);
+  void scoreSignalPrior(SignalPtr);
+  void initSignalLabelingProfiles();
 };
 
 

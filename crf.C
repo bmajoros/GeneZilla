@@ -98,8 +98,7 @@ void AppMain(int argc,char *argv[])
     edgeFactory=new FilteredEdgeFactory(NULL);
   }
   else edgeFactory=new EdgeFactory;
-  CRF crf(PROGRAM_NAME,VERSION,*edgeFactory,transcriptId,priorLabels,
-	  labelMatrix);
+  CRF crf(PROGRAM_NAME,VERSION,*edgeFactory,transcriptId,labelMatrix);
   if(cmd.option('i')) crf.loadIsochoreBoundaries(cmd.optParm('i'));
   if(cmd.option('c')) crf.loadCpGislands(cmd.optParm('c'));
   if(cmd.option('S')) crf.omitSignalScores();
@@ -121,7 +120,7 @@ void AppMain(int argc,char *argv[])
       ofstream osGraph;
       BOOM::Stack<SignalPtr> *path=
 	crf.processChunk(seq,seqString,isochoreFilename,contigId,
-			       osGraph,false,psaName);
+			       osGraph,false,psaName,priorLabels);
 
       // Don't need the path; just delete it (this will also delete the
       // signal objects in it, since we use "smart pointers")
