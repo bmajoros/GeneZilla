@@ -14,16 +14,24 @@ using namespace BOOM;
 
 ostream &operator<<(ostream &os,GeneModelLabel lab)
 {
+  os<<labelToString(lab);
+}
+
+
+
+String labelToString(GeneModelLabel lab)
+{
   switch(lab)
     {
-    case LABEL_NONE:       os<<"?"; break;
-    case LABEL_INTERGENIC: os<<"N"; break;
-    case LABEL_INTRON:     os<<"I"; break;
-    case LABEL_EXON_0:     os<<"E0"; break;
-    case LABEL_EXON_1:     os<<"E1"; break;
-    case LABEL_EXON_2:     os<<"E2"; break;
+    case LABEL_NONE:       return "?"; 
+    case LABEL_INTERGENIC: return "N"; 
+    case LABEL_INTRON:     return "I"; 
+    case LABEL_EXON_0:     return "E0";
+    case LABEL_EXON_1:     return "E1";
+    case LABEL_EXON_2:     return "E2";
     }
 }
+
 
 
 struct GeneModelLabelMap {
@@ -44,6 +52,45 @@ GeneModelLabel strToLabel(const String &s)
 {
   if(GeneModelLabelMap::m.isDefined(s)) return GeneModelLabelMap::m[s];
   throw s+" : unknown gene model label in strToLabel()";
+}
+
+
+
+GeneModelLabel getExonLabel(int phase)
+{
+  switch(phase)
+    {
+    case 0: return LABEL_EXON_0;
+    case 1: return LABEL_EXON_1;
+    case 2: return LABEL_EXON_2;
+    }
+}
+
+
+
+int getExonPhase(GeneModelLabel lab)
+{
+  switch(lab)
+    {
+    case LABEL_EXON_0: return 0;
+    case LABEL_EXON_1: return 1;
+    case LABEL_EXON_2: return 2;
+    default: throw labelToString(lab)+" is not an exon";
+    }
+}
+
+
+
+bool isExon(GeneModelLabel lab)
+{
+  switch(lab)
+    {
+    case LABEL_EXON_0:
+    case LABEL_EXON_1:
+    case LABEL_EXON_2:
+      return true;
+    }
+  return false;
 }
 
 

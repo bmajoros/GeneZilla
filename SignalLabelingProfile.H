@@ -27,6 +27,14 @@ public:
 protected:
   Array2D<GeneModelLabel> M; // indexed as: [phase][position]
   void init(SignalSensor &);
+  void initATG(int offset,int len);
+  void initTAG(int offset,int len);
+  void initGT(int offset,int len);
+  void initAG(int offset,int len);
+  void initNegATG(int offset,int len);
+  void initNegTAG(int offset,int len);
+  void initNegGT(int offset,int len);
+  void initNegAG(int offset,int len);
 };
 
 #endif

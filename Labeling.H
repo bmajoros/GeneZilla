@@ -21,6 +21,10 @@ enum GeneModelLabel {
 };
 ostream &operator<<(ostream &,GeneModelLabel);
 GeneModelLabel strToLabel(const String &);
+String labelToString(GeneModelLabel);
+GeneModelLabel getExonLabel(int phase);
+int getExonPhase(GeneModelLabel);
+bool isExon(GeneModelLabel);
 
 class Labeling {
 public:

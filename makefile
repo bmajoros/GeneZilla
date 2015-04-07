@@ -2234,6 +2234,95 @@ apply-content-sensor: \
 		$(OBJ)/apply-content-sensor.o \
 		$(LIBDIRS) $(LIBS)
 #---------------------------------------------------------
+$(OBJ)/apply-signal-sensor.o:\
+		apply-signal-sensor.C
+	$(CC) $(CFLAGS) -o $(OBJ)/apply-signal-sensor.o -c \
+		apply-signal-sensor.C
+#---------------------------------------------------------
+apply-signal-sensor: \
+		$(OBJ)/CodonTree.o \
+		$(OBJ)/SignalPeptideSensor.o \
+		$(OBJ)/BranchAcceptor.o \
+		$(OBJ)/ThreePeriodicIMM.o \
+		$(OBJ)/IMM.o \
+		$(OBJ)/Edge.o \
+		$(OBJ)/GarbageCollector.o \
+		$(OBJ)/WAM.o \
+		$(OBJ)/WWAM.o \
+		$(OBJ)/TataCapModel.o \
+		$(OBJ)/TataCapSignal.o \
+		$(OBJ)/MarkovChainCompiler.o \
+		$(OBJ)/FastMarkovChain.o \
+		$(OBJ)/ThreePeriodicMarkovChain.o \
+		$(OBJ)/SignalTypeProperties.o \
+		$(OBJ)/Fast3PMC.o \
+		$(OBJ)/Transitions.o \
+		$(OBJ)/ContentType.o \
+		$(OBJ)/DiscreteDistribution.o \
+		$(OBJ)/EmpiricalDistribution.o \
+		$(OBJ)/GeometricDistribution.o \
+		$(OBJ)/SignalType.o \
+		$(OBJ)/ContentSensor.o \
+		$(OBJ)/IntronQueue.o \
+		$(OBJ)/MarkovChain.o \
+		$(OBJ)/ModelBuilder.o \
+		$(OBJ)/NoncodingQueue.o \
+		$(OBJ)/ScoreAnalyzer.o \
+		$(OBJ)/WMM.o \
+		$(OBJ)/Signal.o \
+		$(OBJ)/SignalSensor.o \
+		$(OBJ)/SignalQueue.o \
+		$(OBJ)/Propagator.o \
+		$(OBJ)/ModelType.o \
+		$(OBJ)/MddTree.o \
+		$(OBJ)/TreeNode.o \
+		$(OBJ)/Partition.o \
+		$(OBJ)/TrainingSequence.o \
+		$(OBJ)/NthOrderStringIterator.o \
+		$(OBJ)/apply-signal-sensor.o
+	$(CC) $(LDFLAGS) -o apply-signal-sensor \
+		$(OBJ)/CodonTree.o \
+		$(OBJ)/SignalPeptideSensor.o \
+		$(OBJ)/BranchAcceptor.o \
+		$(OBJ)/ThreePeriodicIMM.o \
+		$(OBJ)/IMM.o \
+		$(OBJ)/Partition.o \
+		$(OBJ)/TreeNode.o \
+		$(OBJ)/MddTree.o \
+		$(OBJ)/Edge.o \
+		$(OBJ)/GarbageCollector.o \
+		$(OBJ)/WAM.o \
+		$(OBJ)/WWAM.o \
+		$(OBJ)/TataCapModel.o \
+		$(OBJ)/TataCapSignal.o \
+		$(OBJ)/ModelType.o \
+		$(OBJ)/MarkovChainCompiler.o \
+		$(OBJ)/FastMarkovChain.o \
+		$(OBJ)/ThreePeriodicMarkovChain.o \
+		$(OBJ)/DiscreteDistribution.o \
+		$(OBJ)/Transitions.o \
+		$(OBJ)/Fast3PMC.o \
+		$(OBJ)/EmpiricalDistribution.o \
+		$(OBJ)/GeometricDistribution.o \
+		$(OBJ)/SignalQueue.o \
+		$(OBJ)/SignalTypeProperties.o \
+		$(OBJ)/SignalType.o \
+		$(OBJ)/NoncodingQueue.o \
+		$(OBJ)/ContentSensor.o \
+		$(OBJ)/IntronQueue.o \
+		$(OBJ)/MarkovChain.o \
+		$(OBJ)/ModelBuilder.o \
+		$(OBJ)/ContentType.o \
+		$(OBJ)/Signal.o \
+		$(OBJ)/ScoreAnalyzer.o \
+		$(OBJ)/WMM.o \
+		$(OBJ)/SignalSensor.o \
+		$(OBJ)/Propagator.o \
+		$(OBJ)/TrainingSequence.o \
+		$(OBJ)/NthOrderStringIterator.o \
+		$(OBJ)/apply-signal-sensor.o \
+		$(LIBDIRS) $(LIBS)
+#---------------------------------------------------------
 $(OBJ)/fit.o:\
 		fit.C
 	$(CC) $(CFLAGS) -o $(OBJ)/fit.o -c \
