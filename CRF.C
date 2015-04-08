@@ -14,10 +14,11 @@
 
 CRF::CRF(const BOOM::String &PROGRAM_NAME,
 	 const BOOM::String &VERSION,EdgeFactory &edgeFactory,
-	 int &transcriptId,LabelMatrix &labelMatrix)
+	 int &transcriptId,LabelMatrix &labelMatrix,float priorWeight)
   : GeneZilla(PROGRAM_NAME,VERSION,edgeFactory,transcriptId),
     labelMatrix(labelMatrix),
-    signalLabelingProfiles(NumContentTypes)
+    signalLabelingProfiles(NumContentTypes),
+    priorWeight(priorWeight)
   {
     // ctor
   }
@@ -299,7 +300,7 @@ void CRF::scoreSignalPrior(SignalPtr s)
       
 	GeneModelLabel predictedLabel=profile.getLabel(phase,pos-wBegin);
 	GeneModelLabel priorLabel=priorLabels[pos];
-	float penalty=log(labelMatrix(priorLabel,predictedLabel));
+	float penalty=priorWeight*log(labelMatrix(priorLabel,predictedLabel));
 
       }
     }

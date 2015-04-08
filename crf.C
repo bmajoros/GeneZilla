@@ -98,7 +98,7 @@ void AppMain(int argc,char *argv[])
     edgeFactory=new FilteredEdgeFactory(NULL);
   }
   else edgeFactory=new EdgeFactory;
-  CRF crf(PROGRAM_NAME,VERSION,*edgeFactory,transcriptId,labelMatrix);
+  CRF crf(PROGRAM_NAME,VERSION,*edgeFactory,transcriptId,labelMatrix,lambda);
   if(cmd.option('i')) crf.loadIsochoreBoundaries(cmd.optParm('i'));
   if(cmd.option('c')) crf.loadCpGislands(cmd.optParm('c'));
   if(cmd.option('S')) crf.omitSignalScores();
