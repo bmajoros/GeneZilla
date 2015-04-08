@@ -15,6 +15,7 @@ using namespace BOOM;
 ostream &operator<<(ostream &os,GeneModelLabel lab)
 {
   os<<labelToString(lab);
+  return os;
 }
 
 
@@ -35,7 +36,8 @@ String labelToString(GeneModelLabel lab)
 
 
 struct GeneModelLabelMap {
-  static Map<String,GeneModelLabel> m;
+  Map<String,GeneModelLabel> m;
+  static GeneModelLabelMap global;
   GeneModelLabelMap() {
     m["N"]=LABEL_INTERGENIC;
     m["I"]=LABEL_INTRON;
@@ -44,13 +46,14 @@ struct GeneModelLabelMap {
     m["E2"]=LABEL_EXON_2;
   }
 };
-Map<String,GeneModelLabel> GeneModelLabelMap::m;
+GeneModelLabelMap GeneModelLabelMap::global;
 
 
 
 GeneModelLabel strToLabel(const String &s)
 {
-  if(GeneModelLabelMap::m.isDefined(s)) return GeneModelLabelMap::m[s];
+  if(GeneModelLabelMap::global.m.isDefined(s)) 
+    return GeneModelLabelMap::global.m[s];
   throw s+" : unknown gene model label in strToLabel()";
 }
 

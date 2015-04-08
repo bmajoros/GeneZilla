@@ -16,7 +16,8 @@ CRF::CRF(const BOOM::String &PROGRAM_NAME,
 	 const BOOM::String &VERSION,EdgeFactory &edgeFactory,
 	 int &transcriptId,LabelMatrix &labelMatrix)
   : GeneZilla(PROGRAM_NAME,VERSION,edgeFactory,transcriptId),
-    labelMatrix(labelMatrix)
+    labelMatrix(labelMatrix),
+    signalLabelingProfiles(NumContentTypes)
   {
     // ctor
   }
@@ -285,12 +286,24 @@ void CRF::scoreSignalPrior(SignalPtr s)
 {
   SignalType t=s->getSignalType();
   SignalLabelingProfile &profile=signalLabelingProfiles[t];
-
+  const int wBegin=s->getContextWindowPosition();
+  const int L=s->getContextWindowLength();
+  const int wEnd=wBegin+L;
   Set<ContentType> &queues=s->belongsInWhichQueues();
+  for(Set<ContentType>::iterator cur=queues.begin(), end=queues.end() ;
+      cur!=end ; ++cur) {
+    ContentType t=*cur;
+    Propagator &prop=s->getPropagator(t);
+    for(int phase=0 ; phase<3 ; ++phase) {
+      for(int pos=wBegin ; pos<wEnd ; ++pos) {
+      
+	GeneModelLabel predictedLabel=profile.getLabel(phase,pos-wBegin);
+	GeneModelLabel priorLabel=priorLabels[pos];
+	float penalty=log(labelMatrix(priorLabel,predictedLabel));
 
-  //Propagator &prop=s.getPropagator(ContentType);
-
-
+      }
+    }
+  }
 }
 
 
@@ -304,8 +317,8 @@ void CRF::initSignalLabelingProfiles()
     SignalSensor &sensor=**cur;
     signalLabelingProfiles[sensor.getSignalType()]=
       SignalLabelingProfile(sensor);
-    cout<<sensor.getSignalType()<<endl;
-    cout<<signalLabelingProfiles[sensor.getSignalType()]<<endl<<endl;
+    //cout<<sensor.getSignalType()<<endl;
+    //cout<<signalLabelingProfiles[sensor.getSignalType()]<<endl<<endl;
   }
 }
 

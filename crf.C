@@ -77,7 +77,7 @@ void AppMain(int argc,char *argv[])
 
   Labeling priorLabels(labelFile);
   LabelMatrix labelMatrix(matrixFile);
-
+  
   alphabet=DnaAlphabet::global();
   int minSeqLen=
     (cmd.option('s') ? cmd.optParm('s').asInt() : 1);
