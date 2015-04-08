@@ -296,13 +296,15 @@ void CRF::scoreSignalPrior(SignalPtr s)
     ContentType t=*cur;
     Propagator &prop=s->getPropagator(t);
     for(int phase=0 ; phase<3 ; ++phase) {
-      for(int pos=wBegin ; pos<wEnd ; ++pos) {
-      
-	GeneModelLabel predictedLabel=profile.getLabel(phase,pos-wBegin);
-	GeneModelLabel priorLabel=priorLabels[pos];
-	float penalty=priorWeight*log(labelMatrix(priorLabel,predictedLabel));
-
-      }
+      float score=0;
+      if(priorWeight>0)
+	for(int pos=wBegin ; pos<wEnd ; ++pos) {
+	  GeneModelLabel predictedLabel=profile.getLabel(phase,pos-wBegin);
+	  GeneModelLabel priorLabel=priorLabels[pos];
+	  float penalty=priorWeight*log(labelMatrix(priorLabel,predictedLabel));
+	  score+=penalty;
+	}
+      prop[phase]+=score;
     }
   }
 }
