@@ -253,33 +253,47 @@ void CRF::updateAccumulators(const Sequence &seq,
 				  const BOOM::String &str,
 				  int pos,Symbol base,char c)
 {
-  double score, scorePhase0, scorePhase1, scorePhase2;
-  BOOM::Vector<ContentSensor*>::iterator cur=
-    isochore->contentSensors.begin(),
-    end=isochore->contentSensors.end();
-  for(; cur!=end ; ++cur)
-    {
-      ContentSensor &contentSensor=**cur;
-      bool isCoding=contentSensor.isCoding();
-      if(isCoding)
-	contentSensor.scoreSingleBase(seq,str,pos,base,c,scorePhase0,
-				      scorePhase1,scorePhase2);
-      else
-	score=contentSensor.scoreSingleBase(seq,str,pos,base,c);
-      BOOM::Set<SignalQueue*> &queues=contentSensor.getSignalQueues();
-      BOOM::Set<SignalQueue*>::iterator cur=queues.begin(), 
-	end=queues.end();
-      for(; cur!= end ; ++cur)
-	{
-	  SignalQueue &queue=**cur;
-	  if(isCoding)
-	    queue.addToAccumulator(scorePhase0,scorePhase1,scorePhase2,pos);
-	  else
-	    queue.addToAccumulator(score);
-	}
+  double score, intronScore, scorePhase0, scorePhase1, scorePhase2;
+  for(Vector<ContentSensor*>::iterator cur=isochore->contentSensors.begin(),
+	end=isochore->contentSensors.end() ; cur!=end ; ++cur) {
+    ContentSensor &contentSensor=**cur;
+    ContentType contentType=contentSensor.getContentType();
+    bool isCoding=contentSensor.isCoding();
+    if(isCoding)
+      contentSensor.scoreSingleBase(seq,str,pos,base,c,scorePhase0,
+				    scorePhase1,scorePhase2);
+    else {
+      score=contentSensor.scoreSingleBase(seq,str,pos,base,c);
+      intronScore=score+priorWeight*log(labelMatrix(priorLabels[pos],LABEL_INTRON));
     }
+    for(int phase=0 ; phase<3 ; ++phase) { // Score against the prior labeling
+      GeneModelLabel predictedLabel;
+      if(isIntron(contentType)) predictedLabel=LABEL_INTRON;
+      else if(isIntergenic(contentType) || isUTR(contentType)) 
+	predictedLabel=LABEL_INTERGENIC;
+      else if(isCoding) predictedLabel=getExonLabel(phase);
+      else INTERNAL_ERROR;
+      float prior=priorWeight*log(labelMatrix(priorLabels[pos],predictedLabel));
+      if(priorWeight==0) prior=0;
+      if(isNaN(prior)) INTERNAL_ERROR; // ###
+      if(getStrand(contentType)!=PLUS_STRAND) prior=NEGATIVE_INFINITY; // ###
+      if(isCoding) switch(phase) {
+	case 0: scorePhase0+=prior; break;
+	case 1: scorePhase1+=prior; break;
+	case 2: scorePhase2+=prior; break;
+      }
+      else if(phase==0) score+=prior;
+    }
+    BOOM::Set<SignalQueue*> &queues=contentSensor.getSignalQueues();
+    for(BOOM::Set<SignalQueue*>::iterator cur=queues.begin(), end=queues.end() ; 
+	cur!= end ; ++cur) {
+      SignalQueue &queue=**cur;
+      if(isCoding) queue.addToAccumulator(scorePhase0,scorePhase1,scorePhase2,pos);
+      else if(isIntron(queue.getContentType())) queue.addToAccumulator(intronScore);
+      else queue.addToAccumulator(score);
+    }
+  }
 }
-
 
 
 

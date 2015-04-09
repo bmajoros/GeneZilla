@@ -39,6 +39,8 @@ struct GeneModelLabelMap {
   Map<String,GeneModelLabel> m;
   static GeneModelLabelMap global;
   GeneModelLabelMap() {
+    m["?"]=LABEL_NONE;
+    m["U"]=LABEL_NONE;
     m["N"]=LABEL_INTERGENIC;
     m["I"]=LABEL_INTRON;
     m["E0"]=LABEL_EXON_0;

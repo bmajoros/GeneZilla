@@ -37,7 +37,7 @@ void LabelMatrix::load(const String &filename)
     Vector<String> &fields=*line.getFields();
     if(fields.size()<7) throw filename+" : error parsing matrix";
     for(int j=0 ; j<6 ; ++j)
-      M[j][i]=fields[j+1].asFloat();
+      M[i][j]=fields[j+1].asFloat();
     delete &fields;
   }
 }

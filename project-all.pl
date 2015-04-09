@@ -19,8 +19,8 @@ for(my $i=0 ; $i<$n ; ++$i) {
   $defline=~/\/cigar=(\S+)/ || die "can't parse defline: $defline";
   my $cigar=$1;
   my $outfile="$dir/$id.lab";
-  my $cmd="genezilla/project-annotation $dir/$id-ref.gff $dir/$id-ref.fasta $dir/$id-alt.fasta $cigar $outfile";
+  my $cmd="genezilla/project-annotation $dir/$id-ref.gff $dir/$id-ref.fasta $dir/$id-alt.fasta $cigar $outfile $dir/$id-projected.gff";
+  print "$cmd\n";
   system("$cmd");
-  #print "$cmd\n";
 }
 

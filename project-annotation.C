@@ -26,6 +26,7 @@ private:
   GeneModelLabel getExonLabel(int phase);
   void computeLabeling(TranscriptList *,Labeling &);
   void mapLabeling(Labeling &from,Labeling &to,const String &cigar);
+  void mapTranscripts(TranscriptList &,const String &cig,const String &outfile);
 };
 
 
@@ -69,13 +70,14 @@ int Application::main(int argc,char *argv[])
 {
   // Process command line
   CommandLine cmd(argc,argv,"");
-  if(cmd.numArgs()!=5)
-    throw String("project-annotation <ref.gff> <ref.fasta> <alt.fasta> <CIGAR> <out.vector>");
+  if(cmd.numArgs()!=6)
+    throw String("project-annotation <ref.gff> <ref.fasta> <alt.fasta> <CIGAR> <out.vector> <out.gff>");
   const String refGffFile=cmd.arg(0);
   const String refFasta=cmd.arg(1);
   const String altFasta=cmd.arg(2);
   const String CIGAR=cmd.arg(3);
   const String outfile=cmd.arg(4);
+  const String outGff=cmd.arg(5);
   
   // Read some data from files
   String refSeq=loadSeq(refFasta), altSeq=loadSeq(altFasta);
@@ -91,11 +93,37 @@ int Application::main(int argc,char *argv[])
   Labeling altLab(altSeqLen);
   mapLabeling(refLab,altLab,CIGAR);
 
+  // Project the reference GFF over to an alternate GFF
+  mapTranscripts(*transcripts,CIGAR,outGff);
+
   // Generate output
   ofstream os(outfile.c_str());
   os<<altLab;
 
   return 0;
+}
+
+
+
+void Application::mapTranscripts(TranscriptList &transcripts,const String &cig,
+				 const String &outfile)
+{
+  CigarString cigar(cig);
+  CigarAlignment &align=*cigar.getAlignment();
+  GffTranscript *transcript=transcripts[0];
+  char strand=transcript->getStrand();
+  String source=transcript->getSource();
+  String substrate=transcript->getSubstrate();
+  int numExons=transcript->getNumExons();
+  for(int i=0 ; i<numExons ; ++i) {
+    GffExon &exon=transcript->getIthExon(i);
+    int begin=exon.getBegin(), end=exon.getEnd();
+    begin=align[begin]; end=align[end];
+    exon.setBegin(begin); exon.setEnd(end);
+  }
+  delete &align;
+  ofstream os(outfile.c_str());
+  transcript->toGff(os);
 }
 
 
@@ -108,6 +136,7 @@ void Application::mapLabeling(Labeling &from,Labeling &to,const String &cig)
   int L=align.length();
   for(int i=0 ; i<L ; ++i) {
     int j=align[i];
+    //cout<<"j="<<j<<" toLen="<<to.length()<<endl;
     if(j!=CIGAR_UNDEFINED) to[j]=from[i];
   }
   delete &align;
