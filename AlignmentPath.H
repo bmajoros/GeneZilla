@@ -22,8 +22,7 @@
 using namespace std;
 using namespace BOOM;
 
-class AlignmentPath
-{
+class AlignmentPath {
 public:
   static int MAX_WIDTH;
   AlignmentPath(const Sequence &,const Sequence &,Alphabet &,double score=0);
@@ -40,6 +39,7 @@ public:
   void getResidualsOnRight(Sequence &,Sequence &);
   void countNonNColumns(int &cols,int &matches) const;
   void getMatchExtent(int &firstBegin,int &firstEnd,int &secondBegin,int &secondEnd) const;
+  String getCigarString() const;
 private:
   const Sequence &s1, &s2;
   Vector<MatchType> matchData;

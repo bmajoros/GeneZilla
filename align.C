@@ -1,5 +1,6 @@
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <math.h>
 #include "BOOM/CommandLine.H"
 #include "BOOM/FastaReader.H"
@@ -55,10 +56,11 @@ Application::Application()
 int Application::main(int argc,char *argv[])
   {
     // Process command line
-    CommandLine cmd(argc,argv,"qn:w:uUl");
+    CommandLine cmd(argc,argv,"qn:w:uUlc:");
     if(cmd.numArgs()!=6)
       throw string("align <AlignmentSubstMatrix> <+GapOpenPenalty> <+GapExtendPenalty> \n               <*.fasta> <*.fasta> DNA|PROTEIN [-q] [-w #]\n\n\
 example: align blosum62 5 2 1.fasta 2.fasta DNA\n\
+-c <file> = emit CIGAR string into file\n\
 -q = quiet (no alignment output -- just match intervals, #matches, and score)\n\
 -u = ungapped alignment\n\
 -U = ungapped, report only the closed match interval and #matches\n\
@@ -77,6 +79,8 @@ example: align blosum62 5 2 1.fasta 2.fasta DNA\n\
     if(type!="DNA" && type!="PROTEIN") throw "specify DNA or PROTEIN";
     bool quiet=cmd.option('q');
     if(cmd.option('w')) AlignmentPath::MAX_WIDTH=cmd.optParm('w').asInt();
+    ofstream cigarFile;
+    if(cmd.option('c')) cigarFile.open(cmd.optParm('c').c_str());
 
     Alphabet &alphabet=
       (type=="DNA") ? 
@@ -90,6 +94,7 @@ example: align blosum62 5 2 1.fasta 2.fasta DNA\n\
     for(int i=0 ; i<n ; ++i) {
       Needleman<double> aligner(alphabet,*seq1,*seq2,M,gapOpen,gapExtend);
       AlignmentPath *alignment=local ? aligner.partialAlignment() : aligner.fullAlignment(wantUngapped);
+      if(cmd.option('c')) cigarFile<<alignment->getCigarString()<<endl;
       int mismatches, insertions;
       alignment->countMismatches(mismatches,insertions);
       int alignmentLength=alignment->getAlignmentLength();

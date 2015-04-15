@@ -304,3 +304,35 @@ void AlignmentPath::getMatchExtent(int &firstBegin,int &firstEnd,int &secondBegi
 
 
 
+char matchTypeToCigarLetter(MatchType m)
+{
+  switch(m)
+    {
+    case MATCH: return 'M';
+    case FIRST_UNMATCHED: return 'D';
+    case SECOND_UNMATCHED: return 'I';
+    default: INTERNAL_ERROR;
+    }
+}
+
+
+
+String AlignmentPath::getCigarString() const
+{
+  int L=matchData.size();
+  if(L==0) return "";
+  String cigar;
+  int opLen=1;
+  MatchType matchType=matchData[0];
+  char op=matchTypeToCigarLetter(matchType);
+  for(int i=1 ; i<L ; ) {
+    while(matchData[i]==matchType) { ++opLen; ++i; }
+    cigar+=opLen; cigar+=op;
+    if(i<L) { 
+      matchType=matchData[i]; 
+      op=matchTypeToCigarLetter(matchType); 
+      opLen=1; }
+  }
+  return cigar;
+}
+
