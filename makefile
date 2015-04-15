@@ -2778,4 +2778,23 @@ posmod: \
 	$(CC) $(LDFLAGS) -o posmod \
 		$(OBJ)/posmod.o \
 		$(LIBS)
-#---------------------------------------------
+#---------------------------------------------------------
+$(OBJ)/AlignmentPath.o:\
+		AlignmentPath.H \
+		AlignmentPath.C
+	$(CC) $(CFLAGS) -o $(OBJ)/AlignmentPath.o -c \
+		AlignmentPath.C
+#---------------------------------------------------------
+$(OBJ)/align.o:\
+		align.C
+	$(CC) $(CFLAGS) -o $(OBJ)/align.o -c \
+		align.C
+#---------------------------------------------------------
+align: \
+		$(OBJ)/AlignmentPath.o \
+		$(OBJ)/align.o
+	$(CC) $(LDFLAGS) -o align \
+		$(OBJ)/AlignmentPath.o \
+		$(OBJ)/align.o \
+		$(LIBS)
+#---------------------------------------------------------
