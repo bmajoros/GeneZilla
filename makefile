@@ -2798,3 +2798,16 @@ align: \
 		$(OBJ)/align.o \
 		$(LIBS)
 #---------------------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/find-variants.o:\
+		find-variants.C
+	$(CC) $(CFLAGS) -o $(OBJ)/find-variants.o -c \
+		find-variants.C
+#---------------------------------------------------------
+find-variants: \
+		$(OBJ)/find-variants.o
+	$(CC) $(LDFLAGS) -o find-variants \
+		$(OBJ)/find-variants.o \
+		$(LIBS)
+#---------------------------------------------
