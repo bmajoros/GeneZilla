@@ -96,7 +96,6 @@ void AppMain(int argc,char *argv[])
   // Process all the contigs
   BOOM::FastaReader fastaReader(fastaFilename);
   BOOM::String defline, seqString;
-  float gcContent;
   int transcriptId=-1;
   EdgeFactory *edgeFactory=NULL;
   String evidenceDir;

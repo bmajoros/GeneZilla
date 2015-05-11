@@ -352,6 +352,7 @@ BOOM::Stack<SignalPtr> * GeneZilla::processChunk(const Sequence &substrate,
 	gcContent=getGCcontent(substrateString);
     }
 
+  cerr<<"GC content = "<<gcContent<<endl;
   if(isochores.getNumIsochores()==0)
     {
       // This is the first chunk we are seeing...so do some initialization
