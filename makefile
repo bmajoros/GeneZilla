@@ -2824,3 +2824,16 @@ pds: \
 		$(OBJ)/pds.o \
 		$(LIBS)
 #---------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/check-projection.o:\
+		check-projection.C
+	$(CC) $(CFLAGS) -o $(OBJ)/check-projection.o -c \
+		check-projection.C
+#---------------------------------------------------------
+check-projection: \
+		$(OBJ)/check-projection.o
+	$(CC) $(LDFLAGS) -o check-projection \
+		$(OBJ)/check-projection.o \
+		$(LIBS)
+#---------------------------------------------

@@ -92,6 +92,8 @@ public:
   double scoreExon(SignalPtr left,SignalPtr right,int phase,
 		   ContentType &);
   void setEvidenceFilter(EvidenceFilter *e) { evidenceFilter=e; }
+  float getGCcontent(const BOOM::String &);
+  Isochore *getIsochore(float gc) {return isochores.getIsochore(gc);}
 
 #ifdef EXPLICIT_GRAPHS
   ParseGraph &getParseGraph();
@@ -165,7 +167,6 @@ protected:
 						 String psaFilename);
   void computeIntergenicSums(const Sequence &,const BOOM::String &,
 			     const char *);
-  float getGCcontent(const BOOM::String &);
   void instantiateLeftTermini();
   BOOM::Stack<SignalPtr> *instantiateRightTermini(const BOOM::String &,
 						int seqLen,
