@@ -12,21 +12,17 @@
 #include "BOOM/FastaWriter.H"
 #include "BOOM/File.H"
 #include "BOOM/Vector.H"
+#include "BOOM/Array1D.H"
 using namespace std;
 using namespace BOOM;
 
-struct Region {
-  String chr;
-  int begin, end;
-  String seq;
-  Region(const String &chr,int begin,int end,const String &seq)
-    : chr(chr), begin(begin), end(end), seq(seq) {}
-};
+const int PLOIDY=2;
 
 struct Genotype {
   Array1D<int> alleles;
   Genotype(int ploidy) : alleles(ploidy) {}
 };
+
 
 struct Variant {
   String id, chr, ref, alt;
@@ -35,6 +31,18 @@ struct Variant {
 	  const String &ref,const String &alt)
     : id(id), chr(chr), pos(pos), ref(ref), alt(alt) {}
 };
+
+
+struct Region {
+  String chr;
+  int begin, end;
+  String seq;
+  Region(const String &chr,int begin,int end,const String &seq)
+    : chr(chr), begin(begin), end(end), seq(seq) {}
+  bool contains(const Variant &v) const 
+  { return v.chr==chr && v.pos>=begin && v.pos+v.ref.length()<=end; }
+};
+
 
 class Application {
 public:
@@ -49,6 +57,7 @@ protected:
   void parseHeader(const String &line);
   void loadRegions(const String &regionsFilename,const String &genomeFilename,
 		   const String &tempFile);
+  void emit(const Vector<Genotype> &loci,ostream &);
 };
 
 
@@ -120,14 +129,17 @@ void Application::convert(File &gcf,ostream &os,const String genomeFile)
     if(fields.size()!=numVariants+1) throw "Wrong number of fields in GCF line";
     String id=fields.front();
     fields.erase(fields.begin());
+    Vector<Genotype> loci;
     for(Vector<String>::const_iterator cur=fields.begin(), end=fields.end() ;
 	cur!=end ; ++cur) {
       const String &field=*cur;
       if(field.length()!=3) throw String("Cannot parse genotype: ")+field;
-      int gt[2]; gt[0]=field[0]-'0'; gt[1]=field[2]-'0';
+      Genotype gt(2);
+      gt.alleles[0]=field[0]-'0'; gt.alleles[1]=field[2]-'0';
+      loci.push_back(gt);
     }
     delete &fields;
-    emit(
+    emit(loci,os);
   }
 }
 
@@ -146,6 +158,8 @@ void Application::parseHeader(const String &line)
     const int pos=fields[2];
     const String &ref=fields[3];
     const String &alt=fields[4];
+    if(ref.length()!=1 || alt.length()!=1) 
+      throw "only variants of length 1 are currently supported";
     variants.push_back(Variant(id,chr,pos,ref,alt));
     delete &fields;
   }
@@ -177,6 +191,30 @@ void Application::loadRegions(const String &regionsFilename,const String &
     regions.push_back(Region(chr,begin,end,seq));
   }
   unlink(tempFile.c_str());
+}
+
+
+
+void Application::emit(const Vector<Genotype> &loci,ostream &os)
+{
+  const int numVariants=variants.size();
+  for(Vector<Region>::const_iterator cur=regions.begin(), end=regions.end() ;
+      cur!=end ; ++cur) {
+    const Region &region=*cur;
+    String seq[PLOIDY]; seq[0]=seq[1]=region.seq; // diploid only!
+    for(int i=0 ; i<numVariants ; ++i) {
+      const Variant &variant=variants[i];
+      const int localPos=variant.pos-region.begin;
+      if(region.contains(variant)) {
+	Genotype gt=loci[i];
+	for(int j=0 ; j<PLOIDY ; ++j) {
+	  cout<<"strlen="<<seq[j].length()<<" localPos="<<localPos<<" ref="<<variant.ref<<" alt="<<variant.alt<<" gt="<<gt.alleles[j]<<" region.chr="<<region.chr<<" region.begin="<<region.begin<<" region.end="<<region.end<<" variant.pos="<<variant.pos<<" variant.chr="<<variant.chr<<endl;
+	  seq[j].replaceSubstring(localPos,variant.ref.length(),
+				  gt.alleles[j] ? variant.alt : variant.ref);
+	}
+      }
+    }
+  }
 }
 
 
