@@ -2850,3 +2850,16 @@ vcf-to-gcf: \
 		$(OBJ)/vcf-to-gcf.o \
 		$(LIBS)
 #---------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/gcf-to-fasta.o:\
+		gcf-to-fasta.C
+	$(CC) $(CFLAGS) -o $(OBJ)/gcf-to-fasta.o -c \
+		gcf-to-fasta.C
+#---------------------------------------------------------
+gcf-to-fasta: \
+		$(OBJ)/gcf-to-fasta.o
+	$(CC) $(LDFLAGS) -o gcf-to-fasta \
+		$(OBJ)/gcf-to-fasta.o \
+		$(LIBS)
+#---------------------------------------------
