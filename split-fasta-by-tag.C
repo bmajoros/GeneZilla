@@ -17,6 +17,8 @@ class Application {
 public:
   Application();
   int main(int argc,char *argv[]);
+protected:
+  FastaWriter writer;
 };
 
 
@@ -62,12 +64,11 @@ int Application::main(int argc,char *argv[])
   String def, seq;
   while(reader.nextSequence(def,seq)) {
     if(defRegex.search(def)) {
-      String value=defRegex[0];
-      cout<<value<<endl;
+      String value=defRegex[1];
+      String filename=outdir+"/"+value+".fasta";
+      writer.appendToFasta(def,seq,filename);
     }
-    
   }
-
   return 0;
 }
 

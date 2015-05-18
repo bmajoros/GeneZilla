@@ -2863,3 +2863,16 @@ gcf-to-fasta: \
 		$(OBJ)/gcf-to-fasta.o \
 		$(LIBS)
 #---------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/split-fasta-by-tag.o:\
+		split-fasta-by-tag.C
+	$(CC) $(CFLAGS) -o $(OBJ)/split-fasta-by-tag.o -c \
+		split-fasta-by-tag.C
+#---------------------------------------------------------
+split-fasta-by-tag: \
+		$(OBJ)/split-fasta-by-tag.o
+	$(CC) $(LDFLAGS) -o split-fasta-by-tag \
+		$(OBJ)/split-fasta-by-tag.o \
+		$(LIBS)
+#---------------------------------------------
