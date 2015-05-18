@@ -57,7 +57,7 @@ protected:
   void parseHeader(const String &line);
   void loadRegions(const String &regionsFilename,const String &genomeFilename,
 		   const String &tempFile);
-  void emit(const Vector<Genotype> &loci,ostream &);
+  void emit(const String &individualID,const Vector<Genotype> &loci,ostream &);
 };
 
 
@@ -92,6 +92,8 @@ int Application::main(int argc,char *argv[])
   if(cmd.numArgs()!=4)
     throw String("\ngcf-to-fasta [options] <in.gcf> <genome.2bit> <regions.bed> <out.fasta>\n\
      -t path : path to twoBitToFa\n\
+\n\
+     NOTE: You must first run 'which twoBitToFa' to make sure it's in your path\n\
 ");
   const String &gcfFilename=cmd.arg(0);
   const String &genomeFilename=cmd.arg(1);
@@ -139,7 +141,7 @@ void Application::convert(File &gcf,ostream &os,const String genomeFile)
       loci.push_back(gt);
     }
     delete &fields;
-    emit(loci,os);
+    emit(id,loci,os);
   }
 }
 
@@ -148,6 +150,7 @@ void Application::convert(File &gcf,ostream &os,const String genomeFile)
 void Application::parseHeader(const String &line)
 {
   Vector<String> &fields=*line.getFields();
+  Map<String,int> prevPos;
   for(Vector<String>::const_iterator cur=fields.begin(), end=fields.end()
 	; cur!=end ; ++cur) {
     const String &field=*cur;
@@ -156,10 +159,11 @@ void Application::parseHeader(const String &line)
     const String &id=fields[0];
     const String &chr=fields[1];
     const int pos=fields[2];
+    if(!prevPos.isDefined(chr)) prevPos[chr]=0;
+    if(pos<=prevPos[chr]) throw "input file is not sorted: use vcf-sort and re-convert to gcf";
+    prevPos[chr]=pos;
     const String &ref=fields[3];
     const String &alt=fields[4];
-    if(ref.length()!=1 || alt.length()!=1) 
-      throw "only variants of length 1 are currently supported";
     variants.push_back(Variant(id,chr,pos,ref,alt));
     delete &fields;
   }
@@ -195,26 +199,35 @@ void Application::loadRegions(const String &regionsFilename,const String &
 
 
 
-void Application::emit(const Vector<Genotype> &loci,ostream &os)
+void Application::emit(const String &individualID,const Vector<Genotype> &loci,ostream &os)
 {
   const int numVariants=variants.size();
   for(Vector<Region>::const_iterator cur=regions.begin(), end=regions.end() ;
       cur!=end ; ++cur) {
+    Array1D<int> deltas(PLOIDY); deltas.setAllTo(0); // for indels
     const Region &region=*cur;
-    String seq[PLOIDY]; seq[0]=seq[1]=region.seq; // diploid only!
+    String seq[PLOIDY]; for(int i=0 ; i<PLOIDY ; ++i) seq[i]=region.seq;
     for(int i=0 ; i<numVariants ; ++i) {
       const Variant &variant=variants[i];
       const int localPos=variant.pos-region.begin;
       if(region.contains(variant)) {
 	Genotype gt=loci[i];
 	for(int j=0 ; j<PLOIDY ; ++j) {
-	  cout<<"strlen="<<seq[j].length()<<" localPos="<<localPos<<" ref="<<variant.ref<<" alt="<<variant.alt<<" gt="<<gt.alleles[j]<<" region.chr="<<region.chr<<" region.begin="<<region.begin<<" region.end="<<region.end<<" variant.pos="<<variant.pos<<" variant.chr="<<variant.chr<<endl;
-	  seq[j].replaceSubstring(localPos,variant.ref.length(),
-				  gt.alleles[j] ? variant.alt : variant.ref);
+	  if(gt.alleles[j]) {
+	    int refLen=variant.ref.length(), altLen=variant.alt.length();
+	    deltas[j]+=refLen-altLen;
+	    seq[j].replaceSubstring(localPos-deltas[j],refLen,
+				    gt.alleles[j] ? variant.alt : variant.ref);
+	  }
 	}
       }
+    } // foreach variant
+    for(int j=0 ; j<PLOIDY ; ++j) {
+      String def=String(">")+individualID+"_"+j+" /indiv="+individualID+" /region="
+	+region.chr+":"+region.begin+"-"+region.end;
+      writer.addToFasta(def,seq[j],os);
     }
-  }
+  } // foreach region
 }
 
 
