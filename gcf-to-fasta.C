@@ -56,6 +56,7 @@ protected:
   Vector<Variant> variants;
   FastaWriter writer;
   Vector<Region> regions;
+  bool wantRef;
   void convert(File &gcf,ostream &,const String genomeFile);
   void parseHeader(const String &line);
   void loadRegions(const String &regionsFilename,const String &genomeFilename,
@@ -91,10 +92,11 @@ Application::Application()
 int Application::main(int argc,char *argv[])
 {
   // Process command line
-  CommandLine cmd(argc,argv,"t:");
+  CommandLine cmd(argc,argv,"rt:");
   if(cmd.numArgs()!=4)
     throw String("\ngcf-to-fasta [options] <in.gcf> <genome.2bit> <regions.bed> <out.fasta>\n\
      -t path : path to twoBitToFa\n\
+     -r : emit reference sequence also\n\
 \n\
      NOTE: You must first run 'which twoBitToFa' to make sure it's in your path\n\
      NOTE: regions.bed is a BED6 file: chr begin end name score strand\n\
@@ -104,6 +106,7 @@ int Application::main(int argc,char *argv[])
   const String &regionsFilename=cmd.arg(2);
   const String &fastaFilename=cmd.arg(3);
   if(cmd.option('t')) twoBitToFa=cmd.optParm('t');
+  wantRef=cmd.option('r');
 
   // Load regions
   loadRegions(regionsFilename,genomeFilename,fastaFilename);
@@ -125,6 +128,21 @@ void Application::convert(File &gcf,ostream &os,const String genomeFile)
   line.trimWhitespace();
   parseHeader(line);
   const int numVariants=variants.size();
+
+  // Emit reference
+  if(wantRef) {
+    for(Vector<Region>::const_iterator cur=regions.begin(), end=regions.end() ;
+	cur!=end ; ++cur) {
+      const Region &region=*cur;
+      String seq=region.seq;
+      if(region.strand=='-') seq=ProteinTrans::reverseComplement(seq);
+      for(int j=0 ; j<PLOIDY ; ++j) {
+	String def=String(">reference_")+j+" /individual=reference"+
+	  " /allele="+j+" /region="+region.id;
+	writer.addToFasta(def,seq,os);
+      }
+    }
+  }
 
   // Process each individual
   while(!gcf.eof()) {
