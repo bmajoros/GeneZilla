@@ -2837,3 +2837,16 @@ check-projection: \
 		$(OBJ)/check-projection.o \
 		$(LIBS)
 #---------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/vcf-to-gcf.o:\
+		vcf-to-gcf.C
+	$(CC) $(CFLAGS) -o $(OBJ)/vcf-to-gcf.o -c \
+		vcf-to-gcf.C
+#---------------------------------------------------------
+vcf-to-gcf: \
+		$(OBJ)/vcf-to-gcf.o
+	$(CC) $(LDFLAGS) -o vcf-to-gcf \
+		$(OBJ)/vcf-to-gcf.o \
+		$(LIBS)
+#---------------------------------------------
