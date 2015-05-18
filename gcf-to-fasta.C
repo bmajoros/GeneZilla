@@ -34,11 +34,11 @@ struct Variant {
 
 
 struct Region {
-  String chr;
+  String chr, id;
   int begin, end;
   String seq;
-  Region(const String &chr,int begin,int end,const String &seq)
-    : chr(chr), begin(begin), end(end), seq(seq) {}
+  Region(const String &id,const String &chr,int begin,int end,const String &seq)
+    : id(id), chr(chr), begin(begin), end(end), seq(seq) {}
   bool contains(const Variant &v) const 
   { return v.chr==chr && v.pos>=begin && v.pos+v.ref.length()<=end; }
 };
@@ -181,9 +181,10 @@ void Application::loadRegions(const String &regionsFilename,const String &
     line.trimWhitespace();
     if(line.isEmpty()) continue;
     Vector<String> &fields=*line.getFields();
-    if(fields.size()<3) throw String("error in regions file: ")+line;
+    if(fields.size()<4) throw "regions file requires four fields: chr begin end name";
     const String chr=fields[0];
     const int begin=fields[1].asInt(), end=fields[2].asInt();
+    const String id=fields[3];
     delete &fields;
     
     // Invoke twoBitToFa to extract sequence from chrom file
@@ -192,7 +193,7 @@ void Application::loadRegions(const String &regionsFilename,const String &
     system(cmd.c_str());
     String def, seq;
     FastaReader::load(tempFile,def,seq);
-    regions.push_back(Region(chr,begin,end,seq));
+    regions.push_back(Region(id,chr,begin,end,seq));
   }
   unlink(tempFile.c_str());
 }
@@ -224,7 +225,7 @@ void Application::emit(const String &individualID,const Vector<Genotype> &loci,o
     } // foreach variant
     for(int j=0 ; j<PLOIDY ; ++j) {
       String def=String(">")+individualID+"_"+j+" /indiv="+individualID+" /region="
-	+region.chr+":"+region.begin+"-"+region.end;
+	+region.id;
       writer.addToFasta(def,seq[j],os);
     }
   } // foreach region
