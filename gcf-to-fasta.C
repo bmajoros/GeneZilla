@@ -13,6 +13,7 @@
 #include "BOOM/File.H"
 #include "BOOM/Vector.H"
 #include "BOOM/Array1D.H"
+#include "BOOM/ProteinTrans.H"
 using namespace std;
 using namespace BOOM;
 
@@ -37,8 +38,10 @@ struct Region {
   String chr, id;
   int begin, end;
   String seq;
-  Region(const String &id,const String &chr,int begin,int end,const String &seq)
-    : id(id), chr(chr), begin(begin), end(end), seq(seq) {}
+  char strand;
+  Region(const String &id,const String &chr,char strand,int begin,int end,
+	 const String &seq) : id(id), chr(chr), begin(begin), end(end), 
+			      strand(strand), seq(seq) {}
   bool contains(const Variant &v) const 
   { return v.chr==chr && v.pos>=begin && v.pos+v.ref.length()<=end; }
 };
@@ -94,6 +97,7 @@ int Application::main(int argc,char *argv[])
      -t path : path to twoBitToFa\n\
 \n\
      NOTE: You must first run 'which twoBitToFa' to make sure it's in your path\n\
+     NOTE: regions.bed is a BED6 file: chr begin end name score strand\n\
 ");
   const String &gcfFilename=cmd.arg(0);
   const String &genomeFilename=cmd.arg(1);
@@ -181,10 +185,11 @@ void Application::loadRegions(const String &regionsFilename,const String &
     line.trimWhitespace();
     if(line.isEmpty()) continue;
     Vector<String> &fields=*line.getFields();
-    if(fields.size()<4) throw "regions file requires four fields: chr begin end name";
+    if(fields.size()<6) throw "regions file requires 6 fields: chr begin end name score strand";
     const String chr=fields[0];
     const int begin=fields[1].asInt(), end=fields[2].asInt();
     const String id=fields[3];
+    char strand=fields[5][0];
     delete &fields;
     
     // Invoke twoBitToFa to extract sequence from chrom file
@@ -193,7 +198,7 @@ void Application::loadRegions(const String &regionsFilename,const String &
     system(cmd.c_str());
     String def, seq;
     FastaReader::load(tempFile,def,seq);
-    regions.push_back(Region(id,chr,begin,end,seq));
+    regions.push_back(Region(id,chr,strand,begin,end,seq));
   }
   unlink(tempFile.c_str());
 }
@@ -217,6 +222,9 @@ void Application::emit(const String &individualID,const Vector<Genotype> &loci,o
 	  if(gt.alleles[j]) {
 	    int refLen=variant.ref.length(), altLen=variant.alt.length();
 	    deltas[j]+=refLen-altLen;
+	    if(region.seq.substring(localPos,refLen)!=variant.ref)
+	      throw String("reference mismatch: ")+variant.ref+" vs. "+
+		region.seq.substring(variant.pos,refLen);
 	    seq[j].replaceSubstring(localPos-deltas[j],refLen,
 				    gt.alleles[j] ? variant.alt : variant.ref);
 	  }
@@ -224,8 +232,9 @@ void Application::emit(const String &individualID,const Vector<Genotype> &loci,o
       }
     } // foreach variant
     for(int j=0 ; j<PLOIDY ; ++j) {
-      String def=String(">")+individualID+"_"+j+" /indiv="+individualID+" /region="
-	+region.id;
+      String def=String(">")+individualID+"_"+j+" /individual="+individualID+
+	" /allele="+j+" /region="+region.id;
+      if(region.strand=='-') seq[j]=ProteinTrans::reverseComplement(seq[j]);
       writer.addToFasta(def,seq[j],os);
     }
   } // foreach region
