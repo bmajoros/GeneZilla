@@ -2876,3 +2876,16 @@ split-fasta-by-tag: \
 		$(OBJ)/split-fasta-by-tag.o \
 		$(LIBS)
 #---------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/split-gff-by-gene.o:\
+		split-gff-by-gene.C
+	$(CC) $(CFLAGS) -o $(OBJ)/split-gff-by-gene.o -c \
+		split-gff-by-gene.C
+#---------------------------------------------------------
+split-gff-by-gene: \
+		$(OBJ)/split-gff-by-gene.o
+	$(CC) $(LDFLAGS) -o split-gff-by-gene \
+		$(OBJ)/split-gff-by-gene.o \
+		$(LIBS)
+#---------------------------------------------
