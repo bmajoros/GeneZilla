@@ -5,8 +5,10 @@
  License (GPL) version 3, as described at www.opensource.org.
  ****************************************************************/
 #include <iostream>
+#include <fstream>
 #include "BOOM/String.H"
 #include "BOOM/CommandLine.H"
+#include "BOOM/GffReader.H"
 using namespace std;
 using namespace BOOM;
 
@@ -54,6 +56,15 @@ int Application::main(int argc,char *argv[])
   // Load GFF file
   Vector<GffGene> &genes=*GffReader::loadGenes(inGff);
 
+  // Generate output
+  for(Vector<GffGene>::iterator cur=genes.begin(), end=genes.end() ;
+      cur!=end ; ++cur) {
+    GffGene &gene=*cur;
+    const String &id=gene.getID();
+    const String outfile=outDir+'/'+id+".gff";
+    ofstream os(outfile.c_str());
+    
+  }
 
   return 0;
 }
