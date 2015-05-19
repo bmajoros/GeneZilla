@@ -2889,3 +2889,16 @@ split-gff-by-gene: \
 		$(OBJ)/split-gff-by-gene.o \
 		$(LIBS)
 #---------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/gff-fix-chrom-names.o:\
+		gff-fix-chrom-names.C
+	$(CC) $(CFLAGS) -o $(OBJ)/gff-fix-chrom-names.o -c \
+		gff-fix-chrom-names.C
+#---------------------------------------------------------
+gff-fix-chrom-names: \
+		$(OBJ)/gff-fix-chrom-names.o
+	$(CC) $(LDFLAGS) -o gff-fix-chrom-names \
+		$(OBJ)/gff-fix-chrom-names.o \
+		$(LIBS)
+#---------------------------------------------
