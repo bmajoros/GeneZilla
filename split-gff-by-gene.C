@@ -12,8 +12,12 @@
 using namespace std;
 using namespace BOOM;
 
+
+
 class Application {
   bool wantLongest;
+  void emitLongest(const GffGene &,ostream &);
+  void emitAll(const GffGene &,ostream &);
 public:
   Application();
   int main(int argc,char *argv[]);
@@ -55,6 +59,7 @@ int Application::main(int argc,char *argv[])
 
   // Load GFF file
   Vector<GffGene> &genes=*GffReader::loadGenes(inGff);
+  cerr<<genes.size()<<" genes loaded"<<endl;
 
   // Generate output
   for(Vector<GffGene>::iterator cur=genes.begin(), end=genes.end() ;
@@ -63,9 +68,38 @@ int Application::main(int argc,char *argv[])
     const String &id=gene.getID();
     const String outfile=outDir+'/'+id+".gff";
     ofstream os(outfile.c_str());
-    
+    if(wantLongest) emitLongest(gene,os);
+    else emitAll(gene,os);
   }
 
   return 0;
 }
+
+
+
+void Application::emitLongest(const GffGene &gene,ostream &os)
+{
+  const int n=gene.numTranscripts();
+  int longestL=0;
+  GffTranscript *longest=NULL;
+  for(int i=0 ; i<n ; ++i) {
+    GffTranscript &trans=gene.getIthTranscript(i);
+    const int length=trans.getEnd()-trans.getBegin();
+    if(length>longestL) { longest=&trans; longestL=length; }
+  }
+  longest->toGff(os);
+}
+
+
+
+void Application::emitAll(const GffGene &gene,ostream &os)
+{
+  const int n=gene.numTranscripts();
+  for(int i=0 ; i<n ; ++i) {
+    GffTranscript &trans=gene.getIthTranscript(i);
+    trans.toGff(os);
+  }
+}
+
+
 
