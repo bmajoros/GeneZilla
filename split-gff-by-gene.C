@@ -52,7 +52,9 @@ int Application::main(int argc,char *argv[])
   // Process command line
   CommandLine cmd(argc,argv,"l");
   if(cmd.numArgs()!=2)
-    throw String("split-gff-by-gene [options] <in.gff> <out-dir>");
+    throw String("\nsplit-gff-by-gene [options] <in.gff> <out-dir>\n\
+      -l = longest transcript only\n\
+");
   const String inGff=cmd.arg(0);
   const String outDir=cmd.arg(1);
   wantLongest=cmd.option('l');
