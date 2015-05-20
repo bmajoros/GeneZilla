@@ -2915,3 +2915,16 @@ gff-shift-coords: \
 		$(OBJ)/gff-shift-coords.o \
 		$(LIBS)
 #---------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/fasta-get-id.o:\
+		fasta-get-id.C
+	$(CC) $(CFLAGS) -o $(OBJ)/fasta-get-id.o -c \
+		fasta-get-id.C
+#---------------------------------------------------------
+fasta-get-id: \
+		$(OBJ)/fasta-get-id.o
+	$(CC) $(LDFLAGS) -o fasta-get-id \
+		$(OBJ)/fasta-get-id.o \
+		$(LIBS)
+#---------------------------------------------
