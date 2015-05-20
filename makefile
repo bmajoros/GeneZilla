@@ -2902,3 +2902,16 @@ gff-fix-chrom-names: \
 		$(OBJ)/gff-fix-chrom-names.o \
 		$(LIBS)
 #---------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/gff-shift-coords.o:\
+		gff-shift-coords.C
+	$(CC) $(CFLAGS) -o $(OBJ)/gff-shift-coords.o -c \
+		gff-shift-coords.C
+#---------------------------------------------------------
+gff-shift-coords: \
+		$(OBJ)/gff-shift-coords.o
+	$(CC) $(LDFLAGS) -o gff-shift-coords \
+		$(OBJ)/gff-shift-coords.o \
+		$(LIBS)
+#---------------------------------------------
