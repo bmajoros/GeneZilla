@@ -71,11 +71,11 @@ int Application::main(int argc,char *argv[])
   // Process command line
   CommandLine cmd(argc,argv,"");
   if(cmd.numArgs()!=6)
-    throw String("project-annotation <ref.gff> <ref.fasta> <alt.fasta> <CIGAR> <out.vector> <out.gff>");
+    throw String("project-annotation <ref.gff> <ref.fasta> <alt.fasta> <ref-alt.cigar> <out.vector> <out.gff>");
   const String refGffFile=cmd.arg(0);
   const String refFasta=cmd.arg(1);
   const String altFasta=cmd.arg(2);
-  const String CIGAR=cmd.arg(3);
+  const String cigarFile=cmd.arg(3);
   const String outfile=cmd.arg(4);
   const String outGff=cmd.arg(5);
   
@@ -88,6 +88,12 @@ int Application::main(int argc,char *argv[])
   // Compute the reference labeling
   Labeling refLab(refSeqLen);
   computeLabeling(transcripts,refLab);
+
+  // Load CIGAR string
+  String CIGAR;
+  File cigar(cigarFile);
+  CIGAR=cigar.getline();
+  cigar.close();
 
   // Project the reference labeling over to the alternate sequence
   Labeling altLab(altSeqLen);
@@ -118,7 +124,7 @@ void Application::mapTranscripts(TranscriptList &transcripts,const String &cig,
   for(int i=0 ; i<numExons ; ++i) {
     GffExon &exon=transcript->getIthExon(i);
     int begin=exon.getBegin(), end=exon.getEnd();
-    begin=align[begin]; end=align[end];
+    begin=align[begin]; end=align[end-1]+1;//###
     exon.setBegin(begin); exon.setEnd(end);
   }
   delete &align;
