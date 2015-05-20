@@ -2941,3 +2941,16 @@ gff-change-substrate: \
 		$(OBJ)/gff-change-substrate.o \
 		$(LIBS)
 #---------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/fastas-are-identical.o:\
+		fastas-are-identical.C
+	$(CC) $(CFLAGS) -o $(OBJ)/fastas-are-identical.o -c \
+		fastas-are-identical.C
+#---------------------------------------------------------
+fastas-are-identical: \
+		$(OBJ)/fastas-are-identical.o
+	$(CC) $(LDFLAGS) -o fastas-are-identical \
+		$(OBJ)/fastas-are-identical.o \
+		$(LIBS)
+#---------------------------------------------
