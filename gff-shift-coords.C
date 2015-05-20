@@ -5,6 +5,7 @@
  License (GPL) version 3, as described at www.opensource.org.
  ****************************************************************/
 #include <iostream>
+#include <fstream>
 #include "BOOM/String.H"
 #include "BOOM/CommandLine.H"
 #include "BOOM/GffReader.H"
@@ -60,13 +61,17 @@ gff-shift-coords [OPTIONS] <in.gff> -- <delta>\n\
   Vector<GffFeature*> *features=reader.loadFeatures();
 
   // Fix coords
-  
+  for(Vector<GffFeature*>::iterator cur=features->begin(), 
+	end=features->end() ; cur!=end ; ++cur)
+    (*cur)->shiftCoords(delta);
 
   // Output results
+  ofstream os;
+  if(wantReplace) os.open(inGff.c_str());
   for(Vector<GffFeature*>::iterator cur=features->begin(), 
 	end=features->end() ; cur!=end ; ++cur) {
     String gff=(*cur)->toGff();
-    cout<<gff;
+    (wantReplace ? os : cout) << gff;
     delete *cur;
   }
   delete features;
