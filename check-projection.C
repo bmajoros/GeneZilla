@@ -92,7 +92,7 @@ int Application::main(int argc,char *argv[])
   if(altProtein.contains("*")) cout<<"premature stop detected"<<endl;
 
   // Check length is divisible by 3
-  if(altProtein.length()%3) cout<<"non-integral number of codons"<<endl;
+  if(altDNA.length()%3) cout<<"non-integral number of codons"<<endl;
   
   // Check for start codon
   if(altProtein.length()<1 || altProtein[0]!='M') cout<<"No start codon"<<endl;
