@@ -53,8 +53,11 @@ int Application::main(int argc,char *argv[])
 
   // Load GFF file
   GffReader reader(gffFilename);
-  ofstream os(gffFilename.c_str());
   Vector<GffFeature*> *features=reader.loadFeatures();
+  reader.close();
+
+  // Modify substrates and save back to same file
+  ofstream os(gffFilename.c_str());
   for(Vector<GffFeature*>::iterator cur=features->begin(), end=
 	features->end() ; cur!=end ; ++cur) {
     GffFeature *feature=*cur;
