@@ -16,8 +16,10 @@ using namespace BOOM;
 
 class Application {
   bool wantLongest;
+  bool needToFixStop;
   void emitLongest(const GffGene &,ostream &);
   void emitAll(const GffGene &,ostream &);
+  void fixStopCodons(GffGene &);
 public:
   Application();
   int main(int argc,char *argv[]);
@@ -50,14 +52,16 @@ Application::Application()
 int Application::main(int argc,char *argv[])
 {
   // Process command line
-  CommandLine cmd(argc,argv,"l");
+  CommandLine cmd(argc,argv,"ls");
   if(cmd.numArgs()!=2)
     throw String("\nsplit-gff-by-gene [options] <in.gff> <out-dir>\n\
-      -l = longest transcript only\n\
+      -l = [L]ongest transcript only\n\
+      -s = fix coordinates to include [S]top codon\n\
 ");
   const String inGff=cmd.arg(0);
   const String outDir=cmd.arg(1);
   wantLongest=cmd.option('l');
+  needToFixStop=cmd.option('s');
 
   // Load GFF file
   Vector<GffGene> &genes=*GffReader::loadGenes(inGff);
@@ -67,6 +71,7 @@ int Application::main(int argc,char *argv[])
   for(Vector<GffGene>::iterator cur=genes.begin(), end=genes.end() ;
       cur!=end ; ++cur) {
     GffGene &gene=*cur;
+    if(needToFixStop) fixStopCodons(gene);
     const String &id=gene.getID();
     const String outfile=outDir+'/'+id+".gff";
     ofstream os(outfile.c_str());
@@ -103,5 +108,15 @@ void Application::emitAll(const GffGene &gene,ostream &os)
   }
 }
 
+
+
+void Application::fixStopCodons(GffGene &gene)
+{
+  const int n=gene.numTranscripts();
+  for(int i=0 ; i<n ; ++i) {
+    GffTranscript &trans=gene.getIthTranscript(i);
+    trans.extendFinalExonBy3();
+  }
+}
 
 
