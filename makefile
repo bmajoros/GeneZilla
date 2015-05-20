@@ -2928,3 +2928,16 @@ fasta-get-id: \
 		$(OBJ)/fasta-get-id.o \
 		$(LIBS)
 #---------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/gff-change-substrate.o:\
+		gff-change-substrate.C
+	$(CC) $(CFLAGS) -o $(OBJ)/gff-change-substrate.o -c \
+		gff-change-substrate.C
+#---------------------------------------------------------
+gff-change-substrate: \
+		$(OBJ)/gff-change-substrate.o
+	$(CC) $(LDFLAGS) -o gff-change-substrate \
+		$(OBJ)/gff-change-substrate.o \
+		$(LIBS)
+#---------------------------------------------
