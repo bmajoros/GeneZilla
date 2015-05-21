@@ -5,6 +5,7 @@
  License (GPL) version 3, as described at www.opensource.org.
  ****************************************************************/
 #include <iostream>
+#include <math.h>
 #include "BOOM/String.H"
 #include "BOOM/CommandLine.H"
 #include "BOOM/GCF.H"
@@ -30,6 +31,7 @@ protected:
   void recode(int indivID,const GcfIndividual &,int whichChrom,int whichGene);
   void computeMI();
   void getHapFreqs(int whichGene);
+  float entropy(int whichGene);
 };
 
 
@@ -125,10 +127,50 @@ void Application::computeMI()
   getHapFreqs(0); getHapFreqs(1);
 
   // Iterate over all combinations of haps from two genes
-
+  const int numHaps1=haplotypes[0].size(), numHaps2=haplotypes[1].size();
+  Map<String,int> comboCounts;
+  const int numIndiv=individuals.size();
+  for(int i=0 ; i<numIndiv ; ++i) {
+    const Individual &indiv=individuals[i];
+    const int chrom1_gene1=indiv.hap[0][0], chrom1_gene2=indiv.hap[0][1];
+    const int chrom2_gene1=indiv.hap[1][0], chrom2_gene2=indiv.hap[1][1];
+    const String combo1=String(chrom1_gene1)+" "+chrom1_gene2;
+    const String combo2=String(chrom2_gene1)+" "+chrom2_gene2;
+    if(!comboCounts.isDefined(combo1)) comboCounts[combo1]=0;
+    if(!comboCounts.isDefined(combo2)) comboCounts[combo2]=0;
+    ++comboCounts[combo1]; ++comboCounts[combo2];
+  }
+  Set<String> combinations;
+  comboCounts.getKeys(combinations);
+  float MI=0;
+  for(Set<String>::iterator cur=combinations.begin(), end=combinations.end() ;
+      cur!=end ; ++cur) {
+    const String &combo=*cur;
+    Vector<String> fields; combo.getFields(fields); if(fields.size()!=2) INTERNAL_ERROR;
+    const int hap1=fields[0].asInt(), hap2=fields[1].asInt();
+    const float pAB=comboCounts[combo]/float(numIndiv*2);
+    const float pA=hapFreqs[0][hap1], pB=hapFreqs[1][hap2];
+    MI+=pAB*log2(pAB/(pA*pB));
+  }
+  cout<<"un-normalized: "<<MI<<endl;
 
   // Normalize by sqrt of product of entropies
+  const float H1=entropy(0), H2=entropy(1);
+  MI/=sqrt(H1*H2);
+  cout<<"normalized: "<<MI<<endl;
+}
 
+
+
+float Application::entropy(int whichGene)
+{
+  const int n=hapFreqs[whichGene].size();
+  float H=0;
+  for(int i=0 ; i<n ; ++i) {
+    const float P=hapFreqs[whichGene][i];
+    H-=P*log2(P);
+  }
+  return H;
 }
 
 
@@ -146,7 +188,5 @@ void Application::getHapFreqs(int whichGene)
   }
   const int denom=numIndiv*2;
   for(int i=0 ; i<numHaps ; ++i) hapFreqs[whichGene][i]/=denom;
-  for(int i=0 ; i<numHaps ; ++i) cout<<hapFreqs[whichGene][i]<<endl;
-
 }
 
