@@ -42,6 +42,7 @@ protected:
   Map<String,Vector<Region> > regions;
   Vector<Individual> individuals;
   Vector<Variant> variants;
+  bool wantFilter;
   bool prependChr;
   bool SNPsOnly;
   void loadRegions(const String &filename);
@@ -91,7 +92,7 @@ int Application::main(int argc,char *argv[])
 ");
   const String infile=cmd.arg(0);
   const String outfile=cmd.arg(1);
-  bool wantFilter=cmd.option('f');
+  wantFilter=cmd.option('f');
   prependChr=cmd.option('c');
   SNPsOnly=cmd.option('s');
 
@@ -169,7 +170,7 @@ void Application::parseVariant(const Vector<String> &fields)
   const String chr=fields[0];
   if(prependChr) chr=String("chr")+chr;
   const int pos=fields[1].asInt()-1; // VCF files are 1-based
-  if(!keep(chr,pos)) return;
+  if(wantFilter && !keep(chr,pos)) return;
   const String id=fields[2];
   if(id==".") id=chr+"@"+pos;
   const String ref=fields[3];
