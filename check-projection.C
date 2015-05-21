@@ -19,65 +19,63 @@ public:
   Application();
   int main(int argc,char *argv[]);
 private:
+  Set<String> nonCanonicalGTs, nonCanonicalAGs;
   GffTranscript *loadGff(const String &filename);
-  void checkSpliceSites(GffTranscript &,const String &substrate);
-  void checkDonor(GffExon &,const String &substrate);
-  void checkAcceptor(GffExon &,const String &substrate);
+  void parseNoncanonicals(const String &,Set<String> &);
+  void checkSpliceSites(GffTranscript &refTrans,const String &refSubstrate,
+			GffTranscript &altTrans,const String &altSubstrate);
+  void checkDonor(GffExon &refExon,const String &refSubstrate,
+		  GffExon &altExon,const String &altSubstrate);
+  void checkAcceptor(GffExon &refExon,const String &refSubstrate,
+		     GffExon &altExon,const String &altSubstrate);
+  String getDonor(GffExon &,const String &substrate,int &pos);
+  String getAcceptor(GffExon &,const String &substrate,int &pos);
 };
 
 
-int main(int argc,char *argv[])
-  {
-    try
-      {
-	Application app;
-	return app.main(argc,argv);
-      }
-    catch(const char *p)
-      {
-	cerr << p << endl;
-      }
-    catch(const string &msg)
-      {
-	cerr << msg.c_str() << endl;
-      }
-    catch(const exception &e)
-      {
-	cerr << "STL exception caught in main:\n" << e.what() << endl;
-      }
-    catch(...)
-      {
-	cerr << "Unknown exception caught in main" << endl;
-      }
-    return -1;
-  }
+int main(int argc,char *argv[]) {
+  try {
+    Application app;
+    return app.main(argc,argv); }
+  catch(const char *p) { cerr << p << endl; }
+  catch(const string &msg) { cerr << msg.c_str() << endl; }
+  catch(const exception &e) 
+    {cerr << "STL exception caught in main:\n" << e.what() << endl;}
+  catch(...)
+    {cerr << "Unknown exception caught in main" << endl;}
+  return -1;
+}
 
 
 
 Application::Application()
-  {
-    // ctor
-  }
+{
+  // ctor
+}
 
 
 
 int Application::main(int argc,char *argv[])
 {
   // Process command line
-  CommandLine cmd(argc,argv,"");
+  CommandLine cmd(argc,argv,"d:a:");
   if(cmd.numArgs()!=4)
-    throw String("check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff>");
+    throw String("\n\
+check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff>\n\
+     -d donors = allow noncanonical donors; comma-separated list (capital letters)\n\
+     -a acceptors = allow noncanonical acceptors; comma-separated list (capital letters)\n\
+");
   const String refFasta=cmd.arg(0);
   const String refGff=cmd.arg(1);
   const String altFasta=cmd.arg(2);
   const String altGff=cmd.arg(3);
+  if(cmd.option('d')) parseNoncanonicals(cmd.optParm('d'),nonCanonicalGTs);
+  if(cmd.option('a')) parseNoncanonicals(cmd.optParm('a'),nonCanonicalAGs);
 
-  // Load fastas
+  // Load input files
   String def, refSubstrate, altSubstrate;
   FastaReader::load(refFasta,def,refSubstrate);
   FastaReader::load(altFasta,def,altSubstrate);
-
-  // Load GFF
   GffTranscript *refTrans=loadGff(refGff), *altTrans=loadGff(altGff);
 
   // Translate to proteins
@@ -86,7 +84,7 @@ int Application::main(int argc,char *argv[])
   const String altDNA=altTrans->getSequence();
   const String refProtein=ProteinTrans::translate(refDNA);
   const String altProtein=ProteinTrans::translate(altDNA);
-  if(refProtein==altProtein) cout<<"proteins differ"<<endl;
+  if(refProtein!=altProtein) cout<<"proteins differ"<<endl;
 
   // Check for stop codons
   if(altProtein.contains("*")) cout<<"premature stop detected"<<endl;
@@ -98,57 +96,92 @@ int Application::main(int argc,char *argv[])
   if(altProtein.length()<1 || altProtein[0]!='M') cout<<"No start codon"<<endl;
 
   // Check splice sites
-  checkSpliceSites(*altTrans,altSubstrate);
+  checkSpliceSites(*refTrans,refSubstrate,*altTrans,altSubstrate);
 
   return 0;
 }
 
 
 
-void Application::checkSpliceSites(GffTranscript &transcript,
-				   const String &substrate)
+void Application::checkSpliceSites(GffTranscript &refTranscript,
+				   const String &refSubstrate,
+				   GffTranscript &altTranscript,
+				   const String &altSubstrate)
 {
-  int numExons=transcript.getNumExons();
+  int numExons=refTranscript.getNumExons();
+  if(altTranscript.getNumExons()!=numExons)
+    throw "projected transcript has different number of exons";
   for(int i=0 ; i<numExons ; ++i) {
-    GffExon &exon=transcript.getIthExon(i);
-    if(exon.hasDonor()) checkDonor(exon,substrate);
-    if(exon.hasAcceptor()) checkAcceptor(exon,substrate);
+    GffExon &refExon=refTranscript.getIthExon(i);
+    GffExon &altExon=altTranscript.getIthExon(i);
+    if(refExon.hasDonor()) 
+      checkDonor(refExon,refSubstrate,altExon,altSubstrate);
+    if(refExon.hasAcceptor()) 
+      checkAcceptor(refExon,refSubstrate,altExon,altSubstrate);
   }
 }
 
 
 
-void Application::checkDonor(GffExon &exon,const String &substrate)
+void Application::checkDonor(GffExon &refExon,const String &refSubstrate,
+			     GffExon &altExon,const String &altSubstrate)
+{
+  int pos;
+  const String refDonor=getDonor(refExon,refSubstrate,pos);
+  const String altDonor=getDonor(altExon,altSubstrate,pos);
+  if(altDonor==refDonor) return;
+  if(altDonor=="GT") return;
+  for(Set<String>::const_iterator cur=nonCanonicalGTs.begin(),
+	end=nonCanonicalGTs.end() ; cur!=end ; ++cur)
+    if(altDonor==*cur) return;
+  cout<<"broken donor site: "<<altDonor<<" at "<<pos<<" in alt sequence"<<endl;
+}
+
+
+
+void Application::checkAcceptor(GffExon &refExon,const String &refSubstrate,
+				GffExon &altExon,const String &altSubstrate)
+{
+  int pos;
+  const String refAcceptor=getAcceptor(refExon,refSubstrate,pos);
+  const String altAcceptor=getAcceptor(altExon,altSubstrate,pos);
+  if(altAcceptor==refAcceptor) return;
+  if(altAcceptor=="AG") return;
+  for(Set<String>::const_iterator cur=nonCanonicalAGs.begin(),
+	end=nonCanonicalAGs.end() ; cur!=end ; ++cur)
+    if(altAcceptor==*cur) return;
+  cout<<"broken acceptor site: "<<altAcceptor<<" at "<<pos<<" in alt sequence"<<endl;
+}
+
+
+
+String Application::getDonor(GffExon &exon,const String &substrate,int &pos)
 {
   if(exon.getStrand()=='+') {
     const int end=exon.getEnd();
-    if(end>substrate.length()-2) return;
-    String GT=substrate.substring(end,2);
-    if(GT!="GT") cout<<"noncanonical donor site "<<GT<<" at "<<end<<endl;
+    if(end>substrate.length()-2) return "";
+    return substrate.substring(pos=end,2);
   }
   else {
     const int begin=exon.getBegin();
-    if(begin<2) return;
-    String GT=ProteinTrans::reverseComplement(substrate.substring(begin-2,2));
-    if(GT!="GT") cout<<"noncanonical donor site "<<GT<<" at "<<begin<<endl;
+    if(begin<2) return "";
+    return ProteinTrans::reverseComplement(substrate.substring(pos=begin-2,2));
   }
 }
 
 
 
-void Application::checkAcceptor(GffExon &exon,const String &substrate)
+String Application::getAcceptor(GffExon &exon,const String &substrate,int &pos)
 {
   if(exon.getStrand()=='+') {
     const int begin=exon.getBegin();
-    if(begin<2) return;
-    String AG=substrate.substring(begin-2,2);
-    if(AG!="AG") cout<<"noncanonical acceptor site "<<AG<<" at "<<begin<<endl;
+    if(begin<2) return "";
+    return substrate.substring(pos=begin-2,2);
   }
   else {
     const int end=exon.getEnd();
-    if(end>substrate.length()-2) return;
-    String AG=ProteinTrans::reverseComplement(substrate.substring(end,2));
-    if(AG!="AG") cout<<"noncanonical acceptor site "<<AG<<" at "<<end<<endl;
+    if(end>substrate.length()-2) return "";
+    return ProteinTrans::reverseComplement(substrate.substring(pos=end,2));
   }
 }
 
@@ -166,6 +199,16 @@ GffTranscript *Application::loadGff(const String &filename)
   return transcript;
 }
 
+
+
+void Application::parseNoncanonicals(const String &str,Set<String> &into)
+{
+  Vector<String> &fields=*str.getFields(",");
+  for(Vector<String>::const_iterator cur=fields.begin(), end=fields.end() ;
+      cur!=end ; ++cur)
+    into.insert(*cur);
+  delete &fields;
+}
 
 
 
