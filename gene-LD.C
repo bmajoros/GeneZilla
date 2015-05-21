@@ -15,6 +15,10 @@ class Application {
 public:
   Application();
   int main(int argc,char *argv[]);
+  void recode(GCF &,int whichGene);
+projected:
+  Map<String,int> haploMap[2]; // for two genes
+  Vector<String> haplotypes[2]; // for two genes
 };
 
 
@@ -55,6 +59,21 @@ int Application::main(int argc,char *argv[])
   const int numIndiv=gcf1.numIndividuals();
   if(gcf2.numIndividuals()!=numIndiv) throw "files have different numbers of individuals";
 
+  // Re-code the haplotypes as integers (separately for each gene)
+  recode(gcf1,0); recode(gcf2,1);
+
+  // Compute mutual information
+
+
   return 0;
 }
+
+
+
+void Application::recode(GCF &gcf,int whichGene)
+{
+  const int numIndiv=gcf.numIndividuals();
+  
+}
+
 

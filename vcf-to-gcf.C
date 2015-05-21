@@ -45,6 +45,7 @@ protected:
   bool wantFilter;
   bool prependChr;
   bool SNPsOnly;
+  bool variableOnly;
   void loadRegions(const String &filename);
   void convert(File &infile,File &outfile);
   void parseChromLine(const Vector<String> &);
@@ -82,16 +83,18 @@ Application::Application()
 int Application::main(int argc,char *argv[])
 {
   // Process command line
-  CommandLine cmd(argc,argv,"cf:s");
+  CommandLine cmd(argc,argv,"cf:sv");
   if(cmd.numArgs()!=2)
     throw String("\nvcf-to-gcf [options] <in.vcf> <out.gcf>\n\
    -f regions.bed : keep only variants in these regions\n\
         (coordinates are 0-based, end is not inclusive)\n\
    -c : prepend \"chr\" before chromosome names\n\
    -s : SNPs only\n\
+   -v : variable sites only\n\
 ");
   const String infile=cmd.arg(0);
   const String outfile=cmd.arg(1);
+  variableOnly=cmd.option('v');
   wantFilter=cmd.option('f');
   prependChr=cmd.option('c');
   SNPsOnly=cmd.option('s');
@@ -178,6 +181,16 @@ void Application::parseVariant(const Vector<String> &fields)
   if(SNPsOnly && (ref.size()!=1 || alt.size()!=1)) return;
   variants.push_back(Variant(chr,pos,ref,alt,id));
   const int numIndiv=fields.size()-9;
+  if(variableOnly) {
+    bool seenZero=false, seenOne=false;
+    for(int i=9 ; i<fields.size() ; ++i) {
+      const String &field=fields[i];
+      if(field.length()!=3) throw String("Bad field in VCF: ")+field;
+      if(field[0]=='0' || field[3]=='0') seenZero=true;
+      if(field[0]=='1' || field[3]=='1') seenOne=true;
+    }
+    if(!seenZero || !seenOne) return;
+  }
   int gt[2];
   for(int i=0 ; i<numIndiv ; ++i) {
     parseGenotype(fields[i+9],gt);
