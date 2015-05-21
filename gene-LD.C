@@ -24,8 +24,12 @@ public:
 protected:
   Map<String,int> haploMap[2]; // for two genes
   Vector<String> haplotypes[2]; // for two genes
+  Array1D<float> hapFreqs[2]; // for two genes
   Array1D<Individual> individuals;
   String genotypeToString(const Array1D<int> &genotype);
+  void recode(int indivID,const GcfIndividual &,int whichChrom,int whichGene);
+  void computeMI();
+  void getHapFreqs(int whichGene);
 };
 
 
@@ -71,7 +75,7 @@ int Application::main(int argc,char *argv[])
   recode(gcf1,0); recode(gcf2,1);
 
   // Compute mutual information
-
+  computeMI();
 
   return 0;
 }
@@ -83,23 +87,24 @@ void Application::recode(GCF &gcf,int whichGene)
   const int numIndiv=gcf.numIndividuals();
   for(int i=0 ; i<numIndiv ; ++i) {
     const GcfIndividual &indiv=gcf.getIthIndividual(i);
-    recode(indiv.chrom[0],whichGene);
-    recode(indiv.chrom[1],whichGene);
+    recode(i,indiv,0,whichGene);
+    recode(i,indiv,1,whichGene);
   }
 }
 
 
 
-void Application::recode(const Array1D<int> &chrom,int whichGene)
+void Application::recode(int indivID,const GcfIndividual &indiv,int whichChrom,
+			 int whichGene)
 {
-  String s=genotypeToString(indiv.chrom[0]);
+  String s=genotypeToString(indiv.chrom[whichChrom]);
   int hapID;
   if(!haploMap[whichGene].isDefined(s)) {
     hapID=haploMap[whichGene][s]=haplotypes[whichGene].size();
     haplotypes[whichGene].push_back(s);
   }
   else hapID=haploMap[whichGene][s];
-  
+  individuals[indivID].hap[whichChrom][whichGene]=hapID;
 }
 
 
@@ -112,4 +117,36 @@ String Application::genotypeToString(const Array1D<int> &gt)
   return str;
 }
 
+
+
+void Application::computeMI()
+{
+  // Tabulate counts of invidividual haplotypes in each gene
+  getHapFreqs(0); getHapFreqs(1);
+
+  // Iterate over all combinations of haps from two genes
+
+
+  // Normalize by sqrt of product of entropies
+
+}
+
+
+
+void Application::getHapFreqs(int whichGene)
+{
+  const int numHaps=haplotypes[whichGene].size();
+  hapFreqs[whichGene].resize(numHaps);
+  hapFreqs[whichGene].setAllTo(0.0);
+  const int numIndiv=individuals.size();
+  for(int i=0 ; i<numIndiv ; ++i) {
+    const Individual &indiv=individuals[i];
+    ++hapFreqs[whichGene][indiv.hap[0][whichGene]]; // chrom 1
+    ++hapFreqs[whichGene][indiv.hap[1][whichGene]]; // chrom 2
+  }
+  const int denom=numIndiv*2;
+  for(int i=0 ; i<numHaps ; ++i) hapFreqs[whichGene][i]/=denom;
+  for(int i=0 ; i<numHaps ; ++i) cout<<hapFreqs[whichGene][i]<<endl;
+
+}
 

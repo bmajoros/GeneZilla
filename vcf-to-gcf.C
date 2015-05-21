@@ -154,8 +154,6 @@ void Application::convert(File &infile,File &outfile)
 void Application::parseChromLine(const Vector<String> &fields)
 {
   // #CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  200848168@1097100704
-  // The FORMAT column may or may not be present
-
   const int numFields=fields.size();
   if(numFields<10 || fields[8]!="FORMAT") 
     throw "Error parsing #CHROM line in VCF file";
@@ -169,6 +167,16 @@ void Application::parseChromLine(const Vector<String> &fields)
 
 void Application::parseVariant(const Vector<String> &fields)
 {
+  if(variableOnly) {
+    bool seenZero=false, seenOne=false;
+    for(int i=9 ; i<fields.size() ; ++i) {
+      const String &field=fields[i];
+      if(field.length()!=3) throw String("Bad field in VCF: ")+field;
+      if(field[0]=='0' || field[3]=='0') seenZero=true;
+      if(field[0]=='1' || field[3]=='1') seenOne=true;
+    }
+    if(!seenZero || !seenOne) return;
+  }
   if(fields.size()<10 || fields[6]!="PASS" || fields[8]!="GT") return;
   const String chr=fields[0];
   if(prependChr) chr=String("chr")+chr;
@@ -181,16 +189,6 @@ void Application::parseVariant(const Vector<String> &fields)
   if(SNPsOnly && (ref.size()!=1 || alt.size()!=1)) return;
   variants.push_back(Variant(chr,pos,ref,alt,id));
   const int numIndiv=fields.size()-9;
-  if(variableOnly) {
-    bool seenZero=false, seenOne=false;
-    for(int i=9 ; i<fields.size() ; ++i) {
-      const String &field=fields[i];
-      if(field.length()!=3) throw String("Bad field in VCF: ")+field;
-      if(field[0]=='0' || field[3]=='0') seenZero=true;
-      if(field[0]=='1' || field[3]=='1') seenOne=true;
-    }
-    if(!seenZero || !seenOne) return;
-  }
   int gt[2];
   for(int i=0 ; i<numIndiv ; ++i) {
     parseGenotype(fields[i+9],gt);
