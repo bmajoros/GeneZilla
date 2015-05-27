@@ -2969,3 +2969,16 @@ gene-LD: \
 		$(OBJ)/gene-LD.o \
 		$(LIBS)
 #---------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/gff-longest-transcript.o:\
+		gff-longest-transcript.C
+	$(CC) $(CFLAGS) -o $(OBJ)/gff-longest-transcript.o -c \
+		gff-longest-transcript.C
+#---------------------------------------------------------
+gff-longest-transcript: \
+		$(OBJ)/gff-longest-transcript.o
+	$(CC) $(LDFLAGS) -o gff-longest-transcript \
+		$(OBJ)/gff-longest-transcript.o \
+		$(LIBS)
+#---------------------------------------------

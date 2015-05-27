@@ -10,6 +10,7 @@
 #include "BOOM/CommandLine.H"
 #include "BOOM/GCF.H"
 #include "BOOM/Map.H"
+#include "BOOM/Constants.H"
 using namespace std;
 using namespace BOOM;
 
@@ -83,6 +84,7 @@ int Application::main(int argc,char *argv[])
   float MI;
   int numHaps1, numHaps2;
   MI=computeMI(numHaps1,numHaps2);
+  if(!isFinite(MI)) MI=0;
 
   // Generate output
   if(!quiet) cout<<"MI\t#variants1\t#variants2\t#haplo1\t#haplo2\t"<<endl;
