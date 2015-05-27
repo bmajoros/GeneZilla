@@ -10,6 +10,7 @@
 #include "BOOM/File.H"
 #include "BOOM/Vector.H"
 #include "BOOM/Map.H"
+#include "BOOM/Regex.H"
 using namespace std;
 using namespace BOOM;
 
@@ -42,6 +43,7 @@ protected:
   Map<String,Vector<Region> > regions;
   Vector<Individual> individuals;
   Vector<Variant> variants;
+  Regex dnaRegex;
   bool wantFilter;
   bool prependChr;
   bool SNPsOnly;
@@ -75,6 +77,7 @@ int main(int argc,char *argv[])
 
 
 Application::Application()
+  : dnaRegex("[^ACGTacgt]")
 {
   // ctor
 }
@@ -189,6 +192,7 @@ void Application::parseVariant(const Vector<String> &fields)
   if(id==".") id=chr+"@"+pos;
   const String ref=fields[3];
   const String alt=fields[4];
+  if(dnaRegex.search(ref) || dnaRegex.search(alt)) return; // nonstandard characters
   if(ref.contains("<") || alt.contains("<")) {
     if(!quiet) cerr<<"skipping "<<id<<" : nonstandard variant"<<endl;
     return;

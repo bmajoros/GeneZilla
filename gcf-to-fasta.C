@@ -216,6 +216,11 @@ void Application::loadRegions(const String &regionsFilename,const String &
     system(cmd.c_str());
     String def, seq;
     FastaReader::load(tempFile,def,seq);
+
+    //###
+    if(seq.contains(",")) throw tempFile+"contains a comma: "+cmd;
+    //###
+    
     regions.push_back(Region(id,chr,strand,begin,end,seq));
   }
   unlink(tempFile.c_str());
