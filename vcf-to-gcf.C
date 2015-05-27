@@ -46,6 +46,7 @@ protected:
   bool prependChr;
   bool SNPsOnly;
   bool variableOnly;
+  bool quiet;
   void loadRegions(const String &filename);
   void convert(File &infile,File &outfile);
   void parseChromLine(const Vector<String> &);
@@ -83,7 +84,7 @@ Application::Application()
 int Application::main(int argc,char *argv[])
 {
   // Process command line
-  CommandLine cmd(argc,argv,"cf:sv");
+  CommandLine cmd(argc,argv,"cf:qsv");
   if(cmd.numArgs()!=2)
     throw String("\nvcf-to-gcf [options] <in.vcf> <out.gcf>\n\
    -f regions.bed : keep only variants in these regions\n\
@@ -91,6 +92,7 @@ int Application::main(int argc,char *argv[])
    -c : prepend \"chr\" before chromosome names\n\
    -s : SNPs only\n\
    -v : variable sites only\n\
+   -q : quiet (no warnings)\n\
 ");
   const String infile=cmd.arg(0);
   const String outfile=cmd.arg(1);
@@ -98,6 +100,7 @@ int Application::main(int argc,char *argv[])
   wantFilter=cmd.option('f');
   prependChr=cmd.option('c');
   SNPsOnly=cmd.option('s');
+  quiet=cmd.option('q');
 
   // Load regions to filter by
   if(wantFilter) loadRegions(cmd.optParm('f'));
@@ -186,6 +189,10 @@ void Application::parseVariant(const Vector<String> &fields)
   if(id==".") id=chr+"@"+pos;
   const String ref=fields[3];
   const String alt=fields[4];
+  if(ref.contains("<") || alt.contains("<")) {
+    if(!quiet) cerr<<"skipping "<<id<<" : nonstandard variant"<<endl;
+    return;
+  }
   if(SNPsOnly && (ref.size()!=1 || alt.size()!=1)) return;
   variants.push_back(Variant(chr,pos,ref,alt,id));
   const int numIndiv=fields.size()-9;
@@ -232,11 +239,13 @@ void Application::output(File &out)
     out.print(v.asString());
     out.print(i+1<numVariants ? "\t" : "\n");
   }
+  if(numVariants==0) out.print("\n");
 
   // Output individual genotypes
   for(Vector<Individual>::const_iterator cur=individuals.begin(), 
 	end=individuals.end() ; cur!=end ; ++cur) {
     const Individual &indiv=*cur;
+    if(numVariants==0) { out.print(indiv.id+"\n"); continue; }
     out.print(indiv.id+"\t");
     const  Vector<int> &var0=indiv.variants[0], &var1=indiv.variants[1];
     const int numVariants=var0.size();

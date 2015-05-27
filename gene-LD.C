@@ -29,7 +29,7 @@ protected:
   Array1D<Individual> individuals;
   String genotypeToString(const Array1D<int> &genotype);
   void recode(int indivID,const GcfIndividual &,int whichChrom,int whichGene);
-  void computeMI();
+  float computeMI(int &numHaps1,int &numHaps2);
   void getHapFreqs(int whichGene);
   float entropy(int whichGene);
 };
@@ -61,14 +61,17 @@ Application::Application()
 int Application::main(int argc,char *argv[])
 {
   // Process command line
-  CommandLine cmd(argc,argv,"");
+  CommandLine cmd(argc,argv,"q");
   if(cmd.numArgs()!=2)
-    throw String("gene-LD <gene1.gcf> <gene2.gcf>");
+    throw String("gene-LD <gene1.gcf> <gene2.gcf>\n\
+  -q = quiet (no header)\n");
   const String file1=cmd.arg(0);
   const String file2=cmd.arg(1);
+  const bool quiet=cmd.option('q');
 
   // Load files
   GCF gcf1(file1), gcf2(file2);
+  const int numVar1=gcf1.numVariants(), numVar2=gcf2.numVariants();
   const int numIndiv=gcf1.numIndividuals();
   if(gcf2.numIndividuals()!=numIndiv) throw "files have different numbers of individuals";
   individuals.resize(numIndiv);
@@ -77,7 +80,13 @@ int Application::main(int argc,char *argv[])
   recode(gcf1,0); recode(gcf2,1);
 
   // Compute mutual information
-  computeMI();
+  float MI;
+  int numHaps1, numHaps2;
+  MI=computeMI(numHaps1,numHaps2);
+
+  // Generate output
+  if(!quiet) cout<<"MI\t#variants1\t#variants2\t#haplo1\t#haplo2\t"<<endl;
+  cout<<MI<<"\t"<<numVar1<<"\t"<<numVar2<<"\t"<<numHaps1<<"\t"<<numHaps2<<"\t"<<endl;
 
   return 0;
 }
@@ -121,13 +130,13 @@ String Application::genotypeToString(const Array1D<int> &gt)
 
 
 
-void Application::computeMI()
+float Application::computeMI(int &numHaps1,int &numHaps2)
 {
   // Tabulate counts of invidividual haplotypes in each gene
   getHapFreqs(0); getHapFreqs(1);
 
   // Iterate over all combinations of haps from two genes
-  const int numHaps1=haplotypes[0].size(), numHaps2=haplotypes[1].size();
+  numHaps1=haplotypes[0].size(); numHaps2=haplotypes[1].size();
   Map<String,int> comboCounts;
   const int numIndiv=individuals.size();
   for(int i=0 ; i<numIndiv ; ++i) {
@@ -152,12 +161,11 @@ void Application::computeMI()
     const float pA=hapFreqs[0][hap1], pB=hapFreqs[1][hap2];
     MI+=pAB*log2(pAB/(pA*pB));
   }
-  cout<<"un-normalized: "<<MI<<endl;
 
   // Normalize by sqrt of product of entropies
   const float H1=entropy(0), H2=entropy(1);
   MI/=sqrt(H1*H2);
-  cout<<"normalized: "<<MI<<endl;
+  return MI;
 }
 
 
