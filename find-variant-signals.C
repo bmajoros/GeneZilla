@@ -9,10 +9,11 @@
 #include "EdgeFactory.H"
 #include "BOOM/FastaReader.H"
 #include "BOOM/Constants.H"
+#include "BOOM/CigarString.H"
 using namespace std;
 
 #ifdef EXPLICIT_GRAPHS
-//#error Please edit the file genezilla.H, comment out the definition of EXPLICIT_GRAPHS, issue a "make clean", and recompile this project
+#error Please edit the file genezilla.H, comment out the definition of EXPLICIT_GRAPHS, issue a "make clean", and recompile this project
 #endif
 
 #ifdef FORCE_SPECIFIC_SIGNALS
@@ -45,10 +46,13 @@ class Application {
 public:
   void AppMain(int argc,char *argv[]);
 protected:
-  void parseVariantLine(const String &line,VariantRegion &);
+  bool parseVariantLine(const String &line,VariantRegion &);
   void applySensor(SignalSensor &,const VariantRegion &,Sequence &refSeq,
 		   Sequence &altSeq,const String &refSeqStr,const String 
-		   &altSeqStr,CigarAlignment &);
+		   &altSeqStr,const CigarAlignment &fw,const CigarAlignment &rev);
+  void mapWindow(int refPos,int windowLen,const CigarAlignment &,Set<int> &into);
+  void emit(SignalPtr,const String &substrate,const String &status);
+  void emitIndels(const CigarAlignment &,const CigarAlignment &revAlign);
 };
 
 
@@ -100,7 +104,8 @@ void Application::AppMain(int argc,char *argv[])
   alphabet=DnaAlphabet::global();
   
   // Load sequences & alignment
-  GeneZilla genezilla(PROGRAM_NAME,VERSION,new EdgeFactory,-1);
+  EdgeFactory factory;
+  GeneZilla genezilla(PROGRAM_NAME,VERSION,factory,-1);
   BOOM::String defline, refSeqStr, altSeqStr;
   FastaReader::load(refFasta,defline,refSeqStr);
   FastaReader::load(altFasta,defline,altSeqStr);
@@ -110,39 +115,42 @@ void Application::AppMain(int argc,char *argv[])
   Isochore *isochore=genezilla.getIsochore(gc);
   CigarString cigar(cigarFile);
   CigarAlignment &alignment=*cigar.getAlignment();
+  CigarAlignment &revAlign=*alignment.invert(altSeqStr.length());
 
   // Iterate through variants
   File variantFile(variantFilename);
   VariantRegion region;
   while(!variantFile.eof()) {
     String line=variantFile.getline();
-    parseVariantLine(line,region);
+    if(!parseVariantLine(line,region)) continue;
 
     // Iterate through signal sensors
     for(Vector<SignalSensor*>::iterator cur=signalSensors.begin(), end=
 	  signalSensors.end() ; cur!=end ; ++cur) {
       SignalSensor *sensor=*cur;
+      if(sensor.getStrand()!=PLUS_STRAND) continue;
       applySensor(*sensor,region,refSeq,altSeq,refSeqStr,altSeqStr,
-		  alignment);
-
-
+		  alignment,revAlign);
     }
   }
 }
 
 
 
-void Application::parseVariantLine(const String &line,VariantRegion &region)
+bool Application::parseVariantLine(const String &line,VariantRegion &region)
 {
   line.trimWhitespace();
   Vector<String> &fields=*line.getFields();
+  bool ok=false;
   if(fields.size()==6) {
     region.refBegin=fields[1].asInt();
     region.refEnd=fields[2].asInt();
     region.altBegin=fields[4].asInt();
     region.altEnd=fields[5].asInt();
+    ok=true;
   }
   delete &fields;
+  return ok;
 }
 
 
@@ -150,38 +158,94 @@ void Application::parseVariantLine(const String &line,VariantRegion &region)
 void Application::applySensor(SignalSensor &sensor,const VariantRegion &region,
 			      Sequence &refSeq,Sequence &altSeq,const String
 			      &refSeqStr,const String &altSeqStr,
-			      CigarAlignment &alignment)
+			      const CigarAlignment &alignment,
+			      const CigarAlignment &revAlign)
 {
   const float threshold=sensor.getCutoff();
   const int windowLen=sensor.getContextWindowLength();
   const int refLen=refSeq.getLength(), altLen=altSeq.getLength();
 
   // Find reference signals missing in the alternate
-  int begin=region.refBegin-windowLen+1;
-  if(begin<0) begin=0;
-  int end=regin.refEnd-1;
-  if(end+windowLen>refLen) end=refLen-windowLen;
-  for(int r=begin ; r<=end ; ++r) {
-    SignalPtr signal=sensor.detect(refSeq,refSeqStr,r);
-    if(signal) {
-      if(containsIndel(signal,alignment)) {
-	// emit: this signal is missing in the alt
-	
-      }
-      else {
-	// run on corresponding alt interval, see if score < threshold
-
+  {
+    const int begin=region.refBegin-windowLen+1;
+    if(begin<0) begin=0;
+    int end=region.refEnd-1;
+    if(end+windowLen>refLen) end=refLen-windowLen;
+    for(int r=begin ; r<=end ; ++r) {
+      SignalPtr signal=sensor.detect(refSeq,refSeqStr,r);
+      if(signal) {
+	Set<int> altPositions;
+	mapWindow(r,windowLen,alignment,altPositions);
+	for(Set<int>::cons_iterator cur=altPositions.begin(), end=
+	      altPositions.end() ; cur!=end ; ++cur) {
+	  const int altPos=*cur;
+	  SignalPtr altSignal=sensor.detect(altSeq,altSeqStr,altPos);
+	  if(!altSignal) emit(signal,"ref","broken");
+	}
       }
     }
   }
 
   // Find alternate signals missing in the reference
+  {
+    const int begin=region.altBegin-windowLen+1;
+    if(begin<0) begin=0;
+    int end=region.altEnd-1;
+    if(end+windowLen>altLen) end=altLen-windowLen;
+    for(int r=begin ; r<=end ; ++r) {
+      SignalPtr signal=sensor.detect(altSeq,altSeqStr,r);
+      if(signal) {
+	Set<int> refPositions;
+	mapWindow(r,windowLen,revAlign,refPositions);
+	for(Set<int>::cons_iterator cur=refPositions.begin(), end=
+	      refPositions.end() ; cur!=end ; ++cur) {
+	  const int refPos=*cur;
+	  SignalPtr refSignal=sensor.detect(refSeq,refSeqStr,refPos);
+	  if(!refSignal) emit(signal,"alt","new");
+	}
+      }
+    }
+  }
+
+  // Report indels
+  emitIndels(alignment,revAlign);
+}
 
 
 
-  // Find indels
+void Application::mapWindow(int refBegin,int windowLen,
+			    const CigarAlignment &alignment,
+			    Set<int> &into)
+{
+  /* In order to account for possible indels in the window, we
+     map each window position separately, then figure out where
+     that would place the beginning of the window.  This gives a
+     set of possible starting positions for the signal window in
+     the alt sequence, accounting for the fact that indels may
+     allow multiple reasonable starting positions */
+  for(int i=0 ; i<windowLen ; ++i) {
+    const int refPos=refBegin+i;
+    const int altPos=alignment[i];
+    const int altBegin=altPos-i;
+    into+=altBegin;
+  }
+}
 
 
+
+void Application::emit(SignalPtr signal,const String &substrate,
+		       const String &status)
+{
+  cout<<substrate<<"\t"<<status<<"\t"<<signalTypeToName(signal.getSignalType())
+      <<"\t"<<signal.getBegin()+1<<"\t"<<signal.getEnd()<<"\t"<<".\t"
+      <<signal.getStrand()<<"0"<<endl;
+}
+
+
+
+void Application::emitIndels(const CigarAlignment &alignment,
+			     const CigarAlignment &revAlign)
+{
 }
 
 
