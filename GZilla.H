@@ -77,7 +77,6 @@ public:
 				      bool dumpGraph,
 				      String psaFilename);
   void loadIsochoreBoundaries(const BOOM::String &);
-  void processIsochoreFile(const BOOM::String &filename,float gcContent);
   void loadCpGislands(const BOOM::String &);
   int mapPhaseBack(int phase,SignalPtr right,SignalPtr left);
   DiscreteDistribution &getDistribution(ContentType);
@@ -166,6 +165,7 @@ protected:
 						 ostream &osGraph,
 						 bool dumpGraph,
 						 String psaFilename);
+  void processIsochoreFile(const BOOM::String &filename,float gcContent);
   void computeIntergenicSums(const Sequence &,const BOOM::String &,
 			     const char *);
   void instantiateLeftTermini();

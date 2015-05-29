@@ -54,8 +54,10 @@ protected:
 		   &altSeqStr,const CigarAlignment &fw,const CigarAlignment &rev);
   void mapWindow(int refPos,int windowLen,const CigarAlignment &,Set<int> &into,
 		 int altLen);
-  void emit(SignalPtr,const String &substrate,const String &status);
+  void emit(SignalPtr,int consensusPosition,const String &substrate,
+	    const String &status);
   void emitIndels(const CigarAlignment &);
+  int mapConsensus(int refPos,const CigarAlignment &);
 };
 
 
@@ -118,9 +120,10 @@ void Application::AppMain(int argc,char *argv[])
   Sequence refSeq(refSeqStr,alphabet);
   Sequence altSeq(altSeqStr,alphabet);
   const float gc=genezilla.getGCcontent(refSeqStr);
-  genezilla.processIsochoreFile(isochoreFilename,gc);
-  Isochore *isochore=genezilla.getIsochore(gc);
-  CigarString cigar(cigarFile);
+  IsochoreTable isochores(genezilla.getGC());
+  isochores.load(isochoreFilename);
+  Isochore *isochore=isochores.getIsochore(gc);
+  CigarString cigar; cigar.load(cigarFile);
   CigarAlignment &alignment=*cigar.getAlignment();
   CigarAlignment &revAlign=*alignment.invert(altSeqStr.length());
 
@@ -140,6 +143,9 @@ void Application::AppMain(int argc,char *argv[])
 		  alignment,revAlign);
     }
   }
+
+  // Report indels
+  emitIndels(revAlign);
 }
 
 
@@ -183,11 +189,16 @@ void Application::applySensor(SignalSensor &sensor,const VariantRegion &region,
       if(signal) {
 	Set<int> altPositions;
 	mapWindow(r,windowLen,alignment,altPositions,altLen);
+	bool found=false;
 	for(Set<int>::const_iterator cur=altPositions.begin(), end=
 	      altPositions.end() ; cur!=end ; ++cur) {
 	  const int altPos=*cur;
 	  SignalPtr altSignal=sensor.detect(altSeq,altSeqStr,altPos);
-	  if(!altSignal) emit(signal,refSubstrate,"broken");
+	  if(altSignal) found=true;
+	}
+	if(!found) {
+	  int altPos=mapConsensus(signal->getConsensusPosition(),alignment);
+	  emit(signal,altPos,altSubstrate,"broken");
 	}
       }
     }
@@ -204,18 +215,17 @@ void Application::applySensor(SignalSensor &sensor,const VariantRegion &region,
       if(signal) {
 	Set<int> refPositions;
 	mapWindow(r,windowLen,revAlign,refPositions,refLen);
+	bool found=false;
 	for(Set<int>::const_iterator cur=refPositions.begin(), end=
 	      refPositions.end() ; cur!=end ; ++cur) {
 	  const int refPos=*cur;
 	  SignalPtr refSignal=sensor.detect(refSeq,refSeqStr,refPos);
-	  if(!refSignal) emit(signal,altSubstrate,"new");
+	  if(refSignal) found=true;
 	}
+	if(!found) emit(signal,signal->getConsensusPosition(),altSubstrate,"new");
       }
     }
   }
-
-  // Report indels
-  emitIndels(revAlign);
 }
 
 
@@ -243,13 +253,12 @@ void Application::mapWindow(int refBegin,int windowLen,
 
 
 
-void Application::emit(SignalPtr signal,const String &substrate,
+void Application::emit(SignalPtr signal,int consPos,const String &substrate,
 		       const String &status)
 {
-  const int consPos=signal->getConsensusPosition();
   cout<<substrate<<"\t"<<status<<"\t"<<signalTypeToName(signal->getSignalType())
       <<"\t"<<consPos+1<<"\t"<<consPos+signal->getConsensusLength()<<"\t"<<".\t"
-      <<signal->getStrand()<<"0"<<endl;
+      <<signal->getStrand()<<"\t0"<<endl;
 }
 
 
@@ -267,17 +276,25 @@ void Application::emitIndels(const CigarAlignment &revAlign)
     }
     else {
       if(inInsertion) {
-	cout<<altSubstrate<<"\tindel\tinsertion\t"<<beginInsertion
-	    <<"\t"<<i<<".\t+\t0"<<endl;
+	cout<<altSubstrate<<"\tindel\tinsertion\t"<<beginInsertion+1
+	    <<"\t"<<i<<"\t.\t+\t0"<<endl;
 	inInsertion=false;
       }
       if(prevRefPos>=0 && refPos-prevRefPos>1)
-	cout<<altSubstrate<<"\tindel\tdeletion\t"<<prevAltPos
-	    <<"\t"<<i<<".\t+\t0"<<endl;
+	cout<<altSubstrate<<"\tindel\tdeletion\t"<<prevAltPos+1
+	    <<"\t"<<i<<"\t.\t+\t0"<<endl;
       prevRefPos=refPos;
       prevAltPos=i;
     }
   }
+}
+
+
+
+int Application::mapConsensus(int refPos,const CigarAlignment &alignment)
+{
+  while(refPos>0 && alignment[refPos]==CIGAR_UNDEFINED) --refPos;
+  return alignment[refPos];
 }
 
 
