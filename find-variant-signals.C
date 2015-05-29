@@ -152,7 +152,7 @@ void Application::applySensor(SignalSensor &sensor,const VariantRegion &region,
 			      &refSeqStr,const String &altSeqStr,
 			      CigarAlignment &alignment)
 {
-  const float refThreshold=refSeq.getCutoff(), altThreshold=altSeq.getCutoff();
+  const float threshold=sensor.getCutoff();
   const int windowLen=sensor.getContextWindowLength();
   const int refLen=refSeq.getLength(), altLen=altSeq.getLength();
 

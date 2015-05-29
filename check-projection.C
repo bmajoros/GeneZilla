@@ -87,7 +87,11 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff>\n\
   if(refProtein!=altProtein) cout<<"proteins differ"<<endl;
 
   // Check for stop codons
-  if(altProtein.contains("*")) cout<<"premature stop detected"<<endl;
+  if(altProtein.lastChar()!='*') cout<<"missing stop codon"<<endl;
+  refProtein.chop(); altProtein.chop();
+  const int firstStop=altProtein.findFirst('*');
+  if(firstStop>=0) 
+    cout<<"premature stop at AA position "<<firstStop<<" in alt protein"<<endl;
 
   // Check length is divisible by 3
   if(altDNA.length()%3) cout<<"non-integral number of codons"<<endl;
