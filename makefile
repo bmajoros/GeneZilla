@@ -2810,8 +2810,6 @@ find-variants: \
 	$(CC) $(LDFLAGS) -o find-variants \
 		$(OBJ)/find-variants.o \
 		$(LIBS)
-#---------------------------------------------
-
 #--------------------------------------------------------
 $(OBJ)/pds.o:\
 		pds.C
@@ -2823,8 +2821,6 @@ pds: \
 	$(CC) $(LDFLAGS) -o pds \
 		$(OBJ)/pds.o \
 		$(LIBS)
-#---------------------------------------------
-
 #--------------------------------------------------------
 $(OBJ)/check-projection.o:\
 		check-projection.C
@@ -2836,8 +2832,6 @@ check-projection: \
 	$(CC) $(LDFLAGS) -o check-projection \
 		$(OBJ)/check-projection.o \
 		$(LIBS)
-#---------------------------------------------
-
 #--------------------------------------------------------
 $(OBJ)/vcf-to-gcf.o:\
 		vcf-to-gcf.C
@@ -2849,8 +2843,6 @@ vcf-to-gcf: \
 	$(CC) $(LDFLAGS) -o vcf-to-gcf \
 		$(OBJ)/vcf-to-gcf.o \
 		$(LIBS)
-#---------------------------------------------
-
 #--------------------------------------------------------
 $(OBJ)/gcf-to-fasta.o:\
 		gcf-to-fasta.C
@@ -2862,8 +2854,6 @@ gcf-to-fasta: \
 	$(CC) $(LDFLAGS) -o gcf-to-fasta \
 		$(OBJ)/gcf-to-fasta.o \
 		$(LIBS)
-#---------------------------------------------
-
 #--------------------------------------------------------
 $(OBJ)/split-fasta-by-tag.o:\
 		split-fasta-by-tag.C
@@ -2875,8 +2865,6 @@ split-fasta-by-tag: \
 	$(CC) $(LDFLAGS) -o split-fasta-by-tag \
 		$(OBJ)/split-fasta-by-tag.o \
 		$(LIBS)
-#---------------------------------------------
-
 #--------------------------------------------------------
 $(OBJ)/split-gff-by-gene.o:\
 		split-gff-by-gene.C
@@ -2888,8 +2876,6 @@ split-gff-by-gene: \
 	$(CC) $(LDFLAGS) -o split-gff-by-gene \
 		$(OBJ)/split-gff-by-gene.o \
 		$(LIBS)
-#---------------------------------------------
-
 #--------------------------------------------------------
 $(OBJ)/gff-fix-chrom-names.o:\
 		gff-fix-chrom-names.C
@@ -2901,8 +2887,6 @@ gff-fix-chrom-names: \
 	$(CC) $(LDFLAGS) -o gff-fix-chrom-names \
 		$(OBJ)/gff-fix-chrom-names.o \
 		$(LIBS)
-#---------------------------------------------
-
 #--------------------------------------------------------
 $(OBJ)/gff-shift-coords.o:\
 		gff-shift-coords.C
@@ -2914,8 +2898,6 @@ gff-shift-coords: \
 	$(CC) $(LDFLAGS) -o gff-shift-coords \
 		$(OBJ)/gff-shift-coords.o \
 		$(LIBS)
-#---------------------------------------------
-
 #--------------------------------------------------------
 $(OBJ)/fasta-get-id.o:\
 		fasta-get-id.C
@@ -2927,8 +2909,6 @@ fasta-get-id: \
 	$(CC) $(LDFLAGS) -o fasta-get-id \
 		$(OBJ)/fasta-get-id.o \
 		$(LIBS)
-#---------------------------------------------
-
 #--------------------------------------------------------
 $(OBJ)/gff-change-substrate.o:\
 		gff-change-substrate.C
@@ -2940,8 +2920,6 @@ gff-change-substrate: \
 	$(CC) $(LDFLAGS) -o gff-change-substrate \
 		$(OBJ)/gff-change-substrate.o \
 		$(LIBS)
-#---------------------------------------------
-
 #--------------------------------------------------------
 $(OBJ)/fastas-are-identical.o:\
 		fastas-are-identical.C
@@ -2953,10 +2931,6 @@ fastas-are-identical: \
 	$(CC) $(LDFLAGS) -o fastas-are-identical \
 		$(OBJ)/fastas-are-identical.o \
 		$(LIBS)
-#---------------------------------------------
-
-
-
 #--------------------------------------------------------
 $(OBJ)/gene-LD.o:\
 		gene-LD.C
@@ -2968,8 +2942,6 @@ gene-LD: \
 	$(CC) $(LDFLAGS) -o gene-LD \
 		$(OBJ)/gene-LD.o \
 		$(LIBS)
-#---------------------------------------------
-
 #--------------------------------------------------------
 $(OBJ)/gff-longest-transcript.o:\
 		gff-longest-transcript.C
@@ -2981,4 +2953,113 @@ gff-longest-transcript: \
 	$(CC) $(LDFLAGS) -o gff-longest-transcript \
 		$(OBJ)/gff-longest-transcript.o \
 		$(LIBS)
-#---------------------------------------------
+#---------------------------------------------------------
+find-variant-signals: \
+		$(OBJ)/EvidenceFilter.o \
+		$(OBJ)/RnaJunction.o \
+		$(OBJ)/RnaJunctions.o \
+		$(OBJ)/ParseGraph.o \
+		$(OBJ)/GffPathFromParseGraph.o \
+		$(OBJ)/SignalComparator.o \
+		$(OBJ)/NthOrderStringIterator.o \
+		$(OBJ)/TrainingSequence.o \
+		$(OBJ)/SignalPeptideSensor.o \
+		$(OBJ)/CodonTree.o \
+		$(OBJ)/Isochore.o \
+		$(OBJ)/IsochoreTable.o \
+		$(OBJ)/find-variant-signals.o \
+		$(OBJ)/BranchAcceptor.o \
+		$(OBJ)/ThreePeriodicIMM.o \
+		$(OBJ)/IMM.o \
+		$(OBJ)/EdgeFactory.o \
+		$(OBJ)/MddTree.o \
+		$(OBJ)/Partition.o \
+		$(OBJ)/TreeNode.o \
+		$(OBJ)/GarbageCollector.o \
+		$(OBJ)/Edge.o \
+		$(OBJ)/TopologyLoader.o \
+		$(OBJ)/WAM.o \
+		$(OBJ)/WWAM.o \
+		$(OBJ)/TataCapModel.o \
+		$(OBJ)/TataCapSignal.o \
+		$(OBJ)/MarkovChainCompiler.o \
+		$(OBJ)/Fast3PMC.o \
+		$(OBJ)/FastMarkovChain.o \
+		$(OBJ)/ThreePeriodicMarkovChain.o \
+		$(OBJ)/DiscreteDistribution.o \
+		$(OBJ)/Transitions.o \
+		$(OBJ)/EmpiricalDistribution.o \
+		$(OBJ)/GeometricDistribution.o \
+		$(OBJ)/NoncodingQueue.o \
+		$(OBJ)/IntronQueue.o \
+		$(OBJ)/SignalType.o \
+		$(OBJ)/ContentType.o \
+		$(OBJ)/ModelBuilder.o \
+		$(OBJ)/ScoreAnalyzer.o \
+		$(OBJ)/ContentSensor.o \
+		$(OBJ)/MarkovChain.o \
+		$(OBJ)/WMM.o \
+		$(OBJ)/SignalQueue.o \
+		$(OBJ)/SignalSensor.o \
+		$(OBJ)/Propagator.o \
+		$(OBJ)/Signal.o \
+		$(OBJ)/SignalTypeProperties.o \
+		$(OBJ)/GZilla.o
+	$(CC) $(LDFLAGS) -o find-variant-signals \
+		$(OBJ)/EvidenceFilter.o \
+		$(OBJ)/RnaJunction.o \
+		$(OBJ)/RnaJunctions.o \
+		$(OBJ)/ParseGraph.o \
+		$(OBJ)/GffPathFromParseGraph.o \
+		$(OBJ)/SignalComparator.o \
+		$(OBJ)/NthOrderStringIterator.o \
+		$(OBJ)/TrainingSequence.o \
+		$(OBJ)/SignalPeptideSensor.o \
+		$(OBJ)/CodonTree.o \
+		$(OBJ)/Isochore.o \
+		$(OBJ)/IsochoreTable.o \
+		$(OBJ)/find-variant-signals.o \
+		$(OBJ)/BranchAcceptor.o \
+		$(OBJ)/ThreePeriodicIMM.o \
+		$(OBJ)/IMM.o \
+		$(OBJ)/EdgeFactory.o \
+		$(OBJ)/MddTree.o \
+		$(OBJ)/Partition.o \
+		$(OBJ)/TreeNode.o \
+		$(OBJ)/GarbageCollector.o \
+		$(OBJ)/Edge.o \
+		$(OBJ)/TopologyLoader.o \
+		$(OBJ)/WAM.o \
+		$(OBJ)/WWAM.o \
+		$(OBJ)/TataCapModel.o \
+		$(OBJ)/TataCapSignal.o \
+		$(OBJ)/MarkovChainCompiler.o \
+		$(OBJ)/Fast3PMC.o \
+		$(OBJ)/FastMarkovChain.o \
+		$(OBJ)/ThreePeriodicMarkovChain.o \
+		$(OBJ)/DiscreteDistribution.o \
+		$(OBJ)/Transitions.o \
+		$(OBJ)/EmpiricalDistribution.o \
+		$(OBJ)/GeometricDistribution.o \
+		$(OBJ)/NoncodingQueue.o \
+		$(OBJ)/IntronQueue.o \
+		$(OBJ)/SignalType.o \
+		$(OBJ)/ContentType.o \
+		$(OBJ)/ModelBuilder.o \
+		$(OBJ)/ScoreAnalyzer.o \
+		$(OBJ)/ContentSensor.o \
+		$(OBJ)/MarkovChain.o \
+		$(OBJ)/WMM.o \
+		$(OBJ)/SignalQueue.o \
+		$(OBJ)/SignalSensor.o \
+		$(OBJ)/Propagator.o \
+		$(OBJ)/Signal.o \
+		$(OBJ)/SignalTypeProperties.o \
+		$(OBJ)/GZilla.o \
+		$(LIBDIRS) $(LIBS)
+#--------------------------------------------------------
+$(OBJ)/find-variant-signals.o:\
+		find-variant-signals.C
+	$(CC) $(CFLAGS) -o $(OBJ)/find-variant-signals.o -c \
+		find-variant-signals.C
+#---------------------------------------------------------

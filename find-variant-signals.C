@@ -35,6 +35,7 @@ struct VariantRegion {
   int altBegin, altEnd; // zero-based, end is not inclusive
   VariantRegion(int refBegin,int refEnd,int altBegin,int altEnd)
     : refBegin(refBegin), refEnd(refEnd), altBegin(altBegin), altEnd(altEnd){}
+  VariantRegion(){}
 };
 
 
@@ -107,7 +108,8 @@ void Application::AppMain(int argc,char *argv[])
   
   // Load sequences & alignment
   EdgeFactory factory;
-  GeneZilla genezilla(PROGRAM_NAME,VERSION,factory,-1);
+  int transcriptId=-1;
+  GeneZilla genezilla(PROGRAM_NAME,VERSION,factory,transcriptId);
   BOOM::String defline, refSeqStr, altSeqStr, junk;
   FastaReader::load(refFasta,defline,refSeqStr);
   FastaReader::parseDefline(defline,refSubstrate,junk);
@@ -115,7 +117,8 @@ void Application::AppMain(int argc,char *argv[])
   FastaReader::parseDefline(defline,altSubstrate,junk);
   Sequence refSeq(refSeqStr,alphabet);
   Sequence altSeq(altSeqStr,alphabet);
-  const float gc=genezilla.getGCcontent(seqString);
+  const float gc=genezilla.getGCcontent(refSeqStr);
+  genezilla.processIsochoreFile(isochoreFilename,gc);
   Isochore *isochore=genezilla.getIsochore(gc);
   CigarString cigar(cigarFile);
   CigarAlignment &alignment=*cigar.getAlignment();
@@ -129,10 +132,10 @@ void Application::AppMain(int argc,char *argv[])
     if(!parseVariantLine(line,region)) continue;
 
     // Iterate through signal sensors
-    for(Vector<SignalSensor*>::iterator cur=signalSensors.begin(), end=
-	  signalSensors.end() ; cur!=end ; ++cur) {
+    for(Vector<SignalSensor*>::iterator cur=isochore->signalSensors.begin(), 
+	  end=isochore->signalSensors.end() ; cur!=end ; ++cur) {
       SignalSensor *sensor=*cur;
-      if(sensor.getStrand()!=PLUS_STRAND) continue;
+      if(sensor->getStrand()!=PLUS_STRAND) continue;
       applySensor(*sensor,region,refSeq,altSeq,refSeqStr,altSeqStr,
 		  alignment,revAlign);
     }
@@ -171,7 +174,7 @@ void Application::applySensor(SignalSensor &sensor,const VariantRegion &region,
 
   // Find reference signals missing in the alternate
   {
-    const int begin=region.refBegin-windowLen+1;
+    int begin=region.refBegin-windowLen+1;
     if(begin<0) begin=0;
     int end=region.refEnd-1;
     if(end+windowLen>refLen) end=refLen-windowLen;
@@ -180,7 +183,7 @@ void Application::applySensor(SignalSensor &sensor,const VariantRegion &region,
       if(signal) {
 	Set<int> altPositions;
 	mapWindow(r,windowLen,alignment,altPositions,altLen);
-	for(Set<int>::cons_iterator cur=altPositions.begin(), end=
+	for(Set<int>::const_iterator cur=altPositions.begin(), end=
 	      altPositions.end() ; cur!=end ; ++cur) {
 	  const int altPos=*cur;
 	  SignalPtr altSignal=sensor.detect(altSeq,altSeqStr,altPos);
@@ -192,7 +195,7 @@ void Application::applySensor(SignalSensor &sensor,const VariantRegion &region,
 
   // Find alternate signals missing in the reference
   {
-    const int begin=region.altBegin-windowLen+1;
+    int begin=region.altBegin-windowLen+1;
     if(begin<0) begin=0;
     int end=region.altEnd-1;
     if(end+windowLen>altLen) end=altLen-windowLen;
@@ -201,7 +204,7 @@ void Application::applySensor(SignalSensor &sensor,const VariantRegion &region,
       if(signal) {
 	Set<int> refPositions;
 	mapWindow(r,windowLen,revAlign,refPositions,refLen);
-	for(Set<int>::cons_iterator cur=refPositions.begin(), end=
+	for(Set<int>::const_iterator cur=refPositions.begin(), end=
 	      refPositions.end() ; cur!=end ; ++cur) {
 	  const int refPos=*cur;
 	  SignalPtr refSignal=sensor.detect(refSeq,refSeqStr,refPos);
@@ -243,9 +246,10 @@ void Application::mapWindow(int refBegin,int windowLen,
 void Application::emit(SignalPtr signal,const String &substrate,
 		       const String &status)
 {
-  cout<<substrate<<"\t"<<status<<"\t"<<signalTypeToName(signal.getSignalType())
-      <<"\t"<<signal.getBegin()+1<<"\t"<<signal.getEnd()<<"\t"<<".\t"
-      <<signal.getStrand()<<"0"<<endl;
+  const int consPos=signal->getConsensusPosition();
+  cout<<substrate<<"\t"<<status<<"\t"<<signalTypeToName(signal->getSignalType())
+      <<"\t"<<consPos+1<<"\t"<<consPos+signal->getConsensusLength()<<"\t"<<".\t"
+      <<signal->getStrand()<<"0"<<endl;
 }
 
 
@@ -257,9 +261,9 @@ void Application::emitIndels(const CigarAlignment &revAlign)
   int beginInsertion=0;
   int prevRefPos=-1, prevAltPos=-1;
   for(int i=0 ; i<L ; ++i) {
-    const int refPos=alignment[i];
+    const int refPos=revAlign[i];
     if(refPos==CIGAR_UNDEFINED) {
-      if(!inInsertion) { begin=i; inInsertion=true; }
+      if(!inInsertion) { beginInsertion=i; inInsertion=true; }
     }
     else {
       if(inInsertion) {

@@ -112,7 +112,8 @@ Isochore *IsochoreTable::getIsochore(float GC)
   for(int i=0 ; i<n ; ++i)
     if(GC<boundaries[i])
       return isochores[i];
-  throw "IsochoreTable::getIsochore()";
+  for(int i=0 ; i<n ; ++i) cout<<boundaries[i]<<endl;
+  throw String("GC% ")+GC+" not found in IsochoreTable::getIsochore()";
 }
 
 

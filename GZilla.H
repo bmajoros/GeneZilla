@@ -77,6 +77,7 @@ public:
 				      bool dumpGraph,
 				      String psaFilename);
   void loadIsochoreBoundaries(const BOOM::String &);
+  void processIsochoreFile(const BOOM::String &filename,float gcContent);
   void loadCpGislands(const BOOM::String &);
   int mapPhaseBack(int phase,SignalPtr right,SignalPtr left);
   DiscreteDistribution &getDistribution(ContentType);
@@ -206,7 +207,6 @@ protected:
 			   int oldPhase,int newPhase);
   int getPhase(SignalPtr);
   void observeRecentStopCodons(const BOOM::String &,SignalPtr);
-  void processIsochoreFile(const BOOM::String &filename,float gcContent);
   void createQueue(ContentType);
   void switchIsochore(float gcContent,int pos);
   void resetAccumulatorPositions();
