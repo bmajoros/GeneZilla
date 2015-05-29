@@ -54,9 +54,7 @@ protected:
   void mapWindow(int refPos,int windowLen,const CigarAlignment &,Set<int> &into,
 		 int altLen);
   void emit(SignalPtr,const String &substrate,const String &status);
-  void emitIndels(const CigarAlignment &,const CigarAlignment &revAlign);
-  void emitDeletions(const CigarAlignment &alignment,const String &substrate,
-		     const String &label);
+  void emitIndels(const CigarAlignment &);
 };
 
 
@@ -186,7 +184,7 @@ void Application::applySensor(SignalSensor &sensor,const VariantRegion &region,
 	      altPositions.end() ; cur!=end ; ++cur) {
 	  const int altPos=*cur;
 	  SignalPtr altSignal=sensor.detect(altSeq,altSeqStr,altPos);
-	  if(!altSignal) emit(signal,"ref","broken");
+	  if(!altSignal) emit(signal,refSubstrate,"broken");
 	}
       }
     }
@@ -207,14 +205,14 @@ void Application::applySensor(SignalSensor &sensor,const VariantRegion &region,
 	      refPositions.end() ; cur!=end ; ++cur) {
 	  const int refPos=*cur;
 	  SignalPtr refSignal=sensor.detect(refSeq,refSeqStr,refPos);
-	  if(!refSignal) emit(signal,"alt","new");
+	  if(!refSignal) emit(signal,altSubstrate,"new");
 	}
       }
     }
   }
 
   // Report indels
-  emitIndels(alignment,revAlign);
+  emitIndels(revAlign);
 }
 
 
@@ -252,31 +250,30 @@ void Application::emit(SignalPtr signal,const String &substrate,
 
 
 
-void Application::emitIndels(const CigarAlignment &alignment,
-			     const CigarAlignment &revAlign)
+void Application::emitIndels(const CigarAlignment &revAlign)
 {
-  emitDeletions(alignment,altSubstrate,"deletion");
-  emitDeletions(revAlign,altSubstrate,"insertion");
-}
-
-
-
-void Application::emitDeletions(const CigarAlignment &alignment,
-				const String &substrate,const String &label)
-{
-  const int L=alignment.length();
-  bool inDeletion=false;
-  int begin=0;
+  const int L=revAlign.length();
+  bool inInsertion=false;
+  int beginInsertion=0;
+  int prevRefPos=-1, prevAltPos=-1;
   for(int i=0 ; i<L ; ++i) {
-    if(alignment[i]==CIGAR_UNDEFINED) {
-      if(!inDeletion) { begin=i; inDeletion=true; }
+    const int refPos=alignment[i];
+    if(refPos==CIGAR_UNDEFINED) {
+      if(!inInsertion) { begin=i; inInsertion=true; }
     }
-    else if(inDeletion) {
-      cout<<substrate<<"\t"
+    else {
+      if(inInsertion) {
+	cout<<altSubstrate<<"\tindel\tinsertion\t"<<beginInsertion
+	    <<"\t"<<i<<".\t+\t0"<<endl;
+	inInsertion=false;
+      }
+      if(prevRefPos>=0 && refPos-prevRefPos>1)
+	cout<<altSubstrate<<"\tindel\tdeletion\t"<<prevAltPos
+	    <<"\t"<<i<<".\t+\t0"<<endl;
+      prevRefPos=refPos;
+      prevAltPos=i;
     }
   }
-  //9_136120000-136160000   maker   exon    9396    9423    .       +       0       transcript_id=1;
-
 }
 
 
