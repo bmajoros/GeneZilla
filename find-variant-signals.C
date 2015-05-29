@@ -46,13 +46,17 @@ class Application {
 public:
   void AppMain(int argc,char *argv[]);
 protected:
+  String refSubstrate, altSubstrate;
   bool parseVariantLine(const String &line,VariantRegion &);
   void applySensor(SignalSensor &,const VariantRegion &,Sequence &refSeq,
 		   Sequence &altSeq,const String &refSeqStr,const String 
 		   &altSeqStr,const CigarAlignment &fw,const CigarAlignment &rev);
-  void mapWindow(int refPos,int windowLen,const CigarAlignment &,Set<int> &into);
+  void mapWindow(int refPos,int windowLen,const CigarAlignment &,Set<int> &into,
+		 int altLen);
   void emit(SignalPtr,const String &substrate,const String &status);
   void emitIndels(const CigarAlignment &,const CigarAlignment &revAlign);
+  void emitDeletions(const CigarAlignment &alignment,const String &substrate,
+		     const String &label);
 };
 
 
@@ -106,9 +110,11 @@ void Application::AppMain(int argc,char *argv[])
   // Load sequences & alignment
   EdgeFactory factory;
   GeneZilla genezilla(PROGRAM_NAME,VERSION,factory,-1);
-  BOOM::String defline, refSeqStr, altSeqStr;
+  BOOM::String defline, refSeqStr, altSeqStr, junk;
   FastaReader::load(refFasta,defline,refSeqStr);
+  FastaReader::parseDefline(defline,refSubstrate,junk);
   FastaReader::load(altFasta,defline,altSeqStr);
+  FastaReader::parseDefline(defline,altSubstrate,junk);
   Sequence refSeq(refSeqStr,alphabet);
   Sequence altSeq(altSeqStr,alphabet);
   const float gc=genezilla.getGCcontent(seqString);
@@ -175,7 +181,7 @@ void Application::applySensor(SignalSensor &sensor,const VariantRegion &region,
       SignalPtr signal=sensor.detect(refSeq,refSeqStr,r);
       if(signal) {
 	Set<int> altPositions;
-	mapWindow(r,windowLen,alignment,altPositions);
+	mapWindow(r,windowLen,alignment,altPositions,altLen);
 	for(Set<int>::cons_iterator cur=altPositions.begin(), end=
 	      altPositions.end() ; cur!=end ; ++cur) {
 	  const int altPos=*cur;
@@ -196,7 +202,7 @@ void Application::applySensor(SignalSensor &sensor,const VariantRegion &region,
       SignalPtr signal=sensor.detect(altSeq,altSeqStr,r);
       if(signal) {
 	Set<int> refPositions;
-	mapWindow(r,windowLen,revAlign,refPositions);
+	mapWindow(r,windowLen,revAlign,refPositions,refLen);
 	for(Set<int>::cons_iterator cur=refPositions.begin(), end=
 	      refPositions.end() ; cur!=end ; ++cur) {
 	  const int refPos=*cur;
@@ -215,7 +221,7 @@ void Application::applySensor(SignalSensor &sensor,const VariantRegion &region,
 
 void Application::mapWindow(int refBegin,int windowLen,
 			    const CigarAlignment &alignment,
-			    Set<int> &into)
+			    Set<int> &into,int altLen)
 {
   /* In order to account for possible indels in the window, we
      map each window position separately, then figure out where
@@ -225,8 +231,11 @@ void Application::mapWindow(int refBegin,int windowLen,
      allow multiple reasonable starting positions */
   for(int i=0 ; i<windowLen ; ++i) {
     const int refPos=refBegin+i;
-    const int altPos=alignment[i];
+    const int altPos=alignment[refPos];
+    if(altPos==CIGAR_UNDEFINED) continue;
     const int altBegin=altPos-i;
+    if(altBegin<0) continue;
+    if(altBegin+windowLen>altLen) continue;
     into+=altBegin;
   }
 }
@@ -246,7 +255,28 @@ void Application::emit(SignalPtr signal,const String &substrate,
 void Application::emitIndels(const CigarAlignment &alignment,
 			     const CigarAlignment &revAlign)
 {
+  emitDeletions(alignment,altSubstrate,"deletion");
+  emitDeletions(revAlign,altSubstrate,"insertion");
 }
 
+
+
+void Application::emitDeletions(const CigarAlignment &alignment,
+				const String &substrate,const String &label)
+{
+  const int L=alignment.length();
+  bool inDeletion=false;
+  int begin=0;
+  for(int i=0 ; i<L ; ++i) {
+    if(alignment[i]==CIGAR_UNDEFINED) {
+      if(!inDeletion) { begin=i; inDeletion=true; }
+    }
+    else if(inDeletion) {
+      cout<<substrate<<"\t"
+    }
+  }
+  //9_136120000-136160000   maker   exon    9396    9423    .       +       0       transcript_id=1;
+
+}
 
 
