@@ -34,7 +34,6 @@ protected:
   void setSizes(int consensusLength,int consensusOffset,
 		int contextWindowLength);
   void setStrand(Strand);
-  GarbageCollector &getGC() {return gc;}
 public:
   // Static methods:
   static SignalSensor *load(const BOOM::String &filename,
@@ -58,6 +57,7 @@ public:
 
   // Instance methods:
   virtual ~SignalSensor() {}
+  GarbageCollector &getGC() {return gc;}
   void useInverseProbabilities(Histogram<double> *);
   void multiplyCutoffBy(double);
   void ignoreCutoff();

@@ -8,12 +8,12 @@
 #define INCL_ReferenceAnnotation_H
 #include <iostream>
 #include "BOOM/Vector.H"
+#include "BOOM/Comparator.H"
 #include "Labeling.H"
 #include "LabelMatrix.H"
 #include "Signal.H"
 #include "ContentRegions.H"
 #include "Isochore.H"
-#include "GarbageCollector.H"
 
 using namespace std;
 using namespace BOOM;
@@ -24,20 +24,32 @@ public:
   ReferenceAnnotation();
   ReferenceAnnotation(const String &annoGFFfile,const String &labelingFile,
 		      const String &matrixFile,Isochore &,
-		      GarbageCollector &);
+		      const String &altSeqStr,const Sequence &altSequence);
   virtual ~ReferenceAnnotation();
   const LabelMatrix &getMatrix() const;
   const Labeling &getLabeling() const;
   const ContentRegions &getRegions() const;
+  const Vector<Signal*> &getSignals() const;
 protected:
   LabelMatrix *matrix;
   Labeling labeling;
-  Vector<Signal> signals;
+  Vector<Signal*> signals;
   ContentRegions *contentRegions;
   void loadMatrix(const String &filename);
   void loadLabeling(const String &filename);
   void loadGFF(const String &filename,const int seqLen);
-  void initSignals(Isochore &,GarbageCollector &);
+  void initSignals(Isochore &,const String &altSeqStr,const Sequence &altSequence);
+  void makeSignal(SignalType,int intervalBeginOrEnd,const String &altSequence,
+		  const Sequence &,SignalSensor &);
+  void makeSignal(const String &,const Sequence &,int contextWindowPos,
+		  SignalSensor &);
+  void sortSignals();
+};
+
+struct SignalPosComparator : public Comparator<Signal*> {
+  bool equal(Signal* &a,Signal* &b);
+  bool greater(Signal* &a,Signal* &b);
+  bool less(Signal* &a,Signal* &b);
 };
 
 #endif
