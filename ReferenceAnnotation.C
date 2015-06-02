@@ -20,11 +20,14 @@ ReferenceAnnotation::ReferenceAnnotation()
 
 ReferenceAnnotation::ReferenceAnnotation(const String &annoGFFfile,
 					 const String &labelingFile,
-					 const String &matrixFile)
+					 const String &matrixFile,
+					 Isochore &isochore,
+					 GarbageCollector &gc)
 {
   loadMatrix(matrixFile);
   loadLabeling(labelingFile);
   loadGFF(annoGFFfile,labeling.length());
+  initSignals(isochore,gc);
 }
 
 
@@ -81,5 +84,26 @@ void ReferenceAnnotation::loadGFF(const String &filename,const int seqLen)
   contentRegions=new ContentRegions(transcript,seqLen);
   delete &transcripts;
 }
+
+
+
+void ReferenceAnnotation::initSignals(Isochore &isochore,GarbageCollector &gc)
+{
+  Map<SignalType,SignalSensor*> &sensor=isochore.signalTypeToSensor;
+  const Vector<ContentRegion> &regions=contentRegions->asVector();
+  for(Vector<ContentRegion>::const_iterator cur=regions.begin(), end=
+	regions.end() ; cur!=end ; ++cur) {
+    const ContentRegion &region=*cur;
+    ContentType contentType=region.getType();
+    const Interval &interval=region.getInterval();
+    SignalType leftSignalType=leftSignal(contentType);
+    SignalType rightSignalType=rightSignal(contentType);
+
+
+  }
+
+}
+
+
 
 

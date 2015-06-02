@@ -12,6 +12,8 @@
 #include "LabelMatrix.H"
 #include "Signal.H"
 #include "ContentRegions.H"
+#include "Isochore.H"
+#include "GarbageCollector.H"
 
 using namespace std;
 using namespace BOOM;
@@ -21,7 +23,8 @@ class ReferenceAnnotation {
 public:
   ReferenceAnnotation();
   ReferenceAnnotation(const String &annoGFFfile,const String &labelingFile,
-		      const String &matrixFile);
+		      const String &matrixFile,Isochore &,
+		      GarbageCollector &);
   virtual ~ReferenceAnnotation();
   const LabelMatrix &getMatrix() const;
   const Labeling &getLabeling() const;
@@ -34,6 +37,7 @@ protected:
   void loadMatrix(const String &filename);
   void loadLabeling(const String &filename);
   void loadGFF(const String &filename,const int seqLen);
+  void initSignals(Isochore &,GarbageCollector &);
 };
 
 #endif
