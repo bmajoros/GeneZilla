@@ -7,8 +7,11 @@
 #ifndef INCL_ReferenceAnnotation_H
 #define INCL_ReferenceAnnotation_H
 #include <iostream>
+#include "BOOM/Vector.H"
 #include "Labeling.H"
 #include "LabelMatrix.H"
+#include "Signal.H"
+#include "ContentRegions.H"
 
 using namespace std;
 using namespace BOOM;
@@ -17,14 +20,20 @@ using namespace BOOM;
 class ReferenceAnnotation {
 public:
   ReferenceAnnotation();
+  ReferenceAnnotation(const String &annoGFFfile,const String &labelingFile,
+		      const String &matrixFile);
   virtual ~ReferenceAnnotation();
-  void loadMatrix(const String &filename);
   const LabelMatrix &getMatrix() const;
-  void loadLabeling(const String &filename);
   const Labeling &getLabeling() const;
+  const ContentRegions &getRegions() const;
 protected:
   LabelMatrix *matrix;
   Labeling labeling;
+  Vector<Signal> signals;
+  ContentRegions *contentRegions;
+  void loadMatrix(const String &filename);
+  void loadLabeling(const String &filename);
+  void loadGFF(const String &filename,const int seqLen);
 };
 
 #endif

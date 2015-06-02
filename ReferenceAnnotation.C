@@ -6,13 +6,25 @@
  ****************************************************************/
 #include <iostream>
 #include "ReferenceAnnotation.H"
+#include "BOOM/GffReader.H"
 using namespace std;
 using namespace BOOM;
 
 ReferenceAnnotation::ReferenceAnnotation()
-  : matrix(NULL)
+  : matrix(NULL), contentRegions(NULL)
 {
   // ctor
+}
+
+
+
+ReferenceAnnotation::ReferenceAnnotation(const String &annoGFFfile,
+					 const String &labelingFile,
+					 const String &matrixFile)
+{
+  loadMatrix(matrixFile);
+  loadLabeling(labelingFile);
+  loadGFF(annoGFFfile,labeling.length());
 }
 
 
@@ -20,6 +32,7 @@ ReferenceAnnotation::ReferenceAnnotation()
 ReferenceAnnotation::~ReferenceAnnotation()
 {
   delete matrix;
+  delete contentRegions;
 }
 
 
@@ -51,5 +64,22 @@ const Labeling &ReferenceAnnotation::getLabeling() const
 }
 
 
+
+const ContentRegions &ReferenceAnnotation::getRegions() const
+{
+  return *contentRegions;
+}
+
+
+
+void ReferenceAnnotation::loadGFF(const String &filename,const int seqLen)
+{
+  Vector<GffTranscript*> &transcripts=*GffReader::loadTranscripts(filename);
+  if(transcripts.size()!=1) 
+    throw "ReferenceAnnotation::loadGFF() : file must contain exactly one transcript";
+  GffTranscript &transcript=*transcripts[0];
+  contentRegions=new ContentRegions(transcript,seqLen);
+  delete &transcripts;
+}
 
 

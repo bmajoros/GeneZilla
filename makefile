@@ -3071,3 +3071,19 @@ $(OBJ)/ReferenceAnnotation.o:\
 	$(CC) $(CFLAGS) -o $(OBJ)/ReferenceAnnotation.o -c \
 		ReferenceAnnotation.C
 #---------------------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/ContentRegion.o:\
+		ContentRegion.C\
+		ContentRegion.H
+	$(CC) $(CFLAGS) -o $(OBJ)/ContentRegion.o -c \
+		ContentRegion.C
+#---------------------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/ContentRegions.o:\
+		ContentRegions.C\
+		ContentRegions.H
+	$(CC) $(CFLAGS) -o $(OBJ)/ContentRegions.o -c \
+		ContentRegions.C
+#---------------------------------------------------------
