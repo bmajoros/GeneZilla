@@ -3087,3 +3087,11 @@ $(OBJ)/ContentRegions.o:\
 	$(CC) $(CFLAGS) -o $(OBJ)/ContentRegions.o -c \
 		ContentRegions.C
 #---------------------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/VariantEvent.o:\
+		VariantEvent.C\
+		VariantEvent.H
+	$(CC) $(CFLAGS) -o $(OBJ)/VariantEvent.o -c \
+		VariantEvent.C
+#---------------------------------------------------------
