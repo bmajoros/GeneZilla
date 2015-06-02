@@ -7,8 +7,10 @@
 #ifndef INCL_VariantEvent_H
 #define INCL_VariantEvent_H
 #include <iostream>
+#include "BOOM/String.H"
 using namespace std;
 using namespace BOOM;
+
 
 enum VariantSignalType {
   VAR_SIG_ATG,
@@ -17,12 +19,14 @@ enum VariantSignalType {
   VAR_SIG_AG,
   VAR_SIG_INDEL
 };
+VariantSignalType varSigTypeFromString(const String &);
 
 enum VariantEventType {
   VAR_EVENT_GAIN,
   VAR_EVENT_LOSS,
   VAR_EVENT_INDEL
 };
+VariantEventType varEventTypeFromString(const String &);
 
 class VariantEvent {
 public:

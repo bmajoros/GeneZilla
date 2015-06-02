@@ -3095,3 +3095,11 @@ $(OBJ)/VariantEvent.o:\
 	$(CC) $(CFLAGS) -o $(OBJ)/VariantEvent.o -c \
 		VariantEvent.C
 #---------------------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/VariantEvents.o:\
+		VariantEvents.C\
+		VariantEvents.H
+	$(CC) $(CFLAGS) -o $(OBJ)/VariantEvents.o -c \
+		VariantEvents.C
+#---------------------------------------------------------
