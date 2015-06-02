@@ -139,6 +139,7 @@ void Application::AppMain(int argc,char *argv[])
 	  end=isochore->signalSensors.end() ; cur!=end ; ++cur) {
       SignalSensor *sensor=*cur;
       if(sensor->getStrand()!=PLUS_STRAND) continue;
+      if(dropStrand(sensor->getSignalType())==TAG) sensor->ignoreCutoff();
       applySensor(*sensor,region,refSeq,altSeq,refSeqStr,altSeqStr,
 		  alignment,revAlign);
     }
