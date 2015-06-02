@@ -10,8 +10,46 @@ using namespace std;
 using namespace BOOM;
 
 ReferenceAnnotation::ReferenceAnnotation()
+  : matrix(NULL)
 {
   // ctor
 }
+
+
+
+ReferenceAnnotation::~ReferenceAnnotation()
+{
+  delete matrix;
+}
+
+
+
+void ReferenceAnnotation::loadMatrix(const String &filename)
+{
+  matrix=new LabelMatrix(filename);
+}
+
+
+
+const LabelMatrix &ReferenceAnnotation::getMatrix() const
+{
+  return *matrix;
+}
+
+
+
+void ReferenceAnnotation::loadLabeling(const String &filename)
+{
+  labeling.load(filename);
+}
+
+
+
+const Labeling &ReferenceAnnotation::getLabeling() const
+{
+  return labeling;
+}
+
+
 
 

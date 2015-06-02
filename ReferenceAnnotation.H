@@ -7,6 +7,9 @@
 #ifndef INCL_ReferenceAnnotation_H
 #define INCL_ReferenceAnnotation_H
 #include <iostream>
+#include "Labeling.H"
+#include "LabelMatrix.H"
+
 using namespace std;
 using namespace BOOM;
 
@@ -14,6 +17,14 @@ using namespace BOOM;
 class ReferenceAnnotation {
 public:
   ReferenceAnnotation();
+  virtual ~ReferenceAnnotation();
+  void loadMatrix(const String &filename);
+  const LabelMatrix &getMatrix() const;
+  void loadLabeling(const String &filename);
+  const Labeling &getLabeling() const;
+protected:
+  LabelMatrix *matrix;
+  Labeling labeling;
 };
 
 #endif
