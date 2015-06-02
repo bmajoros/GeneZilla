@@ -3063,3 +3063,11 @@ $(OBJ)/find-variant-signals.o:\
 	$(CC) $(CFLAGS) -o $(OBJ)/find-variant-signals.o -c \
 		find-variant-signals.C
 #---------------------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/ReferenceAnnotation.o:\
+		ReferenceAnnotation.C\
+		ReferenceAnnotation.H
+	$(CC) $(CFLAGS) -o $(OBJ)/ReferenceAnnotation.o -c \
+		ReferenceAnnotation.C
+#---------------------------------------------------------
