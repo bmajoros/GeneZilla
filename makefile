@@ -3111,3 +3111,11 @@ $(OBJ)/SignalStream.o:\
 	$(CC) $(CFLAGS) -o $(OBJ)/SignalStream.o -c \
 		SignalStream.C
 #---------------------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/ConstraintInterval.o:\
+		ConstraintInterval.C\
+		ConstraintInterval.H
+	$(CC) $(CFLAGS) -o $(OBJ)/ConstraintInterval.o -c \
+		ConstraintInterval.C
+#---------------------------------------------------------
