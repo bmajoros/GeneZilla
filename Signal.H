@@ -8,6 +8,7 @@
 #define INCL_Signal_H
 #include <iostream>
 #include "BOOM/List.H"
+#include "BOOM/Comparator.H"
 #include "genezilla.H"
 #include "SignalType.H"
 class Edge;
@@ -74,5 +75,16 @@ public:
 };
 
 ostream &operator<<(ostream &,const Signal &);
+
+
+struct SignalPosComparator : public Comparator<Signal*> {
+  bool equal(Signal* &a,Signal* &b);
+  bool greater(Signal* &a,Signal* &b);
+  bool less(Signal* &a,Signal* &b);
+};
+
+
+
+
 
 #endif

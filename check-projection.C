@@ -23,7 +23,7 @@ private:
   Set<String> nonCanonicalGTs, nonCanonicalAGs;
   GffTranscript *loadGff(const String &filename);
   void parseNoncanonicals(const String &,Set<String> &);
-  void detectNMD(GffTranscript &altTrans,const String &altSubstrate);
+  bool detectNMD(GffTranscript &altTrans,const String &altSubstrate);
   void checkSpliceSites(GffTranscript &refTrans,const String &refSubstrate,
 			GffTranscript &altTrans,const String &altSubstrate);
   void checkDonor(GffExon &refExon,const String &refSubstrate,
@@ -94,7 +94,8 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff>\n\
   const int firstStop=altProtein.findFirst('*');
   if(firstStop>=0) {
     cout<<"premature stop at AA position "<<firstStop<<" in alt protein"<<endl;
-    detectNMD(*altTrans,altSubstrate);
+    if(!detectNMD(*altTrans,altSubstrate))
+      cout<<"truncation predicted"<<endl;
   }
   
 
@@ -221,11 +222,11 @@ void Application::parseNoncanonicals(const String &str,Set<String> &into)
 
 
 
-void Application::detectNMD(GffTranscript &transcript,
+bool Application::detectNMD(GffTranscript &transcript,
 				  const String &substrate)
 {
   const int numExons=transcript.getNumExons();
-  if(numExons<2) return;
+  if(numExons<2) return false;
   const int lastExonLen=transcript.getIthExon(numExons-1).length();
   const int lastEJC=transcript.getSplicedLength()-lastExonLen;
   CodonIterator iter(transcript,substrate);
@@ -235,8 +236,9 @@ void Application::detectNMD(GffTranscript &transcript,
       const int distance=lastEJC-codon.splicedCoord;
       if(distance>=50) 
 	cout<<"NMD predicted: PTC found "<<distance<<"bp from last EJC"<<endl;
-      break;
+      return true;
     }
+  return false;
 }
 
 

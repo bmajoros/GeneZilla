@@ -46,11 +46,5 @@ protected:
   void sortSignals();
 };
 
-struct SignalPosComparator : public Comparator<Signal*> {
-  bool equal(Signal* &a,Signal* &b);
-  bool greater(Signal* &a,Signal* &b);
-  bool less(Signal* &a,Signal* &b);
-};
-
 #endif
 

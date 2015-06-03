@@ -3103,3 +3103,11 @@ $(OBJ)/VariantEvents.o:\
 	$(CC) $(CFLAGS) -o $(OBJ)/VariantEvents.o -c \
 		VariantEvents.C
 #---------------------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/SignalStream.o:\
+		SignalStream.C\
+		SignalStream.H
+	$(CC) $(CFLAGS) -o $(OBJ)/SignalStream.o -c \
+		SignalStream.C
+#---------------------------------------------------------

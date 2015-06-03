@@ -354,3 +354,23 @@ Edge *Signal::findEdgeInFrom(SignalPtr pred)
 }
 #endif
 
+
+
+bool SignalPosComparator::equal(Signal* &a,Signal* &b)
+{
+  return a->getContextWindowPosition() == b->getContextWindowPosition();
+}
+
+
+
+bool SignalPosComparator::greater(Signal* &a,Signal* &b)
+{
+  return a->getContextWindowPosition() > b->getContextWindowPosition();
+}
+
+
+bool SignalPosComparator::less(Signal* &a,Signal* &b)
+{
+  return a->getContextWindowPosition() < b->getContextWindowPosition();
+}
+

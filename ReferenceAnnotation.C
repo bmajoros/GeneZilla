@@ -123,26 +123,6 @@ void ReferenceAnnotation::sortSignals()
 
 
 
-bool SignalPosComparator::equal(Signal* &a,Signal* &b)
-{
-  return a->getContextWindowPosition() == b->getContextWindowPosition();
-}
-
-
-
-bool SignalPosComparator::greater(Signal* &a,Signal* &b)
-{
-  return a->getContextWindowPosition() > b->getContextWindowPosition();
-}
-
-
-bool SignalPosComparator::less(Signal* &a,Signal* &b)
-{
-  return a->getContextWindowPosition() < b->getContextWindowPosition();
-}
-
-
-
 void ReferenceAnnotation::makeSignal(SignalType signalType,int intervalBeginOrEnd,
 				     const String &str,const Sequence &seq,
 				     SignalSensor &sensor)
