@@ -6,6 +6,7 @@
  ****************************************************************/
 #include <iostream>
 #include "VariantEvents.H"
+#include "BOOM/GffReader.H"
 using namespace std;
 using namespace BOOM;
 
