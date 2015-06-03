@@ -54,7 +54,7 @@ Signal *SignalStream::detect(int position)
     ++currentIndex;
     return signals[currentIndex];
   }
-  else if(position>sigPos) INTERNAL_ERROR;
+  if(position>sigPos) INTERNAL_ERROR; // ### DEBUGGING
   return NULL;
 }
 
