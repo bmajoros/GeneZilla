@@ -10,6 +10,7 @@
 #include "BOOM/FastaReader.H"
 #include "BOOM/GffReader.H"
 #include "BOOM/ProteinTrans.H"
+#include "BOOM/CodonIterator.H"
 using namespace std;
 using namespace BOOM;
 
@@ -22,6 +23,7 @@ private:
   Set<String> nonCanonicalGTs, nonCanonicalAGs;
   GffTranscript *loadGff(const String &filename);
   void parseNoncanonicals(const String &,Set<String> &);
+  void detectNMD(GffTranscript &altTrans,const String &altSubstrate);
   void checkSpliceSites(GffTranscript &refTrans,const String &refSubstrate,
 			GffTranscript &altTrans,const String &altSubstrate);
   void checkDonor(GffExon &refExon,const String &refSubstrate,
@@ -90,8 +92,11 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff>\n\
   if(altProtein.lastChar()!='*') cout<<"missing stop codon"<<endl;
   refProtein.chop(); altProtein.chop();
   const int firstStop=altProtein.findFirst('*');
-  if(firstStop>=0) 
+  if(firstStop>=0) {
     cout<<"premature stop at AA position "<<firstStop<<" in alt protein"<<endl;
+    detectNMD(*altTrans,altSubstrate);
+  }
+  
 
   // Check length is divisible by 3
   if(altDNA.length()%3) cout<<"non-integral number of codons"<<endl;
@@ -212,6 +217,26 @@ void Application::parseNoncanonicals(const String &str,Set<String> &into)
       cur!=end ; ++cur)
     into.insert(*cur);
   delete &fields;
+}
+
+
+
+void Application::detectNMD(GffTranscript &transcript,
+				  const String &substrate)
+{
+  const int numExons=transcript.getNumExons();
+  if(numExons<2) return;
+  const int lastExonLen=transcript.getIthExon(numExons-1).length();
+  const int lastEJC=transcript.getSplicedLength()-lastExonLen;
+  CodonIterator iter(transcript,substrate);
+  Codon codon;
+  while(iter.nextCodon(codon))
+    if(codon.isStop()) {
+      const int distance=lastEJC-codon.splicedCoord;
+      if(distance>=50) 
+	cout<<"NMD predicted: PTC found "<<distance<<"bp from last EJC"<<endl;
+      break;
+    }
 }
 
 
