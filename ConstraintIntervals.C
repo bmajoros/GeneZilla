@@ -42,7 +42,22 @@ void ConstraintIntervals::insert(ConstraintInterval I)
 
   // If the two intervals are actually the same, split that interval
   if(firstIndex==secondIndex) {
-
+    Interval &other=intervals[firstIndex].getInterval();
+    if(other==interval) intervals[firstIndex]=I;
+    else if(other.getBegin()==begin) {
+      other.setBegin(end);
+      intervals.insertByIndex(I,firstIndex);
+    }
+    else if(other.getEnd()==end) {
+      other.setEnd(begin);
+      intervals.insertByIndex(I,firstIndex+1);
+    }
+    else { // split into two
+      Vector<ConstraintInterval> two;
+      two.push_back(I); two.push_back(other);
+      other.setEnd(begin); two.back().setBegin(end);
+      intervals.insertByIndex(two,firstIndex+1);
+    }
   }
 
   // Otherwise, perform truncation (or deletion in the boundary case)
