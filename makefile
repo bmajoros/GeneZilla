@@ -2828,8 +2828,10 @@ $(OBJ)/check-projection.o:\
 		check-projection.C
 #---------------------------------------------------------
 check-projection: \
+		$(OBJ)/Labeling.o \
 		$(OBJ)/check-projection.o
 	$(CC) $(LDFLAGS) -o check-projection \
+		$(OBJ)/Labeling.o \
 		$(OBJ)/check-projection.o \
 		$(LIBS)
 #--------------------------------------------------------

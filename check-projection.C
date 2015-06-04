@@ -11,6 +11,7 @@
 #include "BOOM/GffReader.H"
 #include "BOOM/ProteinTrans.H"
 #include "BOOM/CodonIterator.H"
+#include "Labeling.H"
 using namespace std;
 using namespace BOOM;
 
@@ -32,6 +33,8 @@ private:
 		     GffExon &altExon,const String &altSubstrate);
   String getDonor(GffExon &,const String &substrate,int &pos);
   String getAcceptor(GffExon &,const String &substrate,int &pos);
+  void checkFrameshifts(const Labeling &,const GffTranscript &,
+			const String &substrate);
 };
 
 
@@ -61,9 +64,9 @@ int Application::main(int argc,char *argv[])
 {
   // Process command line
   CommandLine cmd(argc,argv,"d:a:");
-  if(cmd.numArgs()!=4)
+  if(cmd.numArgs()!=5)
     throw String("\n\
-check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff>\n\
+check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff> <labels.txt>\n\
      -d donors = allow noncanonical donors; comma-separated list (capital letters)\n\
      -a acceptors = allow noncanonical acceptors; comma-separated list (capital letters)\n\
 ");
@@ -71,6 +74,7 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff>\n\
   const String refGff=cmd.arg(1);
   const String altFasta=cmd.arg(2);
   const String altGff=cmd.arg(3);
+  const String labelFile=cmd.arg(4);
   if(cmd.option('d')) parseNoncanonicals(cmd.optParm('d'),nonCanonicalGTs);
   if(cmd.option('a')) parseNoncanonicals(cmd.optParm('a'),nonCanonicalAGs);
 
@@ -79,6 +83,7 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff>\n\
   FastaReader::load(refFasta,def,refSubstrate);
   FastaReader::load(altFasta,def,altSubstrate);
   GffTranscript *refTrans=loadGff(refGff), *altTrans=loadGff(altGff);
+  Labeling labeling(labelFile);
 
   // Translate to proteins
   refTrans->loadSequence(refSubstrate); altTrans->loadSequence(altSubstrate);
@@ -87,6 +92,9 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff>\n\
   const String refProtein=ProteinTrans::translate(refDNA);
   const String altProtein=ProteinTrans::translate(altDNA);
   if(refProtein!=altProtein) cout<<"proteins differ"<<endl;
+
+  // Check for frameshifts
+  checkFrameshifts(labeling,*altTrans,altSubstrate);
 
   // Check for stop codons
   if(altProtein.lastChar()!='*') cout<<"missing stop codon"<<endl;
@@ -98,7 +106,6 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff>\n\
       cout<<"truncation predicted"<<endl;
   }
   
-
   // Check length is divisible by 3
   if(altDNA.length()%3) cout<<"non-integral number of codons"<<endl;
   
@@ -239,6 +246,35 @@ bool Application::detectNMD(GffTranscript &transcript,
       return true;
     }
   return false;
+}
+
+
+
+void Application::checkFrameshifts(const Labeling &labeling,
+				   const GffTranscript &transcript,
+				   const String &substrate)
+{
+  if(labeling.length()!=substrate.length()) 
+    throw "labeling and alt substrate have different lengths";
+  const int numExons=transcript.numExons();
+  int phase=0, phaseMatches=0, phaseMismatches=0;
+  for(int i=0 ; i<numExons ; ++i) {
+    const GffExon &exon=transcript.getIthExon(i);
+    const int begin=exon.getBegin(), end=exon.getEnd();
+    for(int pos=begin ; pos<end ; ++pos) {
+      const GeneModelLabel label=labeling[pos];
+      if(isExon(label))
+	if(phase==getExonPhase(label)) ++phaseMatches;
+	else ++phaseMismatches;
+      ++phase;
+    }
+  }
+  if(phaseMismatches>0) {
+    const int total=phaseMismatches+phaseMatches;
+    float percentMismatch=phaseMismatches/float(total);
+    cout<<"frameshift detected: "<<phaseMismatches<<"/"<<total<<" = "
+	<<percentMismatch<<"% labeled exon bases chance frame"<<endl;
+  }
 }
 
 
