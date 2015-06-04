@@ -52,3 +52,32 @@ bool ConstraintInterval::contains(int pos) const
 
 
 
+void ConstraintInterval::setBegin(int begin)
+{
+  interval.setBegin(begin);
+}
+
+
+
+void ConstraintInterval::setEnd(int end)
+{
+  interval.setEnd(end);
+}
+
+
+
+int ConstraintInterval::getBegin() const
+{
+  return begin;
+}
+
+
+
+int ConstraintInterval::getEnd() const
+{
+  return end;
+}
+
+
+
+

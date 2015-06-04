@@ -43,13 +43,13 @@ void ConstraintIntervals::insert(ConstraintInterval I)
   // If the two intervals are actually the same, split that interval
   if(firstIndex==secondIndex) {
     Interval &other=intervals[firstIndex].getInterval();
-    if(other==interval) intervals[firstIndex]=I;
+    if(other==interval) intervals[firstIndex]=I; // replace
     else if(other.getBegin()==begin) {
-      other.setBegin(end);
+      other.setBegin(end); // truncate
       intervals.insertByIndex(I,firstIndex);
     }
     else if(other.getEnd()==end) {
-      other.setEnd(begin);
+      other.setEnd(begin); // truncate
       intervals.insertByIndex(I,firstIndex+1);
     }
     else { // split into two
@@ -62,7 +62,16 @@ void ConstraintIntervals::insert(ConstraintInterval I)
 
   // Otherwise, perform truncation (or deletion in the boundary case)
   else {
-
+    ConstraintInterval &firstInterval=intervals[firstIndex];
+    ConstraintInterval &secondInterval=intervals[secondIndex];
+    firstInterval.setEnd(begin); secondInterval.setBegin(end);
+    int insertionIndex=firstIndex+1;
+    int deletionIndex=firstIndex+1, deletionLen=secondIndex-firstIndex-1;
+    if(secondInterval.getInterval().isEmpty()) { ++deletionLen; }
+    if(firstInterval.getInterval().isEmpty()) 
+      { --deletionIndex; ++deletionLen; --insertionIndex; }
+    intervals.cut(deletionIndex,deletionLen);
+    intervals.insertByIndex(I,insertionIndex);
   }
 }
 

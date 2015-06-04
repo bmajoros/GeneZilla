@@ -20,6 +20,10 @@ public:
   bool contains(int pos) const;
   const Interval &getInterval() const;
   Interval &getInterval();
+  void setBegin(int);
+  void setEnd(int);
+  int getBegin() const;
+  int getEnd() const;
 protected:
   bool constrained;
   Interval interval;
