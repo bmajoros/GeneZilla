@@ -97,7 +97,7 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff> <labels.txt>\
   checkFrameshifts(labeling,*altTrans,altSubstrate);
 
   // Check for stop codons
-  if(altProtein.lastChar()!='*') cout<<"missing stop codon"<<endl;
+  const bool stopPresent=altProtein.lastChar()!='*';
   refProtein.chop(); altProtein.chop();
   const int firstStop=altProtein.findFirst('*');
   if(firstStop>=0) {
@@ -105,6 +105,7 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff> <labels.txt>\
     if(!detectNMD(*altTrans,altSubstrate))
       cout<<"truncation predicted"<<endl;
   }
+  else cout<<"missing stop codon"<<endl; 
   
   // Check length is divisible by 3
   if(altDNA.length()%3) cout<<"non-integral number of codons"<<endl;
@@ -241,9 +242,10 @@ bool Application::detectNMD(GffTranscript &transcript,
   while(iter.nextCodon(codon))
     if(codon.isStop()) {
       const int distance=lastEJC-codon.splicedCoord;
-      if(distance>=50) 
+      if(distance>=50) {
 	cout<<"NMD predicted: PTC found "<<distance<<"bp from last EJC"<<endl;
-      return true;
+	return true;
+      }
     }
   return false;
 }
@@ -266,12 +268,12 @@ void Application::checkFrameshifts(const Labeling &labeling,
       if(isExon(label))
 	if(phase==getExonPhase(label)) ++phaseMatches;
 	else ++phaseMismatches;
-      ++phase;
+      phase=(phase+1)%3;
     }
   }
   if(phaseMismatches>0) {
     const int total=phaseMismatches+phaseMatches;
-    float percentMismatch=phaseMismatches/float(total);
+    float percentMismatch=int(1000*phaseMismatches/float(total)+5/9.0)/10.0;
     cout<<"frameshift detected: "<<phaseMismatches<<"/"<<total<<" = "
 	<<percentMismatch<<"% labeled exon bases change frame"<<endl;
   }
