@@ -24,7 +24,7 @@ ConstraintInterval::ConstraintInterval(const Interval &interval,bool constrained
 
 
 
-bool ConstraintInterval::isConstrained()
+bool ConstraintInterval::isConstrained() const
 {
   return constrained;
 }
@@ -38,7 +38,7 @@ const Interval &ConstraintInterval::getInterval() const
 
 
 
-bool ConstraintInterval::contains(int pos)
+bool ConstraintInterval::contains(int pos) const
 {
   return interval.contains(pos);
 }

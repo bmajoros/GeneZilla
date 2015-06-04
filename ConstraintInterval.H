@@ -16,8 +16,8 @@ class ConstraintInterval {
 public:
   ConstraintInterval();
   ConstraintInterval(const Interval &,bool constrained);
-  bool isConstrained();
-  bool contains(int pos);
+  bool isConstrained() const;
+  bool contains(int pos) const;
   const Interval &getInterval() const;
 protected:
   bool constrained;

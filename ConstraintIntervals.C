@@ -9,6 +9,8 @@
 using namespace std;
 using namespace BOOM;
 
+
+
 ConstraintIntervals::ConstraintIntervals(int seqLen)
 {
   intervals.push_back(ConstraintInterval(Interval(0,seqLen),true));
@@ -18,7 +20,35 @@ ConstraintIntervals::ConstraintIntervals(int seqLen)
 
 void ConstraintIntervals::insert(ConstraintInterval I)
 {
-  
+  /*
+    CASE 1: It falls completely within an existing interval.
+            In that case, the existing interval may be replaced,
+            split into two intervals, or truncated on either side.
+    CASE 2: It overlaps at least two existing intervals.  Either of
+            them may be truncated or replaced.
+   */
+
+  // First, find the first and last intervals overlapped by this new one
+  const Interval interval=contraintInterval.getInterval();
+  const int begin=interval.getBegin(), end=interval.getEnd();
+  int firstIndex=-1, secondIndex=-1, N=intervals.size();
+  for(int i=0 ; i<N ; ++i) {
+    const ConstraintInterval &other=intervals[i];
+    if(other.contains(begin)) firstIndex=i;
+    if(other.contains(end)) secondIndex=i;
+  }
+  if(firstIndex<0) firstIndex=0;
+  if(secondIndex<0) secondIndex=N-1;
+
+  // If the two intervals are actually the same, split that interval
+  if(firstIndex==secondIndex) {
+
+  }
+
+  // Otherwise, perform truncation (or deletion in the boundary case)
+  else {
+
+  }
 }
 
 
