@@ -68,14 +68,14 @@ void ConstraintInterval::setEnd(int end)
 
 int ConstraintInterval::getBegin() const
 {
-  return begin;
+  return interval.getBegin();
 }
 
 
 
 int ConstraintInterval::getEnd() const
 {
-  return end;
+  return interval.getEnd();
 }
 
 

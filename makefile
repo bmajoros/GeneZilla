@@ -22,6 +22,7 @@ all: \
 	obj \
 	genezilla \
 	crf \
+	cia \
 	reweight-graph \
 	n-best \
 	get-bias-model \
@@ -3065,67 +3066,221 @@ $(OBJ)/find-variant-signals.o:\
 	$(CC) $(CFLAGS) -o $(OBJ)/find-variant-signals.o -c \
 		find-variant-signals.C
 #---------------------------------------------------------
-
-#--------------------------------------------------------
 $(OBJ)/ReferenceAnnotation.o:\
 		ReferenceAnnotation.C\
 		ReferenceAnnotation.H
 	$(CC) $(CFLAGS) -o $(OBJ)/ReferenceAnnotation.o -c \
 		ReferenceAnnotation.C
 #---------------------------------------------------------
-
-#--------------------------------------------------------
 $(OBJ)/ContentRegion.o:\
 		ContentRegion.C\
 		ContentRegion.H
 	$(CC) $(CFLAGS) -o $(OBJ)/ContentRegion.o -c \
 		ContentRegion.C
 #---------------------------------------------------------
-
-#--------------------------------------------------------
 $(OBJ)/ContentRegions.o:\
 		ContentRegions.C\
 		ContentRegions.H
 	$(CC) $(CFLAGS) -o $(OBJ)/ContentRegions.o -c \
 		ContentRegions.C
 #---------------------------------------------------------
-
-#--------------------------------------------------------
 $(OBJ)/VariantEvent.o:\
 		VariantEvent.C\
 		VariantEvent.H
 	$(CC) $(CFLAGS) -o $(OBJ)/VariantEvent.o -c \
 		VariantEvent.C
 #---------------------------------------------------------
-
-#--------------------------------------------------------
 $(OBJ)/VariantEvents.o:\
 		VariantEvents.C\
 		VariantEvents.H
 	$(CC) $(CFLAGS) -o $(OBJ)/VariantEvents.o -c \
 		VariantEvents.C
 #---------------------------------------------------------
-
-#--------------------------------------------------------
 $(OBJ)/SignalStream.o:\
 		SignalStream.C\
 		SignalStream.H
 	$(CC) $(CFLAGS) -o $(OBJ)/SignalStream.o -c \
 		SignalStream.C
 #---------------------------------------------------------
-
-#--------------------------------------------------------
 $(OBJ)/ConstraintInterval.o:\
 		ConstraintInterval.C\
 		ConstraintInterval.H
 	$(CC) $(CFLAGS) -o $(OBJ)/ConstraintInterval.o -c \
 		ConstraintInterval.C
 #---------------------------------------------------------
-
-#--------------------------------------------------------
 $(OBJ)/ConstraintIntervals.o:\
 		ConstraintIntervals.C\
 		ConstraintIntervals.H
 	$(CC) $(CFLAGS) -o $(OBJ)/ConstraintIntervals.o -c \
 		ConstraintIntervals.C
+#---------------------------------------------------------
+$(OBJ)/SignalStreamBuilder.o:\
+		SignalStreamBuilder.C \
+		SignalStreamBuilder.H \
+		ContentRegion.H \
+		ContentRegions.H \
+		ReferenceAnnotation.H \
+		VariantEvent.H \
+		VariantEvents.H \
+		SignalStream.H \
+		ConstraintInterval.H \
+		ConstraintIntervals.H
+	$(CC) $(CFLAGS) -o $(OBJ)/SignalStreamBuilder.o -c \
+		SignalStreamBuilder.C
+#---------------------------------------------------------
+$(OBJ)/cia.o:\
+		SignalStreamBuilder.H \
+		ContentRegion.H \
+		ContentRegions.H \
+		ReferenceAnnotation.H \
+		VariantEvent.H \
+		VariantEvents.H \
+		SignalStream.H \
+		ConstraintInterval.H \
+		ConstraintIntervals.H \
+		cia.H \
+		cia.C \
+		Propagator.H \
+		SignalQueue.H \
+		$(BOOM)/Histogram.H \
+		Signal.H
+	$(CC) $(CFLAGS) -o $(OBJ)/cia.o -c \
+		cia.C
+#---------------------------------------------------------
+$(OBJ)/CIA.o:\
+		$(BOOM)/Histogram.H \
+		CIA.H \
+		CIA.C
+	$(CC) $(CFLAGS) -o $(OBJ)/CIA.o -c \
+		CIA.C
+#---------------------------------------------------------
+cia: \
+		$(OBJ)/SignalStreamBuilder.o \
+		$(OBJ)/ContentRegion.o \
+		$(OBJ)/ContentRegions.o \
+		$(OBJ)/ReferenceAnnotation.o \
+		$(OBJ)/VariantEvent.o \
+		$(OBJ)/VariantEvents.o \
+		$(OBJ)/SignalStream.o \
+		$(OBJ)/ConstraintInterval.o \
+		$(OBJ)/ConstraintIntervals.o \
+		$(OBJ)/SignalLabelingProfile.o \
+		$(OBJ)/LabelMatrix.o \
+		$(OBJ)/Labeling.o \
+		$(OBJ)/EvidenceFilter.o \
+		$(OBJ)/RnaJunction.o \
+		$(OBJ)/RnaJunctions.o \
+		$(OBJ)/ParseGraph.o \
+		$(OBJ)/GffPathFromParseGraph.o \
+		$(OBJ)/SignalComparator.o \
+		$(OBJ)/NthOrderStringIterator.o \
+		$(OBJ)/TrainingSequence.o \
+		$(OBJ)/SignalPeptideSensor.o \
+		$(OBJ)/CodonTree.o \
+		$(OBJ)/Isochore.o \
+		$(OBJ)/IsochoreTable.o \
+		$(OBJ)/cia.o \
+		$(OBJ)/BranchAcceptor.o \
+		$(OBJ)/ThreePeriodicIMM.o \
+		$(OBJ)/IMM.o \
+		$(OBJ)/EdgeFactory.o \
+		$(OBJ)/MddTree.o \
+		$(OBJ)/Partition.o \
+		$(OBJ)/TreeNode.o \
+		$(OBJ)/GarbageCollector.o \
+		$(OBJ)/Edge.o \
+		$(OBJ)/TopologyLoader.o \
+		$(OBJ)/WAM.o \
+		$(OBJ)/WWAM.o \
+		$(OBJ)/TataCapModel.o \
+		$(OBJ)/TataCapSignal.o \
+		$(OBJ)/MarkovChainCompiler.o \
+		$(OBJ)/Fast3PMC.o \
+		$(OBJ)/FastMarkovChain.o \
+		$(OBJ)/ThreePeriodicMarkovChain.o \
+		$(OBJ)/DiscreteDistribution.o \
+		$(OBJ)/Transitions.o \
+		$(OBJ)/EmpiricalDistribution.o \
+		$(OBJ)/GeometricDistribution.o \
+		$(OBJ)/NoncodingQueue.o \
+		$(OBJ)/IntronQueue.o \
+		$(OBJ)/SignalType.o \
+		$(OBJ)/ContentType.o \
+		$(OBJ)/ModelBuilder.o \
+		$(OBJ)/ScoreAnalyzer.o \
+		$(OBJ)/ContentSensor.o \
+		$(OBJ)/MarkovChain.o \
+		$(OBJ)/WMM.o \
+		$(OBJ)/SignalQueue.o \
+		$(OBJ)/SignalSensor.o \
+		$(OBJ)/Propagator.o \
+		$(OBJ)/Signal.o \
+		$(OBJ)/SignalTypeProperties.o \
+		$(OBJ)/GZilla.o \
+		$(OBJ)/CIA.o
+	$(CC) $(LDFLAGS) -o cia \
+		$(OBJ)/SignalStreamBuilder.o \
+		$(OBJ)/ContentRegion.o \
+		$(OBJ)/ContentRegions.o \
+		$(OBJ)/ReferenceAnnotation.o \
+		$(OBJ)/VariantEvent.o \
+		$(OBJ)/VariantEvents.o \
+		$(OBJ)/SignalStream.o \
+		$(OBJ)/ConstraintInterval.o \
+		$(OBJ)/ConstraintIntervals.o \
+		$(OBJ)/SignalLabelingProfile.o \
+		$(OBJ)/LabelMatrix.o \
+		$(OBJ)/Labeling.o \
+		$(OBJ)/EvidenceFilter.o \
+		$(OBJ)/RnaJunction.o \
+		$(OBJ)/RnaJunctions.o \
+		$(OBJ)/ParseGraph.o \
+		$(OBJ)/GffPathFromParseGraph.o \
+		$(OBJ)/SignalComparator.o \
+		$(OBJ)/NthOrderStringIterator.o \
+		$(OBJ)/TrainingSequence.o \
+		$(OBJ)/SignalPeptideSensor.o \
+		$(OBJ)/CodonTree.o \
+		$(OBJ)/Isochore.o \
+		$(OBJ)/IsochoreTable.o \
+		$(OBJ)/cia.o \
+		$(OBJ)/BranchAcceptor.o \
+		$(OBJ)/ThreePeriodicIMM.o \
+		$(OBJ)/IMM.o \
+		$(OBJ)/EdgeFactory.o \
+		$(OBJ)/MddTree.o \
+		$(OBJ)/Partition.o \
+		$(OBJ)/TreeNode.o \
+		$(OBJ)/GarbageCollector.o \
+		$(OBJ)/Edge.o \
+		$(OBJ)/TopologyLoader.o \
+		$(OBJ)/WAM.o \
+		$(OBJ)/WWAM.o \
+		$(OBJ)/TataCapModel.o \
+		$(OBJ)/TataCapSignal.o \
+		$(OBJ)/MarkovChainCompiler.o \
+		$(OBJ)/Fast3PMC.o \
+		$(OBJ)/FastMarkovChain.o \
+		$(OBJ)/ThreePeriodicMarkovChain.o \
+		$(OBJ)/DiscreteDistribution.o \
+		$(OBJ)/Transitions.o \
+		$(OBJ)/EmpiricalDistribution.o \
+		$(OBJ)/GeometricDistribution.o \
+		$(OBJ)/NoncodingQueue.o \
+		$(OBJ)/IntronQueue.o \
+		$(OBJ)/SignalType.o \
+		$(OBJ)/ContentType.o \
+		$(OBJ)/ModelBuilder.o \
+		$(OBJ)/ScoreAnalyzer.o \
+		$(OBJ)/ContentSensor.o \
+		$(OBJ)/MarkovChain.o \
+		$(OBJ)/WMM.o \
+		$(OBJ)/SignalQueue.o \
+		$(OBJ)/SignalSensor.o \
+		$(OBJ)/Propagator.o \
+		$(OBJ)/Signal.o \
+		$(OBJ)/SignalTypeProperties.o \
+		$(OBJ)/GZilla.o \
+		$(OBJ)/CIA.o \
+		$(LIBDIRS) $(LIBS)
 #---------------------------------------------------------
