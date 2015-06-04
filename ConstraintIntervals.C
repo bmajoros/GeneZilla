@@ -54,8 +54,8 @@ void ConstraintIntervals::insert(ConstraintInterval I)
     }
     else { // split into two
       Vector<ConstraintInterval> two;
-      two.push_back(I); two.push_back(other);
-      other.setEnd(begin); two.back().setBegin(end);
+      two.push_back(I); two.push_back(intervals[firstIndex]);
+      other.setEnd(begin); two.back().getInterval().setBegin(end);
       intervals.insertByIndex(two,firstIndex+1);
     }
   }

@@ -19,6 +19,7 @@ public:
   bool isConstrained() const;
   bool contains(int pos) const;
   const Interval &getInterval() const;
+  Interval &getInterval();
 protected:
   bool constrained;
   Interval interval;
