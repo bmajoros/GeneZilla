@@ -29,7 +29,7 @@ void ConstraintIntervals::insert(ConstraintInterval I)
    */
 
   // First, find the first and last intervals overlapped by this new one
-  const Interval interval=contraintInterval.getInterval();
+  const Interval interval=I.getInterval();
   const int begin=interval.getBegin(), end=interval.getEnd();
   int firstIndex=-1, secondIndex=-1, N=intervals.size();
   for(int i=0 ; i<N ; ++i) {
