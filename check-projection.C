@@ -273,7 +273,7 @@ void Application::checkFrameshifts(const Labeling &labeling,
     const int total=phaseMismatches+phaseMatches;
     float percentMismatch=phaseMismatches/float(total);
     cout<<"frameshift detected: "<<phaseMismatches<<"/"<<total<<" = "
-	<<percentMismatch<<"% labeled exon bases chance frame"<<endl;
+	<<percentMismatch<<"% labeled exon bases change frame"<<endl;
   }
 }
 
