@@ -9,17 +9,22 @@
 using namespace std;
 using namespace BOOM;
 
-SignalStreamBuilder::SignalStreamBuilder()
-{
-  // ctor
-}
+
+
 SignalStreamBuilder::SignalStreamBuilder(const ReferenceAnnotation &refAnno,
 					 const VariantEvents &events,
 					 SignalStream &stream,
 					 ConstraintIntervals &constraints)
-  : refAnno(refAnno), events(events) stream(stream), constraints(constraints)
+  : refAnno(refAnno), events(events), stream(stream), constraints(constraints)
 {
   build();
+}
+
+
+
+void SignalStreamBuilder::build()
+{
+  
 }
 
 

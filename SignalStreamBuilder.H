@@ -23,9 +23,10 @@ public:
 		      ConstraintIntervals &);      // output
 protected:
   const ReferenceAnnotation &refAnno;
-  const VariantEvents &variantEvents;
+  const VariantEvents &events;
   SignalStream &stream;
   ConstraintIntervals &constraints;
+  void build();
 };
 
 #endif
