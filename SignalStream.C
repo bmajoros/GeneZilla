@@ -60,4 +60,8 @@ Signal *SignalStream::detect(int position)
 
 
 
+void SignalStream::reset()
+{
+  currentIndex=0;
+}
 

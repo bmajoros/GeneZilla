@@ -37,3 +37,11 @@ const Interval &ConstraintInterval::getInterval() const
 }
 
 
+
+bool ConstraintInterval::contains(int pos)
+{
+  return interval.contains(pos);
+}
+
+
+

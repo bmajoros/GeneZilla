@@ -3119,3 +3119,11 @@ $(OBJ)/ConstraintInterval.o:\
 	$(CC) $(CFLAGS) -o $(OBJ)/ConstraintInterval.o -c \
 		ConstraintInterval.C
 #---------------------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/ConstraintIntervals.o:\
+		ConstraintIntervals.C\
+		ConstraintIntervals.H
+	$(CC) $(CFLAGS) -o $(OBJ)/ConstraintIntervals.o -c \
+		ConstraintIntervals.C
+#---------------------------------------------------------
