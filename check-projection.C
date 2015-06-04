@@ -86,10 +86,18 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff> <labels.txt>\
   Labeling labeling(labelFile);
 
   // Translate to proteins
-  refTrans->loadSequence(refSubstrate); altTrans->loadSequence(altSubstrate);
-  const String refDNA=refTrans->getSequence();
+  refTrans->loadSequence(refSubstrate); 
+  String refDNA=refTrans->getSequence();
+  String refProtein=ProteinTrans::translate(refDNA);
+  if(refProtein.lastChar()!='*') {
+    cout<<"extending"<<endl;
+    refTrans->extendFinalExonBy3(); altTrans->extendFinalExonBy3();
+    refTrans->loadSequence(refSubstrate); 
+    refDNA=refTrans->getSequence();
+    refProtein=ProteinTrans::translate(refDNA);
+  }
+  altTrans->loadSequence(altSubstrate);
   const String altDNA=altTrans->getSequence();
-  const String refProtein=ProteinTrans::translate(refDNA);
   const String altProtein=ProteinTrans::translate(altDNA);
   if(refProtein!=altProtein) cout<<"proteins differ"<<endl;
 
@@ -97,7 +105,7 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff> <labels.txt>\
   checkFrameshifts(labeling,*altTrans,altSubstrate);
 
   // Check for stop codons
-  const bool stopPresent=altProtein.lastChar()!='*';
+  const bool stopPresent=altProtein.lastChar()=='*';
   refProtein.chop(); altProtein.chop();
   const int firstStop=altProtein.findFirst('*');
   if(firstStop>=0) {
