@@ -53,14 +53,8 @@ void SignalStreamBuilder::build()
   // Finally, do targeted signal sensing in regions around new or broken signals
   for(int i=0 ; i<numEvents ; ++i) {
     const VariantEvent &event=events.getIthEvent(i);
-    if(event.isGain()) {
-      const SignalType t=toSignalType(event.getSignalType());
-      SignalSensor *sensor=isochore->signalTypeToSensor[t];
-      const int pos=event.getPosition();
-
-    }
-    else if(event.isLoss()) {
-    }
+    if(event.isGain()) gain(event);
+    else if(event.isLoss()) loss(event);
   }
 
   // Sort the signals
@@ -68,6 +62,86 @@ void SignalStreamBuilder::build()
 
   // De-duplicate any signals that were made twice
   stream.deduplicate();
+}
+
+
+
+void SignalStreamBuilder::gain(const VariantEvent &event)
+{
+  const SignalType t=toSignalType(event.getSignalType());
+  SignalSensor *sensor=isochore->signalTypeToSensor[t];
+  const int pos=event.getPosition();
+  switch(t) {
+  case ATG: gainATG(pos,*sensor); break;
+  case TAG: gainTAG(pos,*sensor); break;
+  case GT:  gainGT(pos,*sensor);  break;
+  case AG:  gainAG(pos,*sensor);  break;
+  default: INTERNAL_ERROR;
+  }
+}
+
+
+
+void SignalStreamBuilder::loss(const VariantEvent &event)
+{
+  const SignalType t=toSignalType(event.getSignalType());
+  SignalSensor *sensor=isochore->signalTypeToSensor[t];
+  const int pos=event.getPosition();
+  switch(t) {
+  case ATG: lossATG(pos,*sensor); break;
+  case TAG: lossTAG(pos,*sensor); break;
+  case GT:  lossGT(pos,*sensor);  break;
+  case AG:  lossAG(pos,*sensor);  break;
+  default: INTERNAL_ERROR;
+  }
+}
+
+
+
+void SignalStreamBuilder::gainATG(int pos,SignalSensor &sensor)
+{
+}
+
+
+
+void SignalStreamBuilder::gainTAG(int pos,SignalSensor &sensor)
+{
+}
+
+
+
+void SignalStreamBuilder::gainGT(int pos,SignalSensor &sensor)
+{
+}
+
+
+
+void SignalStreamBuilder::gainAG(int pos,SignalSensor &sensor)
+{
+}
+
+
+
+void SignalStreamBuilder::lossATG(int pos,SignalSensor &sensor)
+{
+}
+
+
+
+void SignalStreamBuilder::lossTAG(int pos,SignalSensor &sensor)
+{
+}
+
+
+
+void SignalStreamBuilder::lossGT(int pos,SignalSensor &sensor)
+{
+}
+
+
+
+void SignalStreamBuilder::lossAG(int pos,SignalSensor &sensor)
+{
 }
 
 

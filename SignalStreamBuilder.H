@@ -30,6 +30,16 @@ protected:
   ConstraintIntervals &constraints;
   Isochore *isochore;
   void build();
+  void gain(const VariantEvent &);
+  void loss(const VariantEvent &);
+  void gainATG(int pos,SignalSensor &);
+  void gainTAG(int pos,SignalSensor &);
+  void gainGT(int pos,SignalSensor &);
+  void gainAG(int pos,SignalSensor &);
+  void lossATG(int pos,SignalSensor &);
+  void lossTAG(int pos,SignalSensor &);
+  void lossGT(int pos,SignalSensor &);
+  void lossAG(int pos,SignalSensor &);
 };
 
 #endif
