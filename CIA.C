@@ -251,8 +251,8 @@ void CIA::updateAccumulators(const Sequence &seq,
 				    scorePhase1,scorePhase2);
     else {
       score=contentSensor.scoreSingleBase(seq,str,pos,base,c);
-      intronScore=
-	score+priorWeight*log(labelMatrix(refAnno->getLabeling()[pos],LABEL_INTRON));
+      intronScore=score+priorWeight*
+	log(refAnno->getMatrix()(refAnno->getLabeling()[pos],LABEL_INTRON));
     }
     for(int phase=0 ; phase<3 ; ++phase) { // Score against the prior labeling
       GeneModelLabel predictedLabel;
@@ -261,7 +261,8 @@ void CIA::updateAccumulators(const Sequence &seq,
 	predictedLabel=LABEL_INTERGENIC;
       else if(isCoding) predictedLabel=getExonLabel(phase);
       else INTERNAL_ERROR;
-      float prior=priorWeight*log(labelMatrix(refAnno->getLabeling()[pos],predictedLabel));
+      float prior=priorWeight*
+	log(refAnno->getMatrix()(refAnno->getLabeling()[pos],predictedLabel));
       if(predictedLabel==LABEL_INTRON) cout<<"\t"<<score+prior<<endl;
       if(priorWeight==0) prior=0;
       if(isNaN(prior)) INTERNAL_ERROR; // ###
@@ -420,7 +421,8 @@ void CIA::scoreSignalPrior(SignalPtr s)
 	for(int pos=wBegin ; pos<wEnd ; ++pos) {
 	  GeneModelLabel predictedLabel=profile.getLabel(phase,pos-wBegin);
 	  GeneModelLabel priorLabel=refAnno->getLabeling()[pos];
-	  float penalty=priorWeight*log(labelMatrix(priorLabel,predictedLabel));
+	  float penalty=priorWeight*
+	    log(refAnno->getMatrix()(priorLabel,predictedLabel));
 	  score+=penalty;
 	}
       prop[phase]+=score;

@@ -33,7 +33,6 @@ public:
 protected:
   ReferenceAnnotation *refAnno;
   VariantEvents &events;
-  LabelMatrix labelMatrix;
   String projectedGFF, labelFile; // filenames
   float priorWeight;
   Array1D<SignalLabelingProfile> signalLabelingProfiles;

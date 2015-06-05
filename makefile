@@ -8,13 +8,9 @@ CFLAGS		= $(OPTIMIZE) -w -fpermissive
 LDFLAGS		= $(OPTIMIZE) -w -fpermissive
 BOOM		= BOOM
 OBJ		= obj
-#LIBDIRS		= -L/home/bmajoros/GF/TAIL/bayes 
-#LIBS		= -lbayes
 STATIC		=
-#LIBDIRS		= -LBOOM
-#LIBS		= -lBOOM
 LIBDIRS		= 
-LIBS		= -lpthread  -lgsl -lm -lgslcblas -LBOOM/lambda -llambda -LBOOM -lBOOM 
+LIBS		= -lpthread  -lgsl -lm -lgslcblas -LBOOM -lBOOM 
 
 
 all: \
