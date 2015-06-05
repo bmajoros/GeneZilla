@@ -14,6 +14,7 @@ using namespace BOOM;
 ConstraintIntervals::ConstraintIntervals(int seqLen)
 {
   intervals.push_back(ConstraintInterval(Interval(0,seqLen),true));
+  reset();
 }
 
 
@@ -86,7 +87,9 @@ void ConstraintIntervals::reset()
 
 bool ConstraintIntervals::isConstrained(int pos)
 {
+  //  cout<<"cur="<<currentElem<<endl;
   ConstraintInterval &interval=intervals[currentElem];
+  //cout<<"pos="<<pos<<" interval="<<interval.getInterval()<<endl;
   if(interval.contains(pos)) return interval.isConstrained();
   return intervals[++currentElem].isConstrained();
 }

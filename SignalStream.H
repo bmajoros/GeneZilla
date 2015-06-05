@@ -19,6 +19,7 @@ public:
   virtual ~SignalStream();
   void add(Signal *);
   void sort();
+  void deduplicate();
   void reset();
   Signal *detect(int position);
 protected:

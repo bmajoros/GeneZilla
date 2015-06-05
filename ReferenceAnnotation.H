@@ -30,7 +30,11 @@ public:
   const Labeling &getLabeling() const;
   const ContentRegions &getRegions() const;
   const Vector<Signal*> &getSignals() const;
+  const String &getAltSeqStr() { return altSeqStr; }
+  const Sequence &getAltSeq() { return altSeq; }
 protected:
+  const String altSeqStr;
+  const Sequence altSeq;
   LabelMatrix *matrix;
   Labeling labeling;
   Vector<Signal*> signals;

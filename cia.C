@@ -90,6 +90,7 @@ void AppMain(int argc,char *argv[])
   else edgeFactory=new EdgeFactory;
   CIA cia(PROGRAM_NAME,VERSION,*edgeFactory,transcriptId,variantEvents,
 	  projectedGFF,labelFile);
+  cia.useOneTerminusOnly();
   if(cmd.option('i')) cia.loadIsochoreBoundaries(cmd.optParm('i'));
   if(cmd.option('c')) cia.loadCpGislands(cmd.optParm('c'));
   if(cmd.option('S')) cia.omitSignalScores();

@@ -5,6 +5,7 @@
  License (GPL) version 3, as described at www.opensource.org.
  ****************************************************************/
 #include <iostream>
+#include "BOOM/Exceptions.H"
 #include "VariantEvent.H"
 using namespace std;
 
@@ -38,6 +39,55 @@ int VariantEvent::getPosition() const
 
 
 
+bool VariantEvent::isGain() const
+{
+  return varEventType==VAR_EVENT_GAIN;
+}
+
+
+
+bool VariantEvent::isLoss() const
+{
+  return varEventType==VAR_EVENT_LOSS;
+}
+
+
+
+bool VariantEvent::isIndel() const
+{
+  return varEventType==VAR_EVENT_INDEL;
+}
+
+
+
+bool VariantEvent::isStartCodon() const
+{
+  return varSignalType==VAR_SIG_ATG;
+}
+
+
+
+bool VariantEvent::isStopCodon() const
+{
+  return varSignalType==VAR_SIG_TAG;
+}
+
+
+
+bool VariantEvent::isDonor() const
+{
+  return varSignalType==VAR_SIG_GT;
+}
+
+
+
+bool VariantEvent::isAcceptor() const
+{
+  return varSignalType==VAR_SIG_AG;
+}
+
+
+
 VariantSignalType varSigTypeFromString(const String &s)
 {
   if(s=="start-codon") return VAR_SIG_ATG;
@@ -57,5 +107,27 @@ VariantEventType varEventTypeFromString(const String &s)
   if(s=="indel") return VAR_EVENT_INDEL;
   throw s+" : unknown VariantEventType";
 };
+
+
+
+SignalType toSignalType(VariantSignalType t)
+{
+  switch(t) {
+  case VAR_SIG_ATG:    return ATG;
+  case VAR_SIG_TAG:    return ATG;
+  case VAR_SIG_GT:     return ATG;
+  case VAR_SIG_AG:     return ATG;
+  case VAR_SIG_INDEL: 
+  default:
+    INTERNAL_ERROR;
+  }
+}
+
+
+
+bool isSignal(VariantSignalType t)
+{
+  return t!=VAR_SIG_INDEL;
+}
 
 

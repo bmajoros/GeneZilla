@@ -60,3 +60,20 @@ void SignalStream::reset()
   currentIndex=0;
 }
 
+
+
+void SignalStream::deduplicate()
+{
+  int N=signals.size();
+  for(int i=0 ; i+1<N ; ) {
+    Signal *thisOne=signals[i], *nextOne=signals[i+1];
+    if(thisOne->getContextWindowPosition()==
+       nextOne->getContextWindowPosition() &&
+       thisOne->getSignalType()==
+       nextOne->getSignalType() &&
+       thisOne->getStrand()==
+       nextOne->getStrand())
+      { signals.cut(i); --N; }
+    else ++i;
+  }
+}

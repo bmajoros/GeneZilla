@@ -11,6 +11,7 @@
 #include "VariantEvents.H"
 #include "ConstraintIntervals.H"
 #include "SignalStream.H"
+#include "Isochore.H"
 using namespace std;
 using namespace BOOM;
 
@@ -20,12 +21,14 @@ public:
   SignalStreamBuilder(const ReferenceAnnotation &, // input
 		      const VariantEvents &,       // input
 		      SignalStream &,              // output
-		      ConstraintIntervals &);      // output
+		      ConstraintIntervals &,       // output
+		      Isochore *);
 protected:
   const ReferenceAnnotation &refAnno;
   const VariantEvents &events;
   SignalStream &stream;
   ConstraintIntervals &constraints;
+  Isochore *isochore;
   void build();
 };
 

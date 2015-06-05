@@ -8,6 +8,7 @@
 #define INCL_VariantEvent_H
 #include <iostream>
 #include "BOOM/String.H"
+#include "SignalType.H"
 using namespace std;
 using namespace BOOM;
 
@@ -20,6 +21,8 @@ enum VariantSignalType {
   VAR_SIG_INDEL
 };
 VariantSignalType varSigTypeFromString(const String &);
+SignalType toSignalType(VariantSignalType);
+bool isSignal(VariantSignalType);
 
 enum VariantEventType {
   VAR_EVENT_GAIN,
@@ -34,6 +37,13 @@ public:
   VariantSignalType getSignalType() const;
   VariantEventType getEventType() const;
   int getPosition() const;
+  bool isGain() const;
+  bool isLoss() const;
+  bool isIndel() const;
+  bool isStartCodon() const;
+  bool isStopCodon() const;
+  bool isDonor() const;
+  bool isAcceptor() const;
 protected:
   VariantSignalType varSignalType;
   VariantEventType varEventType;

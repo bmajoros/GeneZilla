@@ -25,6 +25,7 @@ ReferenceAnnotation::ReferenceAnnotation(const String &annoGFFfile,
 					 Isochore &isochore,
 					 const String &altSeqStr,
 					 const Sequence &altSequence)
+  : altSeq(altSequence), altSeqStr(altSeqStr)
 {
   loadMatrix(matrixFile);
   loadLabeling(labelingFile);
@@ -100,13 +101,10 @@ void ReferenceAnnotation::initSignals(Isochore &isochore,const String &altSeqStr
     const ContentRegion &region=*cur;
     ContentType contentType=region.getType();
     const Interval &interval=region.getInterval();
-    SignalType leftSignalType=leftSignal(contentType);
     SignalType rightSignalType=rightSignal(contentType);
-    if(cur==regions.begin())
-      makeSignal(leftSignalType,interval.getBegin(),altSeqStr,altSequence,
-		 *sensors[leftSignalType]);
-    makeSignal(rightSignalType,interval.getEnd(),altSeqStr,altSequence,
-	       *sensors[rightSignalType]);
+    if(interval.getEnd()<altSeqStr.length())
+      makeSignal(rightSignalType,interval.getEnd(),altSeqStr,altSequence,
+		 *sensors[rightSignalType]);
   }
   sortSignals();
 }

@@ -51,6 +51,8 @@ protected:
   void scoreSignalPrior(SignalPtr);
   void initSignalLabelingProfiles();
   void buildParseGraph(const Sequence &seq,const BOOM::String &str);
+  void enforceConstraints(SignalPtr);
+  void purgeQueues();
 };
 
 

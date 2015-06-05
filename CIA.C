@@ -76,7 +76,7 @@ BOOM::Stack<SignalPtr> * CIA::processChunk(const Sequence &substrate,
 
   // Populate the signal stream
   constraints=new ConstraintIntervals(substrateString.length());
-  SignalStreamBuilder ssb(*refAnno,events,signalStream,*constraints);
+  SignalStreamBuilder ssb(*refAnno,events,signalStream,*constraints,isochore);
 
   return mainAlgorithm(substrate,substrateString,osGraph,dumpGraph,
 		       psaFilename);
@@ -171,7 +171,6 @@ void CIA::updateAccumulators(const Sequence &seq,
 
 
 
-#ifdef EXPLICIT_GRAPHS
 void CIA::buildParseGraph(const Sequence &seq,const BOOM::String &str)
 {
   // Instantiate one signal of each type at the left terminus to act as
@@ -186,49 +185,39 @@ void CIA::buildParseGraph(const Sequence &seq,const BOOM::String &str)
     Symbol base=seq[pos];
       
     // Check whether any signals occur here
-    BOOM::Vector<SignalSensor*>::iterator cur=
-      isochore->signalSensors.begin(),
-      end=isochore->signalSensors.end();
-    for(; cur!=end ; ++cur ) {
-      SignalSensor &sensor=**cur;
-      if(pos+sensor.getContextWindowLength()>seqLen) continue;
-      
-      SignalPtr signal=signalStream.detect(pos);//sensor.detect(seq,str,pos);
+    while(1) {
+      SignalPtr signal=signalStream.detect(pos);
       if(signal) {
 	int begin=signal->getConsensusPosition();
 	int end=signal->posOfBaseFollowingConsensus();
 	bool supported=false;
 	if(evidenceFilter)
-	  switch(signal->getSignalType()) 
-	    {
-	    case ATG:
-	    case TAG:
-	    case NEG_ATG:
-	    case NEG_TAG:
-	      supported=evidenceFilter->codingSignalSupported(begin,end);
-	      break;
-	    case GT:
-	    case NEG_AG:
-	      supported=evidenceFilter->spliceOutSupported(begin);
-	      break;
-	    case AG:
-	    case NEG_GT:
-	      supported=evidenceFilter->spliceInSupported(end);
-	      break;
-	    }
+	  switch(signal->getSignalType()) {
+	  case ATG:
+	  case TAG:
+	  case NEG_ATG:
+	  case NEG_TAG:
+	    supported=evidenceFilter->codingSignalSupported(begin,end);
+	    break;
+	  case GT:
+	  case NEG_AG:
+	    supported=evidenceFilter->spliceOutSupported(begin);
+	    break;
+	  case AG:
+	  case NEG_GT:
+	    supported=evidenceFilter->spliceInSupported(end);
+	    break;
+	  }
 	else supported=true;
 
 	if(supported) {
 	  scoreSignalPrior(signal);
-
-	  // Find optimal predecessor for this signal in all 3 phases
 	  linkBack(str,signal);
-		
-	  // Add this signal to the appropriate queue(s)
+	  enforceConstraints(signal);
 	  enqueue(signal);
-
 	}	
       }
+      else break;
     }
       
     // Check for stop codons & terminate reading frames when they are 
@@ -276,7 +265,6 @@ void CIA::buildParseGraph(const Sequence &seq,const BOOM::String &str)
     garbageCollector.drop(s);
   }
 }
-#endif
 
 
 
@@ -321,6 +309,31 @@ void CIA::initSignalLabelingProfiles()
     //cout<<sensor.getSignalType()<<endl;
     //cout<<signalLabelingProfiles[sensor.getSignalType()]<<endl<<endl;
   }
+}
+
+
+
+void CIA::purgeQueues()
+{
+  for(Vector<ContentSensor*>::iterator cur=isochore->contentSensors.begin(),
+        end=isochore->contentSensors.end() ; cur!=end ; ++cur) {
+    ContentSensor &contentSensor=**cur;
+    BOOM::Set<SignalQueue*> &queues=contentSensor.getSignalQueues();
+    for(Set<SignalQueue*>::iterator cur=queues.begin(), end=queues.end();
+        cur!= end ; ++cur) {
+      SignalQueue &queue=**cur;
+      if(queue.getContentType()==INTERGENIC) continue;
+      queue.resetQueue(isochore);
+    }
+  }
+}
+
+
+
+void CIA::enforceConstraints(SignalPtr signal)
+{
+  const int pos=signal->getConsensusPosition();
+  if(constraints->isConstrained(pos)) purgeQueues();
 }
 
 
