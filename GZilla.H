@@ -131,7 +131,7 @@ protected:
   ParseGraph parseGraph;
   bool oneTerminusOnly;
 
-  void buildParseGraph(const Sequence &seq,const BOOM::String &str);
+  virtual void buildParseGraph(const Sequence &seq,const BOOM::String &str);
 #endif
 
   EvidenceFilter *evidenceFilter;

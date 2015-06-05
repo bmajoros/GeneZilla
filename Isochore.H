@@ -26,6 +26,7 @@
  ****************************************************************/
 struct Isochore
 {
+  ConfigFile configFile;
   float maximumGC;
   bool useSignalThresholds;
   double signalThresholdMultiplier;

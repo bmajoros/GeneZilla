@@ -63,6 +63,7 @@ void IsochoreTable::load(const BOOM::String &filename)
 	  BOOM::ConfigFile *configFile=new ConfigFile(configFilename);
 	  configFiles.push_back(configFile);
 	  Isochore *isochore=new Isochore;
+	  isochore->configFile=*configFile;
 	  isochore->name=toRomanNumerals(isochoreId);
 	  isochore->maximumGC=maximumGC;
 	  isochores.push_back(isochore);

@@ -16,11 +16,12 @@ using namespace BOOM;
 
 class LabelMatrix {
 public:
+  LabelMatrix(){}
   LabelMatrix(const String &filename);
+  void load(const String &filename);
   float operator()(GeneModelLabel from,GeneModelLabel to);
 protected:
   Array2D<float> M;
-  void load(const String &filename);
 };
 
 #endif

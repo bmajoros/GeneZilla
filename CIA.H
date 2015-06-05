@@ -1,36 +1,40 @@
 /****************************************************************
- GeneZilla-CRF
+ GeneZilla-CIA
  Copyright (C)2015 William H. Majoros (martiandna@gmail.com).
  This is OPEN SOURCE SOFTWARE governed by the Gnu General Public
  License (GPL) version 3, as described at www.opensource.org.
  ****************************************************************/
-#ifndef INCL_CRF_H
-#include "crf.H"
+#ifndef INCL_CIA_H
+#include "cia.H"
 #include "GZilla.H"
 #include "SignalLabelingProfile.H"
+#include "VariantEvents.H"
+#include "ReferenceAnnotation.H"
 
 /****************************************************************
-                            class CRF
+                            class CIA
  ****************************************************************/
 
-class CRF : public GeneZilla {
+class CIA : public GeneZilla {
 public:
-  CRF(const BOOM::String &PROGRAM_NAME,const BOOM::String &VERSION,
-      EdgeFactory &,int &transcriptId,LabelMatrix &,float priorWeight);
-  virtual ~CRF();
-  virtual int main(int argc,char *argv[]);
+  CIA(const BOOM::String &PROGRAM_NAME,const BOOM::String &VERSION,
+      EdgeFactory &,int &transcriptId,VariantEvents &,const String &
+      projectedGFFfile,const String &labelFile);
+  virtual ~CIA();
+  //virtual int main(int argc,char *argv[]);
   virtual BOOM::Stack<SignalPtr> * processChunk(const Sequence &seq,
 				      const BOOM::String &seqStr,
 				      const BOOM::String &isoFilename,
 				      const BOOM::String &substrateId,
 				      ostream &osGraph,
 				      bool dumpGraph,
-				      String psaFilename,
-				      Labeling &);
+					String psaFilename);
 
 protected:
-  Labeling priorLabels;
+  ReferenceAnnotation *refAnno;
+  VariantEvents &events;
   LabelMatrix labelMatrix;
+  String projectedGFF, labelFile; // filenames
   float priorWeight;
   Array1D<SignalLabelingProfile> signalLabelingProfiles;
 
@@ -43,6 +47,7 @@ protected:
 				  int pos,Symbol,char);
   void scoreSignalPrior(SignalPtr);
   void initSignalLabelingProfiles();
+  void buildParseGraph(const Sequence &seq,const BOOM::String &str);
 };
 
 
