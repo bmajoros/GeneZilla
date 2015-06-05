@@ -33,48 +33,6 @@ CIA::~CIA()
 
 
 
-/*
-int CIA::main(int argc,char *argv[])
-  {
-    // Process command line
-    BOOM::CommandLine cmd(argc,argv,"r:");
-    if(cmd.numArgs()!=2)
-      throw string(
-"\ngenezilla <*.iso> <*.fasta> [-r <*.gff>]\n\
-          where -r <*.gff> specifies a GFF file to load and score\n\n");
-    BOOM::String isochoreFilename=cmd.arg(0);
-    BOOM::String fastaFilename=cmd.arg(1);
-
-    cerr << "Loading sequence from " << fastaFilename 
-	 << "........................" << endl;
-    alphabet=DnaAlphabet::global();
-
-    BOOM::FastaReader fastaReader(fastaFilename);
-    BOOM::String defline, substrateString;
-    fastaReader.nextSequence(defline,substrateString);
-    Sequence substrate(substrateString,DnaAlphabet::global());
-
-    seqLen=substrate.getLength();
-
-//    if(cmd.option('r')) 
-//      loadGFF(cmd.optParm('r'),substrate,substrateString);
-
-    cerr << "Running the CIA algorithm..." << endl;
-    cerr << "\tsequence length=" << substrate.getLength() << endl;
-    ofstream osGraph;
-    BOOM::Stack<SignalPtr> *path=mainAlgorithm(substrate,substrateString,
-					       osGraph,false,"");
-    delete path;
-
-#ifdef REPORT_MEMORY_USAGE
-    MemoryProfiler::report("TOTAL MEMORY USAGE: ",cerr);
-#endif
-
-    return 0;
-  }
-*/
-
-
 BOOM::Stack<SignalPtr> * CIA::processChunk(const Sequence &substrate,
 					   const BOOM::String &substrateString,
 					   const BOOM::String &isoFilename,
@@ -91,35 +49,32 @@ BOOM::Stack<SignalPtr> * CIA::processChunk(const Sequence &substrate,
   nextIsochoreInterval.begin=-1;
   if(!isochoreIntervals.isDefined(substrateId))
     gcContent=getGCcontent(substrateString);
-  else
-    {
-      BOOM::Vector<IsochoreInterval> &intervals=
-	isochoreIntervals[substrateId];
-      if(intervals.size()>0)
-	{
-	  IsochoreInterval &interval=intervals[0];
-	  gcContent=interval.GC;
-	  nextIsochoreIndex=1;
-	  if(intervals.size()>1)
-	    nextIsochoreInterval=intervals[1];
-	  else
-	    nextIsochoreInterval.begin=-1;
-	}
-      else
-	gcContent=getGCcontent(substrateString);
+  else {
+    BOOM::Vector<IsochoreInterval> &intervals=
+      isochoreIntervals[substrateId];
+    if(intervals.size()>0) {
+      IsochoreInterval &interval=intervals[0];
+      gcContent=interval.GC;
+      nextIsochoreIndex=1;
+      if(intervals.size()>1) nextIsochoreInterval=intervals[1];
+      else nextIsochoreInterval.begin=-1;
     }
+    else gcContent=getGCcontent(substrateString);
+  }
 
   // This is the first chunk we are seeing...so do some initialization
   // first:
   cerr << "Processing config file..." << endl;
   processIsochoreFile(isoFilename,gcContent);
-  initSignalLabelingProfiles();
   const String matrixFile=isochore->configFile.lookupOrDie("label-matrix");
   priorWeight=isochore->configFile.getFloatOrDie("prior-weight");
 
   // Load reference annotation
   refAnno=new ReferenceAnnotation(projectedGFF,labelFile,matrixFile,*isochore,
 				  substrateString,substrate);
+
+  cout<<"initializing signal labeling profiles"<<endl;
+  initSignalLabelingProfiles();
 
   cerr << "\tsequence length=" << seqLen << endl;
   return mainAlgorithm(substrate,substrateString,osGraph,dumpGraph,

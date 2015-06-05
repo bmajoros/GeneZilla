@@ -80,6 +80,7 @@ void IsochoreTable::load(const BOOM::String &filename)
       else if(!line.isEmpty())
 	throw BOOM::String("Syntax error in ISO file:\n")+line;
     }
+  infile.close();
 
   // Add the GLOBAL attributes to all the config file representations
   int n=pairs.size();
@@ -89,6 +90,9 @@ void IsochoreTable::load(const BOOM::String &filename)
       pair<BOOM::String,BOOM::String> &p=pairs[i];
       for(int j=0 ; j<m ; ++j)
 	configFiles[j]->enter(p.first,p.second);
+      for(Vector<Isochore*>::iterator cur=isochores.begin(), end=isochores.end() ;
+	  cur!=end ; ++cur)
+	(*cur)->configFile.enter(p.first,p.second);
     }
 
   // Finally, extract the gene-finder parameters from the config files

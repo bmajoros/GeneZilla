@@ -264,6 +264,7 @@ SignalType leftSignal(ContentType contentType)
 {
   switch(contentType)
     {
+    case INTERGENIC:               return TAG;
     case INITIAL_EXON:             return ATG;
     case INTERNAL_EXON:            return AG;
     case FINAL_EXON:               return AG;
@@ -278,7 +279,7 @@ SignalType leftSignal(ContentType contentType)
     case NEG_INTRON:               return NEG_AG;
     case NEG_FIVE_PRIME_UTR:       return NEG_ATG;
     case NEG_THREE_PRIME_UTR:      return NEG_POLYA;
-    default: throw BOOM::String(__FILE__)+__LINE__;
+    default: INTERNAL_ERROR;
     }
 }
 
@@ -288,6 +289,7 @@ SignalType rightSignal(ContentType contentType)
 {
   switch(contentType)
     {
+    case INTERGENIC:               return ATG;
     case INITIAL_EXON:             return GT;
     case INTERNAL_EXON:            return GT;
     case FINAL_EXON:               return TAG;

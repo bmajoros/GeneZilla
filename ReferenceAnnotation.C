@@ -38,9 +38,7 @@ ReferenceAnnotation::~ReferenceAnnotation()
 {
   delete matrix;
   delete contentRegions;
-  for(Vector<Signal*>::iterator cur=signals.begin(), end=signals.end() ;
-      cur!=end ; ++cur)
-    delete *cur;
+  // NOTE: don't delete signals here: they are handled by the garbage collector
 }
 
 
@@ -104,8 +102,9 @@ void ReferenceAnnotation::initSignals(Isochore &isochore,const String &altSeqStr
     const Interval &interval=region.getInterval();
     SignalType leftSignalType=leftSignal(contentType);
     SignalType rightSignalType=rightSignal(contentType);
-    makeSignal(leftSignalType,interval.getBegin(),altSeqStr,altSequence,
-	       *sensors[leftSignalType]);
+    if(cur==regions.begin())
+      makeSignal(leftSignalType,interval.getBegin(),altSeqStr,altSequence,
+		 *sensors[leftSignalType]);
     makeSignal(rightSignalType,interval.getEnd(),altSeqStr,altSequence,
 	       *sensors[rightSignalType]);
   }
@@ -130,14 +129,14 @@ void ReferenceAnnotation::makeSignal(SignalType signalType,int intervalBeginOrEn
   int consensusPos, offset=sensor.getConsensusOffset();
   switch(signalType) {
   case ATG: consensusPos=intervalBeginOrEnd;   break;
-  case TAG: consensusPos=intervalBeginOrEnd-3; break; // ### verify!!!
+  case TAG: consensusPos=intervalBeginOrEnd-3; break;
   case GT:  consensusPos=intervalBeginOrEnd;   break;
   case AG:  consensusPos=intervalBeginOrEnd-2; break;
   default: INTERNAL_ERROR;
   }
   if(sensor.consensusOccursAt(str,consensusPos))
     makeSignal(str,seq,consensusPos-offset,sensor);
-  else cerr<<"WARNING: "<<signalType<<" reference signal does not match"<<endl; // ### debugging
+  //else cerr<<"WARNING: "<<signalType<<" reference signal does not match"<<endl; // ### debugging
 }
 
 
