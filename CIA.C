@@ -10,6 +10,7 @@
 #ifdef REPORT_PROGRESS
 #include "BOOM/Progress.H"
 #include "BOOM/VectorSorter.H"
+#include "SignalStreamBuilder.H"
 #endif
 
 CIA::CIA(const BOOM::String &PROGRAM_NAME,
@@ -19,7 +20,7 @@ CIA::CIA(const BOOM::String &PROGRAM_NAME,
   : GeneZilla(PROGRAM_NAME,VERSION,edgeFactory,transcriptId),
     signalLabelingProfiles(NumContentTypes), priorWeight(0), 
     events(events), refAnno(NULL), projectedGFF(projectedGFF),
-    labelFile(labelFile)
+    labelFile(labelFile), constraints(NULL)
 {
   // ctor
 }
@@ -64,7 +65,6 @@ BOOM::Stack<SignalPtr> * CIA::processChunk(const Sequence &substrate,
 
   // This is the first chunk we are seeing...so do some initialization
   // first:
-  cerr << "Processing config file..." << endl;
   processIsochoreFile(isoFilename,gcContent);
   const String matrixFile=isochore->configFile.lookupOrDie("label-matrix");
   priorWeight=isochore->configFile.getFloatOrDie("prior-weight");
@@ -72,11 +72,12 @@ BOOM::Stack<SignalPtr> * CIA::processChunk(const Sequence &substrate,
   // Load reference annotation
   refAnno=new ReferenceAnnotation(projectedGFF,labelFile,matrixFile,*isochore,
 				  substrateString,substrate);
-
-  cout<<"initializing signal labeling profiles"<<endl;
   initSignalLabelingProfiles();
 
-  cerr << "\tsequence length=" << seqLen << endl;
+  // Populate the signal stream
+  constraints=new ConstraintIntervals(substrateString.length());
+  SignalStreamBuilder ssb(*refAnno,events,signalStream,*constraints);
+
   return mainAlgorithm(substrate,substrateString,osGraph,dumpGraph,
 		       psaFilename);
 }
@@ -98,81 +99,8 @@ BOOM::Stack<SignalPtr> * CIA::mainAlgorithm(const Sequence &seq,
       os<<intergenicSums[i]<<endl;
   }
 
-#ifndef EXPLICIT_GRAPHS
-  // Instantiate one signal of each type at the left terminus to act as
-  // anchors to which real signals can link back
-  instantiateLeftTermini();
-
-#ifdef REPORT_PROGRESS
-  BOOM::Progress progress;
-  progress.start(seqLen);
-#endif
-
-  // Make a single left-to-right pass across the sequence
-  for(int pos=0 ; pos<seqLen ; ++pos, ++charPtr)
-    {
-      if(pos==nextIsochoreInterval.begin) crossIsochoreBoundary(pos);
-      Symbol base=seq[pos];
-      
-      // Check whether any signals occur here
-      BOOM::Vector<SignalSensor*>::iterator cur=
-	isochore->signalSensors.begin(), end=isochore->signalSensors.end();
-      for(; cur!=end ; ++cur )
-	{
-	  SignalSensor &sensor=**cur;
-	  if(pos+sensor.getContextWindowLength()>seqLen) continue;
-#ifdef FORCE_SPECIFIC_SIGNALS
-	  SignalPtr signal=
-	    (forcedSignalCoords.isMember(pos+sensor.getConsensusOffset()) ? 
-	     sensor.detectWithNoCutoff(seq,str,pos) :
-	     sensor.detect(seq,str,pos));
-#else
-	  SignalPtr signal=sensor.detect(seq,str,pos);
-#endif
-	  if(signal)
-	    {
-	      scoreSignalPrior(signal);
-
-	      // Find optimal predecessor for this signal in all 3 phases
-	      linkBack(str,signal);
-
-	      // Add this signal to the appropriate queue(s)
-	      enqueue(signal);
-	    }
-	}
-
-      // Check for stop codons & terminate reading frames when they 
-      // are found.  This check lags behind by two bases so that any 
-      // stop codon we find won't overlap with a signal yet to be 
-      // identified (consider TAGT=TAG+GT; the TAG should not stop 
-      // any reading frames for the GT because when GT is used as a 
-      // donor only the TA would be present during translation)
-      if(pos>1) handleStopCodons(str,pos-2);
-
-      // Propagate scores of all non-eclipsed signals up to this base
-      updateAccumulators(seq,str,pos,base,*charPtr);
-
-#ifdef REPORT_PROGRESS
-      if((pos+1)%250000==0) cerr<<progress.getProgress(pos)<<endl;
-#endif
-    }
-
-  // Instantiate an anchor signal of each type at the right terminus
-  // and link them back, to complete the dynamic programming evaluation:
-  double parseScore;
-  BOOM::Stack<SignalPtr> *path=
-    instantiateRightTermini(str,seqLen,parseScore);
-
-  // Output gene prediction in GFF format
-  generateGff(path,seqLen,parseScore);
-#endif
-
-#ifdef EXPLICIT_GRAPHS
-  //###DEBUGGING: do the prediction using the graph instead of the "trellis"
-  //const char *charPtr=str.c_str();
-  //intergenicSums.resize(seqLen);
-  //computeIntergenicSums(seq,str,charPtr);
   buildParseGraph(seq,str);
+
   double parseScore;
   BOOM::Stack<SignalPtr> *path=parseGraph.findOptimalPath(parseScore);
   generateGff(path,seqLen,parseScore);
@@ -180,7 +108,6 @@ BOOM::Stack<SignalPtr> * CIA::mainAlgorithm(const Sequence &seq,
     parseGraph.setVertexIndices();
     osGraph<<parseGraph<<endl;
   }
-#endif
 
 #ifdef REPORT_MEMORY_USAGE
     MemoryProfiler::report("CIA TOTAL MEMORY USAGE: ",cerr);
@@ -266,12 +193,7 @@ void CIA::buildParseGraph(const Sequence &seq,const BOOM::String &str)
       SignalSensor &sensor=**cur;
       if(pos+sensor.getContextWindowLength()>seqLen) continue;
       
-      SignalPtr signal=sensor.detect(seq,str,pos);
-#ifdef FORCE_SPECIFIC_SIGNALS
-      if(!signal && forcedSignalCoords.isMember
-	 (pos+sensor.getConsensusOffset()))
-	signal=sensor.detectWithNoCutoff(seq,str,pos);
-#endif
+      SignalPtr signal=signalStream.detect(pos);//sensor.detect(seq,str,pos);
       if(signal) {
 	int begin=signal->getConsensusPosition();
 	int end=signal->posOfBaseFollowingConsensus();

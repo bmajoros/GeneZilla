@@ -24,7 +24,13 @@ SignalStreamBuilder::SignalStreamBuilder(const ReferenceAnnotation &refAnno,
 
 void SignalStreamBuilder::build()
 {
-  
+  const Vector<Signal*> &refSignals=refAnno.getSignals();
+  for(Vector<Signal*>::const_iterator cur=refSignals.begin(), end=refSignals.end() ;
+      cur!=end ; ++cur) stream.add(*cur);
+
+
+
+  stream.sort();
 }
 
 

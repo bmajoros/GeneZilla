@@ -43,7 +43,7 @@ int main(int argc,char *argv[]) {
 void AppMain(int argc,char *argv[])
 {
   // Process command line
-  BOOM::CommandLine cmd(argc,argv,"SCD");
+  BOOM::CommandLine cmd(argc,argv,"g:CDS");
   if(cmd.numArgs()!=5)
     throw BOOM::String(
 "\ncia <genezilla.iso> <alt.fasta> <projected.labels> <projected.gff> <variant-signals.gff>\n\
@@ -52,9 +52,11 @@ void AppMain(int argc,char *argv[])
     <projected.gff> = GFF file produced by project-annotation\n\
     <variant-signals.gff> = GFF file produced by find-variant-signals\n\
     <genezilla.iso> = GeneZilla configuration file, with lambda and label-matrix added\n\
-    -S : omit signal scores\n\
-    -C : omit content scores\n\
-    -D : omit duration scores\n\
+  options:\n\
+      -g file : dump ORF graph into file\n\
+      -S : omit signal scores\n\
+      -C : omit content scores\n\
+      -D : omit duration scores\n\
 ");
   const String isochoreFilename=cmd.arg(0);
   const String fastaFilename=cmd.arg(1);
@@ -99,13 +101,16 @@ void AppMain(int argc,char *argv[])
   // Parse the substrate ID out of the defline
   BOOM::String contigId, remainder;
   BOOM::FastaReader::parseDefline(defline,contigId,remainder);
-  cerr<<"processing substrate "<<contigId<<"..."<<endl;
 
   // Predict genes and get path
   ofstream osGraph;
+  bool dumpGraph=false;
+  if(cmd.option('g')) {
+    osGraph.open(cmd.optParm('g').c_str());
+    dumpGraph=true; }
   BOOM::Stack<SignalPtr> *path=
     cia.processChunk(seq,seqString,isochoreFilename,contigId,
-		     osGraph,false,psaName);
+		     osGraph,dumpGraph,psaName);
  
   // Don't need the path; just delete it (this will also delete the
   // signal objects in it, since we use "smart pointers")

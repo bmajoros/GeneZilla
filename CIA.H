@@ -10,6 +10,8 @@
 #include "SignalLabelingProfile.H"
 #include "VariantEvents.H"
 #include "ReferenceAnnotation.H"
+#include "SignalStream.H"
+#include "ConstraintIntervals.H"
 
 /****************************************************************
                             class CIA
@@ -33,6 +35,8 @@ public:
 protected:
   ReferenceAnnotation *refAnno;
   VariantEvents &events;
+  SignalStream signalStream;
+  ConstraintIntervals *constraints;
   String projectedGFF, labelFile; // filenames
   float priorWeight;
   Array1D<SignalLabelingProfile> signalLabelingProfiles;

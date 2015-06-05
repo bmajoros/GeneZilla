@@ -22,9 +22,7 @@ SignalStream::SignalStream()
 
 SignalStream::~SignalStream()
 {
-  for(Vector<Signal*>::iterator cur=signals.begin(), end=signals.end() ;
-      cur!=end ; ++cur)
-    delete *cur;
+  // don't delete the signals: the garbage collector does that
 }
 
 
@@ -50,10 +48,7 @@ Signal *SignalStream::detect(int position)
   int N=signals.size();
   if(currentIndex>=N) return NULL;
   const sigPos=signals[currentIndex]->getContextWindowPosition();
-  if(position==sigPos) {
-    ++currentIndex;
-    return signals[currentIndex];
-  }
+  if(position==sigPos) return signals[currentIndex++];
   if(position>sigPos) INTERNAL_ERROR; // ### DEBUGGING
   return NULL;
 }
