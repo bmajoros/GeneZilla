@@ -5,6 +5,7 @@
  License (GPL) version 3, as described at www.opensource.org.
  ****************************************************************/
 #include <iostream>
+#include <math.h>
 #include "SpliceFeatureExtractor.H"
 using namespace std;
 using namespace BOOM;
@@ -19,7 +20,7 @@ bool RegulatoryMotif::hit(const String &substrate,int pos) const
   const int substrateLen=substrate.length(), myLen=motif.length();
   const int end=pos+myLen;
   if(end>substrateLen) return false;
-  const char *p=motif.c_str(), *q=substrate.c_str();
+  const char *p=motif.c_str(), *q=substrate.c_str()+pos;
   for(int i=pos ; i<end ; ++i, ++p, ++q) if(*p!=*q) return false;
   return true;
 }
@@ -34,7 +35,7 @@ RegulatoryMotifs::RegulatoryMotifs(const String &filename)
   File f(filename);
   while(!f.eof()) {
     const String line=f.getline();
-    Vector<string> fields; line.getFields(fields);
+    Vector<String> fields; line.getFields(fields);
     if(fields.size()<2) continue;
     motifs.push_back(RegulatoryMotif(fields[0],fields[1].asFloat()));
   }
@@ -61,10 +62,12 @@ RegulatoryMotif &RegulatoryMotifs::getIthMotif(int i)
  ****************************************************************/
 SpliceFeatureExtractor::SpliceFeatureExtractor(SignalSensor &sensor,
 					       const RegulatoryMotifs &motifs,
-					       float distanceParm)
+					       float distanceParm,
+					       int maxSREdistance)
   : sensor(sensor), motifs(motifs), distanceParm(distanceParm),
     consensusOffset(sensor.getConsensusOffset()),
-    contextWindowLen(sensor.getContextWindowLength())
+    contextWindowLen(sensor.getContextWindowLength()),
+    maxSREdistance(maxSREdistance)
 {
   // ctor
 }
@@ -78,8 +81,11 @@ bool SpliceFeatureExtractor::extract(const Sequence &seq,
 {
   const int L=seqStr.length();
   const int windowPos=consensusPos-consensusOffset;
+  const int windowEnd=windowPos+contextWindowLen;
+  if(windowPos<0 || windowEnd>L) return false;
   intrinsicSiteScore=sensor.getLogP(seq,seqStr,windowPos);
   regulatoryScore=computeRegScore(seqStr,consensusPos);
+  return true;
 }
 
 
@@ -89,13 +95,17 @@ float SpliceFeatureExtractor::computeRegScore(const String &seq,int consensusPos
   const int numMotifs=motifs.numMotifs();
   const int L=seq.length();
   float score=0;
-  for(int pos=0 ; pos<L ; ++pos) {
+  int begin=consensusPos-maxSREdistance, end=consensusPos+maxSREdistance;
+  if(begin<0) begin=0;
+  if(end>L) end=L;
+  for(int pos=begin ; pos<end ; ++pos) {
     for(int i=0 ; i<numMotifs ; ++i) {
       const RegulatoryMotif &motif=motifs.getIthMotif(i);
       if(motif.hit(seq,pos)) {
-	const int distance=abs(consensusPos-pos+motif.motif.length()/2);
+	const int distance=abs(int(consensusPos-pos+motif.motif.length()/2));
 	const float distanceScore=pow(distanceParm,distance);
 	score+=motif.score*distanceScore;
+	//cout<<"\t\t"<<pos<<"\t"<<i<<"\t"<<motif.motif<<"\t"<<motif.score<<"\t"<<distanceScore<<endl;
       }
     }
   }

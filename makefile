@@ -3280,22 +3280,19 @@ cia: \
 		$(OBJ)/CIA.o \
 		$(LIBDIRS) $(LIBS)
 #---------------------------------------------------------
-
-#--------------------------------------------------------
 $(OBJ)/SpliceFeatureExtractor.o:\
 		SpliceFeatureExtractor.C\
 		SpliceFeatureExtractor.H
 	$(CC) $(CFLAGS) -o $(OBJ)/SpliceFeatureExtractor.o -c \
 		SpliceFeatureExtractor.C
 #---------------------------------------------------------
-
-#--------------------------------------------------------
 $(OBJ)/extract-splice-features.o:\
 		extract-splice-features.C
 	$(CC) $(CFLAGS) -o $(OBJ)/extract-splice-features.o -c \
 		extract-splice-features.C
 #---------------------------------------------------------
 extract-splice-features: \
+		$(OBJ)/SpliceFeatureExtractor.o \
 		$(OBJ)/extract-splice-features.o \
 		$(OBJ)/SignalStreamBuilder.o \
 		$(OBJ)/ContentRegion.o \
@@ -3360,6 +3357,7 @@ extract-splice-features: \
 		$(OBJ)/GZilla.o \
 		$(OBJ)/CIA.o
 	$(CC) $(LDFLAGS) -o extract-splice-features \
+		$(OBJ)/SpliceFeatureExtractor.o \
 		$(OBJ)/SignalStreamBuilder.o \
 		$(OBJ)/ContentRegion.o \
 		$(OBJ)/ContentRegions.o \

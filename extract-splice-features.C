@@ -11,7 +11,7 @@
 #include "BOOM/DnaAlphabet.H"
 #include "BOOM/FastaReader.H"
 #include "IsochoreTable.H"
-#include "SpliceFeatureExtract.H"
+#include "SpliceFeatureExtractor.H"
 using namespace std;
 using namespace BOOM;
 
@@ -52,7 +52,7 @@ Application::Application()
 int Application::main(int argc,char *argv[])
 {
   // Process command line
-  CommandLine cmd(argc,argv,"");
+  CommandLine cmd(argc,argv,"d:");
   if(cmd.numArgs()!=6)
     throw String("\n\
 extract-splice-features <*.iso> <*.fasta> <GT|AG> <begin:end> <motifs.txt> <motif-distance-param>\n\
@@ -60,6 +60,7 @@ extract-splice-features <*.iso> <*.fasta> <GT|AG> <begin:end> <motifs.txt> <moti
   <begin:end> = interval to scan; 0-based coords, half open: [begin,end)\n\
   <motif-distance-param> must be strictly between 0 and 1\n\
   Motifs file should contain two columns: the motif and its score\n\
+  -d N : ignore regulatory elements further than N bases from splice site\n\
   Output: site location, site score, regulatory score\n\
           (one line per putative site)\n\
 ");
@@ -72,6 +73,7 @@ extract-splice-features <*.iso> <*.fasta> <GT|AG> <begin:end> <motifs.txt> <moti
   Vector<String> fields; intervalStr.getFields(fields,":");
   if(fields.size()!=2) throw intervalStr+" : invalid interval specification";
   const Interval interval(fields[0].asInt(),fields[1].asInt());
+  const int maxDistance=cmd.option('d') ? cmd.optParm('d').asInt() : 1000000;
 
   // Load sequence
   String defline, seqStr;
@@ -92,7 +94,7 @@ extract-splice-features <*.iso> <*.fasta> <GT|AG> <begin:end> <motifs.txt> <moti
   RegulatoryMotifs motifs(motifFile);
 
   // Invoke the feature extractor
-  SpliceFeatureExtractor extractor(*sensor,motifs,distanceParm);
+  SpliceFeatureExtractor extractor(*sensor,motifs,distanceParm,maxDistance);
   const int L=seqStr.length();
   const int consensusOffset=sensor->getConsensusOffset();
   const int contextWindowLen=sensor->getContextWindowLength();
@@ -100,9 +102,8 @@ extract-splice-features <*.iso> <*.fasta> <GT|AG> <begin:end> <motifs.txt> <moti
   for(int pos=begin ; pos<=end ; ++pos)
     if(seqStr.substring(pos,2)==GTorAG) {
       float intrinsicScore, regulatoryScore;
-      if(extract(seq,seqStr,pos,intrinsicScore,regulatoryScore)) {
+      if(extractor.extract(seq,seqStr,pos,intrinsicScore,regulatoryScore))
 	cout<<GTorAG<<"\t"<<pos<<"\t"<<intrinsicScore<<"\t"<<regulatoryScore<<endl;
-      }
     }
 
   return 0;
@@ -112,10 +113,10 @@ extract-splice-features <*.iso> <*.fasta> <GT|AG> <begin:end> <motifs.txt> <moti
 
 float Application::getGcContent(const String &s)
 {
-  const int A=s.count("A")+s.count('a');
-  const int C=s.count("C")+s.count('c');
-  const int G=s.count("G")+s.count('g');
-  const int T=s.count("T")+s.count('t');
+  const int A=s.count('A')+s.count('a');
+  const int C=s.count('C')+s.count('c');
+  const int G=s.count('G')+s.count('g');
+  const int T=s.count('T')+s.count('t');
   const int total=A+C+G+T;
   const float gc=(G+C)/float(total);
   return gc;

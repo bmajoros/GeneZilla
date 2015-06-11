@@ -8,6 +8,7 @@
 #define INCL_SpliceFeatureExtractor_H
 #include <iostream>
 #include "BOOM/Vector.H"
+#include "SignalSensor.H"
 using namespace std;
 using namespace BOOM;
 
@@ -17,8 +18,8 @@ using namespace BOOM;
                        RegulatoryMotif
  ****************************************************************/
 struct RegulatoryMotif {
-  const String motif;
-  const float score;
+  String motif;
+  float score;
   RegulatoryMotif(const String &m,float score) : motif(m), score(score) {}
   bool hit(const String &,int pos) const;
 };
@@ -34,7 +35,7 @@ public:
   int numMotifs() const;
   RegulatoryMotif &getIthMotif(int i);
 protected:
-  Vector<RegulatoryMotifs> motifs;
+  Vector<RegulatoryMotif> motifs;
 };
 
 
@@ -44,7 +45,8 @@ protected:
  ****************************************************************/
 class SpliceFeatureExtractor {
 public:
-  SpliceFeatureExtractor(SignalSensor &,const RegulatoryMotifs &,float distanceParm);
+  SpliceFeatureExtractor(SignalSensor &,const RegulatoryMotifs &,float distanceParm,
+			 int maxSREdistance);
   bool extract(const Sequence &seq,const String &seqStr,int consensusPos,
 	       float &intrinsieSiteScore,float &regulatoryScore);
 protected:
@@ -52,6 +54,7 @@ protected:
   const int consensusOffset, contextWindowLen;
   const RegulatoryMotifs &motifs;
   const float distanceParm;
+  int maxSREdistance;
   float computeRegScore(const String &seq,int consensusPos);
 };
 
