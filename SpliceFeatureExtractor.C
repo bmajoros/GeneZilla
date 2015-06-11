@@ -12,6 +12,21 @@ using namespace BOOM;
 
 
 /****************************************************************
+                       RegulatoryMotif
+ ****************************************************************/
+bool RegulatoryMotif::hit(const String &substrate,int pos) const
+{
+  const int substrateLen=substrate.length(), myLen=motif.length();
+  const int end=pos+myLen;
+  if(end>substrateLen) return false;
+  const char *p=motif.c_str(), *q=substrate.c_str();
+  for(int i=pos ; i<end ; ++i, ++p, ++q) if(*p!=*q) return false;
+  return true;
+}
+
+
+
+/****************************************************************
                        RegulatoryMotifs
  ****************************************************************/
 RegulatoryMotifs::RegulatoryMotifs(const String &filename)
@@ -41,10 +56,50 @@ RegulatoryMotif &RegulatoryMotifs::getIthMotif(int i)
 
 
 
-
-SpliceFeatureExtractor::SpliceFeatureExtractor()
+/****************************************************************
+                     SpliceFeatureExtractor
+ ****************************************************************/
+SpliceFeatureExtractor::SpliceFeatureExtractor(SignalSensor &sensor,
+					       const RegulatoryMotifs &motifs,
+					       float distanceParm)
+  : sensor(sensor), motifs(motifs), distanceParm(distanceParm),
+    consensusOffset(sensor.getConsensusOffset()),
+    contextWindowLen(sensor.getContextWindowLength())
 {
   // ctor
+}
+
+
+
+bool SpliceFeatureExtractor::extract(const Sequence &seq,
+				     const String &seqStr,int consensusPos,
+				     float &intrinsicSiteScore,
+				     float &regulatoryScore)
+{
+  const int L=seqStr.length();
+  const int windowPos=consensusPos-consensusOffset;
+  intrinsicSiteScore=sensor.getLogP(seq,seqStr,windowPos);
+  regulatoryScore=computeRegScore(seqStr,consensusPos);
+}
+
+
+
+float SpliceFeatureExtractor::computeRegScore(const String &seq,int consensusPos)
+{
+  const int numMotifs=motifs.numMotifs();
+  const int L=seq.length();
+  float score=0;
+  for(int pos=0 ; pos<L ; ++pos) {
+    for(int i=0 ; i<numMotifs ; ++i) {
+      const RegulatoryMotif &motif=motifs.getIthMotif(i);
+      if(motif.hit(seq,pos)) {
+	const int distance=abs(consensusPos-pos+motif.motif.length()/2);
+	const float distanceScore=pow(distanceParm,distance);
+	score+=motif.score*distanceScore;
+      }
+    }
+  }
+  return score;
 }
 
 

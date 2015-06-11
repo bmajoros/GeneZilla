@@ -11,6 +11,7 @@
 #include "BOOM/DnaAlphabet.H"
 #include "BOOM/FastaReader.H"
 #include "IsochoreTable.H"
+#include "SpliceFeatureExtract.H"
 using namespace std;
 using namespace BOOM;
 
@@ -83,12 +84,26 @@ extract-splice-features <*.iso> <*.fasta> <GT|AG> <begin:end> <motifs.txt> <moti
   IsochoreTable isochores(gc);
   isochores.load(isoFile);
   Isochore *isochore=isochores.getIsochore(gcContent);
+  SignalSensor *sensor;
+  SignalType signalType=stringToSignalType(GTorAG);
+  sensor=isochore->signalTypeToSensor[signalType];
 
   // Load regulatory motifs
-
+  RegulatoryMotifs motifs(motifFile);
 
   // Invoke the feature extractor
-
+  SpliceFeatureExtractor extractor(*sensor,motifs,distanceParm);
+  const int L=seqStr.length();
+  const int consensusOffset=sensor->getConsensusOffset();
+  const int contextWindowLen=sensor->getContextWindowLength();
+  const int begin=consensusOffset, end=L-contextWindowLen+consensusOffset;
+  for(int pos=begin ; pos<=end ; ++pos)
+    if(seqStr.substring(pos,2)==GTorAG) {
+      float intrinsicScore, regulatoryScore;
+      if(extract(seq,seqStr,pos,intrinsicScore,regulatoryScore)) {
+	cout<<GTorAG<<"\t"<<pos<<"\t"<<intrinsicScore<<"\t"<<regulatoryScore<<endl;
+      }
+    }
 
   return 0;
 }

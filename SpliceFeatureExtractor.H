@@ -20,6 +20,7 @@ struct RegulatoryMotif {
   const String motif;
   const float score;
   RegulatoryMotif(const String &m,float score) : motif(m), score(score) {}
+  bool hit(const String &,int pos) const;
 };
 
 
@@ -43,7 +44,15 @@ protected:
  ****************************************************************/
 class SpliceFeatureExtractor {
 public:
-  SpliceFeatureExtractor();
+  SpliceFeatureExtractor(SignalSensor &,const RegulatoryMotifs &,float distanceParm);
+  bool extract(const Sequence &seq,const String &seqStr,int consensusPos,
+	       float &intrinsieSiteScore,float &regulatoryScore);
+protected:
+  SignalSensor &sensor;
+  const int consensusOffset, contextWindowLen;
+  const RegulatoryMotifs &motifs;
+  const float distanceParm;
+  float computeRegScore(const String &seq,int consensusPos);
 };
 
 #endif
