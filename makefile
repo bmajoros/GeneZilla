@@ -3280,3 +3280,148 @@ cia: \
 		$(OBJ)/CIA.o \
 		$(LIBDIRS) $(LIBS)
 #---------------------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/SpliceFeatureExtractor.o:\
+		SpliceFeatureExtractor.C\
+		SpliceFeatureExtractor.H
+	$(CC) $(CFLAGS) -o $(OBJ)/SpliceFeatureExtractor.o -c \
+		SpliceFeatureExtractor.C
+#---------------------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/extract-splice-features.o:\
+		extract-splice-features.C
+	$(CC) $(CFLAGS) -o $(OBJ)/extract-splice-features.o -c \
+		extract-splice-features.C
+#---------------------------------------------------------
+extract-splice-features: \
+		$(OBJ)/extract-splice-features.o \
+		$(OBJ)/SignalStreamBuilder.o \
+		$(OBJ)/ContentRegion.o \
+		$(OBJ)/ContentRegions.o \
+		$(OBJ)/ReferenceAnnotation.o \
+		$(OBJ)/VariantEvent.o \
+		$(OBJ)/VariantEvents.o \
+		$(OBJ)/SignalStream.o \
+		$(OBJ)/ConstraintInterval.o \
+		$(OBJ)/ConstraintIntervals.o \
+		$(OBJ)/SignalLabelingProfile.o \
+		$(OBJ)/LabelMatrix.o \
+		$(OBJ)/Labeling.o \
+		$(OBJ)/EvidenceFilter.o \
+		$(OBJ)/RnaJunction.o \
+		$(OBJ)/RnaJunctions.o \
+		$(OBJ)/ParseGraph.o \
+		$(OBJ)/GffPathFromParseGraph.o \
+		$(OBJ)/SignalComparator.o \
+		$(OBJ)/NthOrderStringIterator.o \
+		$(OBJ)/TrainingSequence.o \
+		$(OBJ)/SignalPeptideSensor.o \
+		$(OBJ)/CodonTree.o \
+		$(OBJ)/Isochore.o \
+		$(OBJ)/IsochoreTable.o \
+		$(OBJ)/BranchAcceptor.o \
+		$(OBJ)/ThreePeriodicIMM.o \
+		$(OBJ)/IMM.o \
+		$(OBJ)/EdgeFactory.o \
+		$(OBJ)/MddTree.o \
+		$(OBJ)/Partition.o \
+		$(OBJ)/TreeNode.o \
+		$(OBJ)/GarbageCollector.o \
+		$(OBJ)/Edge.o \
+		$(OBJ)/TopologyLoader.o \
+		$(OBJ)/WAM.o \
+		$(OBJ)/WWAM.o \
+		$(OBJ)/TataCapModel.o \
+		$(OBJ)/TataCapSignal.o \
+		$(OBJ)/MarkovChainCompiler.o \
+		$(OBJ)/Fast3PMC.o \
+		$(OBJ)/FastMarkovChain.o \
+		$(OBJ)/ThreePeriodicMarkovChain.o \
+		$(OBJ)/DiscreteDistribution.o \
+		$(OBJ)/Transitions.o \
+		$(OBJ)/EmpiricalDistribution.o \
+		$(OBJ)/GeometricDistribution.o \
+		$(OBJ)/NoncodingQueue.o \
+		$(OBJ)/IntronQueue.o \
+		$(OBJ)/SignalType.o \
+		$(OBJ)/ContentType.o \
+		$(OBJ)/ModelBuilder.o \
+		$(OBJ)/ScoreAnalyzer.o \
+		$(OBJ)/ContentSensor.o \
+		$(OBJ)/MarkovChain.o \
+		$(OBJ)/WMM.o \
+		$(OBJ)/SignalQueue.o \
+		$(OBJ)/SignalSensor.o \
+		$(OBJ)/Propagator.o \
+		$(OBJ)/Signal.o \
+		$(OBJ)/SignalTypeProperties.o \
+		$(OBJ)/GZilla.o \
+		$(OBJ)/CIA.o
+	$(CC) $(LDFLAGS) -o extract-splice-features \
+		$(OBJ)/SignalStreamBuilder.o \
+		$(OBJ)/ContentRegion.o \
+		$(OBJ)/ContentRegions.o \
+		$(OBJ)/ReferenceAnnotation.o \
+		$(OBJ)/VariantEvent.o \
+		$(OBJ)/VariantEvents.o \
+		$(OBJ)/SignalStream.o \
+		$(OBJ)/ConstraintInterval.o \
+		$(OBJ)/ConstraintIntervals.o \
+		$(OBJ)/SignalLabelingProfile.o \
+		$(OBJ)/LabelMatrix.o \
+		$(OBJ)/Labeling.o \
+		$(OBJ)/EvidenceFilter.o \
+		$(OBJ)/RnaJunction.o \
+		$(OBJ)/RnaJunctions.o \
+		$(OBJ)/ParseGraph.o \
+		$(OBJ)/GffPathFromParseGraph.o \
+		$(OBJ)/SignalComparator.o \
+		$(OBJ)/NthOrderStringIterator.o \
+		$(OBJ)/TrainingSequence.o \
+		$(OBJ)/SignalPeptideSensor.o \
+		$(OBJ)/CodonTree.o \
+		$(OBJ)/Isochore.o \
+		$(OBJ)/IsochoreTable.o \
+		$(OBJ)/BranchAcceptor.o \
+		$(OBJ)/ThreePeriodicIMM.o \
+		$(OBJ)/IMM.o \
+		$(OBJ)/EdgeFactory.o \
+		$(OBJ)/MddTree.o \
+		$(OBJ)/Partition.o \
+		$(OBJ)/TreeNode.o \
+		$(OBJ)/GarbageCollector.o \
+		$(OBJ)/Edge.o \
+		$(OBJ)/TopologyLoader.o \
+		$(OBJ)/WAM.o \
+		$(OBJ)/WWAM.o \
+		$(OBJ)/TataCapModel.o \
+		$(OBJ)/TataCapSignal.o \
+		$(OBJ)/MarkovChainCompiler.o \
+		$(OBJ)/Fast3PMC.o \
+		$(OBJ)/FastMarkovChain.o \
+		$(OBJ)/ThreePeriodicMarkovChain.o \
+		$(OBJ)/DiscreteDistribution.o \
+		$(OBJ)/Transitions.o \
+		$(OBJ)/EmpiricalDistribution.o \
+		$(OBJ)/GeometricDistribution.o \
+		$(OBJ)/NoncodingQueue.o \
+		$(OBJ)/IntronQueue.o \
+		$(OBJ)/SignalType.o \
+		$(OBJ)/ContentType.o \
+		$(OBJ)/ModelBuilder.o \
+		$(OBJ)/ScoreAnalyzer.o \
+		$(OBJ)/ContentSensor.o \
+		$(OBJ)/MarkovChain.o \
+		$(OBJ)/WMM.o \
+		$(OBJ)/SignalQueue.o \
+		$(OBJ)/SignalSensor.o \
+		$(OBJ)/Propagator.o \
+		$(OBJ)/Signal.o \
+		$(OBJ)/SignalTypeProperties.o \
+		$(OBJ)/GZilla.o \
+		$(OBJ)/CIA.o \
+		$(OBJ)/extract-splice-features.o \
+		$(LIBDIRS) $(LIBS)
+#---------------------------------------------
