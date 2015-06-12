@@ -52,7 +52,7 @@ Application::Application()
 int Application::main(int argc,char *argv[])
 {
   // Process command line
-  CommandLine cmd(argc,argv,"d:");
+  CommandLine cmd(argc,argv,"d:e");
   if(cmd.numArgs()!=6)
     throw String("\n\
 extract-splice-features <*.iso> <*.fasta> <GT|AG> <begin:end> <motifs.txt> <motif-distance-param>\n\
@@ -61,6 +61,7 @@ extract-splice-features <*.iso> <*.fasta> <GT|AG> <begin:end> <motifs.txt> <moti
   <motif-distance-param> must be strictly between 0 and 1\n\
   Motifs file should contain two columns: the motif and its score\n\
   -d N : ignore regulatory elements further than N bases from splice site\n\
+  -e : limit motif search to exons\n\
   Output: site location, site score, regulatory score\n\
           (one line per putative site)\n\
 ");
@@ -74,6 +75,7 @@ extract-splice-features <*.iso> <*.fasta> <GT|AG> <begin:end> <motifs.txt> <moti
   if(fields.size()!=2) throw intervalStr+" : invalid interval specification";
   const Interval interval(fields[0].asInt(),fields[1].asInt());
   const int maxDistance=cmd.option('d') ? cmd.optParm('d').asInt() : 1000000;
+  const bool exonMotifsOnly=cmd.option('e');
 
   // Load sequence
   String defline, seqStr;
@@ -94,7 +96,8 @@ extract-splice-features <*.iso> <*.fasta> <GT|AG> <begin:end> <motifs.txt> <moti
   RegulatoryMotifs motifs(motifFile);
 
   // Invoke the feature extractor
-  SpliceFeatureExtractor extractor(*sensor,motifs,distanceParm,maxDistance);
+  SpliceFeatureExtractor extractor(*sensor,motifs,distanceParm,maxDistance,
+				   exonMotifsOnly);
   const int L=seqStr.length();
   const int consensusOffset=sensor->getConsensusOffset();
   const int contextWindowLen=sensor->getContextWindowLength();

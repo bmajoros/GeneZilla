@@ -46,11 +46,12 @@ protected:
 class SpliceFeatureExtractor {
 public:
   SpliceFeatureExtractor(SignalSensor &,const RegulatoryMotifs &,float distanceParm,
-			 int maxSREdistance);
+			 int maxSREdistance,bool exonMotifsOnly);
   bool extract(const Sequence &seq,const String &seqStr,int consensusPos,
 	       float &intrinsieSiteScore,float &regulatoryScore);
 protected:
   SignalSensor &sensor;
+  const bool exonMotifsOnly;
   const int consensusOffset, contextWindowLen;
   const RegulatoryMotifs &motifs;
   const float distanceParm;

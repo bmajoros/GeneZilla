@@ -63,11 +63,12 @@ RegulatoryMotif &RegulatoryMotifs::getIthMotif(int i)
 SpliceFeatureExtractor::SpliceFeatureExtractor(SignalSensor &sensor,
 					       const RegulatoryMotifs &motifs,
 					       float distanceParm,
-					       int maxSREdistance)
+					       int maxSREdistance,
+					       bool exonMotifsOnly)
   : sensor(sensor), motifs(motifs), distanceParm(distanceParm),
     consensusOffset(sensor.getConsensusOffset()),
     contextWindowLen(sensor.getContextWindowLength()),
-    maxSREdistance(maxSREdistance)
+    maxSREdistance(maxSREdistance), exonMotifsOnly(exonMotifsOnly)
 {
   // ctor
 }
@@ -92,13 +93,20 @@ bool SpliceFeatureExtractor::extract(const Sequence &seq,
 
 float SpliceFeatureExtractor::computeRegScore(const String &seq,int consensusPos)
 {
+  const String consensus=seq.substring(consensusPos,2);
+  const bool includeLeft=!exonMotifsOnly || consensus=="GT";
+  const bool includeRight=!exonMotifsOnly || consensus=="AG";
   const int numMotifs=motifs.numMotifs();
   const int L=seq.length();
   float score=0;
   int begin=consensusPos-maxSREdistance, end=consensusPos+maxSREdistance;
   if(begin<0) begin=0;
   if(end>L) end=L;
+  int sampleSize=0;
   for(int pos=begin ; pos<end ; ++pos) {
+    if(pos<consensusPos && !includeLeft) continue;
+    if(pos>consensusPos && !includeRight) continue;
+    ++sampleSize;
     for(int i=0 ; i<numMotifs ; ++i) {
       const RegulatoryMotif &motif=motifs.getIthMotif(i);
       if(motif.hit(seq,pos)) {
@@ -110,6 +118,7 @@ float SpliceFeatureExtractor::computeRegScore(const String &seq,int consensusPos
     }
   }
   return score;
+  //return score/sampleSize;
 }
 
 
