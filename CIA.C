@@ -68,6 +68,8 @@ BOOM::Stack<SignalPtr> * CIA::processChunk(const Sequence &substrate,
   processIsochoreFile(isoFilename,gcContent);
   const String matrixFile=isochore->configFile.lookupOrDie("label-matrix");
   priorWeight=isochore->configFile.getFloatOrDie("prior-weight");
+  int maxIntronScan=isochore->configFile.getIntOrDie("max-intron-scan-length");
+  int minExonLength=isochore->configFile.getIntOrDie("min-variant-exon-length");
 
   // Load reference annotation
   refAnno=new ReferenceAnnotation(projectedGFF,labelFile,matrixFile,*isochore,
@@ -76,7 +78,8 @@ BOOM::Stack<SignalPtr> * CIA::processChunk(const Sequence &substrate,
 
   // Populate the signal stream
   constraints=new ConstraintIntervals(substrateString.length());
-  SignalStreamBuilder ssb(*refAnno,events,signalStream,*constraints,isochore);
+  SignalStreamBuilder ssb(*refAnno,events,signalStream,*constraints,isochore,
+		      maxIntronScan,minExonLength);
 
   return mainAlgorithm(substrate,substrateString,osGraph,dumpGraph,
 		       psaFilename);

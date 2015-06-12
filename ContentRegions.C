@@ -46,6 +46,23 @@ void ContentRegions::init(const GffTranscript &transcript,int seqLength)
 
 
 
+bool ContentRegions::findJunction(int pos,const ContentRegion *&preceding,
+				  const ContentRegion *&following) const
+{
+  for(Vector<ContentRegion>::const_iterator cur=regions.begin(), 
+	end=regions.end() ; cur!=end ; ++cur) {
+    const ContentRegion *region=&*cur;
+    if(region->getInterval().getEnd()==pos) {
+      preceding=region;
+      ++cur;
+      following=&*cur;
+    }
+  }
+  return false;
+}
+
+
+
 
 
 

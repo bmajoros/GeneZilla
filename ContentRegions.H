@@ -17,6 +17,8 @@ class ContentRegions {
 public:
   ContentRegions(const GffTranscript &,int sequenceLength);
   const Vector<ContentRegion> &asVector();
+  bool findJunction(int pos,const ContentRegion *&preceding,
+		    const ContentRegion *&following) const;
 protected:
   Vector<ContentRegion> regions;
   void init(const GffTranscript &,int seqLen);

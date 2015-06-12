@@ -22,13 +22,17 @@ public:
 		      const VariantEvents &,       // input
 		      SignalStream &,              // output
 		      ConstraintIntervals &,       // output
-		      Isochore *);
+		      Isochore *,
+		      int maxIntronScan,
+		      int minExonLength);
 protected:
   const ReferenceAnnotation &refAnno;
   const VariantEvents &events;
   SignalStream &stream;
   ConstraintIntervals &constraints;
   Isochore *isochore;
+  int maxIntronScan;
+  int minExonLength;
   void build();
   void gain(const VariantEvent &);
   void loss(const VariantEvent &);
@@ -40,6 +44,7 @@ protected:
   void lossTAG(int pos,SignalSensor &);
   void lossGT(int pos,SignalSensor &);
   void lossAG(int pos,SignalSensor &);
+  void scan(int begin,int end,SignalSensor &);
 };
 
 #endif

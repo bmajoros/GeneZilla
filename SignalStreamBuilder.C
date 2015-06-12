@@ -15,9 +15,12 @@ SignalStreamBuilder::SignalStreamBuilder(const ReferenceAnnotation &refAnno,
 					 const VariantEvents &events,
 					 SignalStream &stream,
 					 ConstraintIntervals &constraints,
-					 Isochore *isochore)
+					 Isochore *isochore,
+					 int maxIntronScan,
+					 int minExonLength)
   : refAnno(refAnno), events(events), stream(stream), constraints(constraints),
-    isochore(isochore)
+    isochore(isochore), maxIntronScan(maxIntronScan),
+    minExonLength(minExonLength)
 {
   build();
 }
@@ -136,13 +139,61 @@ void SignalStreamBuilder::lossTAG(int pos,SignalSensor &sensor)
 
 void SignalStreamBuilder::lossGT(int pos,SignalSensor &sensor)
 {
+  // First, determine interval to scan for other GT sites
+  const ContentRegions &regions=refAnno.getRegions();
+  const ContentRegion *prev, *next;
+  if(!regions.findJunction(pos,prev,next)) INTERNAL_ERROR;
+  Interval exon=prev->getInterval(), intron=next->getInterval();
+  const int exonBegin=exon.getBegin(), exonEnd=exon.getEnd(),
+    intronEnd=intron.getEnd();
+  int begin=exonBegin+minExonLength; if(begin>exonEnd) begin=exonEnd;
+  int end=exonEnd+maxIntronScan; if(end>intronEnd) end=intronEnd;
+
+  // Perform scanning
+  scan(begin,end,sensor);
+
+  // Create unconstrained region
+  Interval interval(begin,end);
+  ConstraintInterval constraint(interval,false);
+  constraints.insert(constraint);
 }
 
 
 
 void SignalStreamBuilder::lossAG(int pos,SignalSensor &sensor)
 {
+  // First, determine interval to scan for other AG sites
+  const ContentRegions &regions=refAnno.getRegions();
+  const ContentRegion *prev, *next;
+  if(!regions.findJunction(pos+2,prev,next)) INTERNAL_ERROR;
+  Interval intron=prev->getInterval(), exon=next->getInterval();
+  const int intronBegin=intron.getBegin(), intronEnd=intron.getEnd(),
+    exonEnd=exon.getEnd();
+  int begin=intronEnd-maxIntronScan; if(begin<intronBegin) begin=intronBegin;
+  int end=exonEnd-minExonLength; if(end<intronEnd) end=intronEnd;
+
+  // Perform scanning
+  scan(begin,end,sensor);
+
+  // Create unconstrained region
+  Interval interval(begin,end);
+  ConstraintInterval constraint(interval,false);
+  constraints.insert(constraint);
 }
+
+
+
+void SignalStreamBuilder::scan(int begin,int end,SignalSensor &sensor)
+{
+  const Sequence &seq=refAnno.getAltSeq();
+  const String &seqStr=refAnno.getAltSeqStr();
+  end-=sensor.getContextWindowLength();
+  for(int pos=begin ; pos<end ; ++pos) {
+    SignalPtr signal=sensor.detect(seq,seqStr,pos);
+    if(signal) stream.add(signal);
+  }
+}
+
 
 
 
