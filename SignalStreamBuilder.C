@@ -17,10 +17,11 @@ SignalStreamBuilder::SignalStreamBuilder(const ReferenceAnnotation &refAnno,
 					 ConstraintIntervals &constraints,
 					 Isochore *isochore,
 					 int maxIntronScan,
-					 int minExonLength)
+					 int minExonLength,
+					 bool allowGains)
   : refAnno(refAnno), events(events), stream(stream), constraints(constraints),
     isochore(isochore), maxIntronScan(maxIntronScan),
-    minExonLength(minExonLength)
+    minExonLength(minExonLength), allowGains(allowGains)
 {
   build();
 }
@@ -103,6 +104,7 @@ void SignalStreamBuilder::loss(const VariantEvent &event)
 
 void SignalStreamBuilder::gainATG(int pos,SignalSensor &sensor)
 {
+  if(!allowGains) return;
 }
 
 
@@ -115,24 +117,51 @@ void SignalStreamBuilder::gainTAG(int pos,SignalSensor &sensor)
 
 void SignalStreamBuilder::gainGT(int pos,SignalSensor &sensor)
 {
+  if(!allowGains) return;
 }
 
 
 
 void SignalStreamBuilder::gainAG(int pos,SignalSensor &sensor)
 {
+  if(!allowGains) return;
 }
 
 
 
 void SignalStreamBuilder::lossATG(int pos,SignalSensor &sensor)
 {
+  // First, determine interval to scan for other GT sites
+  const ContentRegions &regions=refAnno.getRegions();
+
+  /*
+  const ContentRegion *prev, *next;
+  if(!regions.findJunction(pos,prev,next)) INTERNAL_ERROR;
+  Interval exon=prev->getInterval(), intron=next->getInterval();
+  const int exonBegin=exon.getBegin(), exonEnd=exon.getEnd(),
+    intronEnd=intron.getEnd();
+  int begin=exonBegin+minExonLength; if(begin>exonEnd) begin=exonEnd;
+  int end=exonEnd+maxIntronScan; if(end>intronEnd) end=intronEnd;
+
+  // Perform scanning
+  scan(begin,end,sensor);
+
+  // Create unconstrained region: covers entire exon (so exon skipping
+  // is an option) and a fixed portion of the following intron
+  SignalSensor *AGsensor=isochore->signalTypeToSensor[AG];
+  const int constraintBegin=exonBegin-2-AGsensor->getConsensusOffset();
+  const Interval interval(constraintBegin,end);
+  ConstraintInterval constraint(interval,false);
+  constraints.insert(constraint);
+  */
 }
 
 
 
 void SignalStreamBuilder::lossTAG(int pos,SignalSensor &sensor)
 {
+  if(!allowGains) return; // loss of stop codon = potential gain of coding sequence
+
 }
 
 

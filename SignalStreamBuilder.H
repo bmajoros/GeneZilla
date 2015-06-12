@@ -24,13 +24,16 @@ public:
 		      ConstraintIntervals &,       // output
 		      Isochore *,
 		      int maxIntronScan,
-		      int minExonLength);
+		      int minExonLength,
+		      bool allowGains); // also includes *loss* of stop codons
+                                        // (which allows a *gain* of coding exon)
 protected:
   const ReferenceAnnotation &refAnno;
   const VariantEvents &events;
   SignalStream &stream;
   ConstraintIntervals &constraints;
   Isochore *isochore;
+  bool allowGains;
   int maxIntronScan;
   int minExonLength;
   void build();
