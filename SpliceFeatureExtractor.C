@@ -117,8 +117,8 @@ float SpliceFeatureExtractor::computeRegScore(const String &seq,int consensusPos
       }
     }
   }
-  return score;
-  //return score/sampleSize;
+  //return score;
+  return score/sampleSize;
 }
 
 
