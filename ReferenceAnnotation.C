@@ -111,6 +111,16 @@ void ReferenceAnnotation::initSignals(Isochore &isochore,const String &altSeqStr
 
 
 
+SignalPtr ReferenceAnnotation::getStartCodon() const
+{
+  for(Vector<Signal*>::const_iterator cur=signals.begin(), end=signals.end() ;
+      cur!=end ; ++cur)
+    if((*cur)->getSignalType()==ATG) return (*cur);
+  throw "Start codon not found in ReferenceAnnotation::getStartCodon()";
+}
+
+
+
 void ReferenceAnnotation::sortSignals()
 {
   SignalPosComparator signalCmp;

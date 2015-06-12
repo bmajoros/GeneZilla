@@ -25,6 +25,7 @@ public:
 		      Isochore *,
 		      int maxIntronScan,
 		      int minExonLength,
+		      int minIntronLen,
 		      bool allowGains); // also includes *loss* of stop codons
                                         // (which allows a *gain* of coding exon)
 protected:
@@ -36,6 +37,7 @@ protected:
   bool allowGains;
   int maxIntronScan;
   int minExonLength;
+  int minIntronLen;
   void build();
   void gain(const VariantEvent &);
   void loss(const VariantEvent &);

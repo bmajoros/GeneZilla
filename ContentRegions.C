@@ -63,6 +63,15 @@ bool ContentRegions::findJunction(int pos,const ContentRegion *&preceding,
 
 
 
+ContentRegion *ContentRegions::regionOverlapping(int pos) const
+{
+  for(Vector<ContentRegion>::const_iterator cur=regions.begin(), 
+	end=regions.end() ; cur!=end ; ++cur)
+    if((*cur).getInterval().contains(pos)) return &*cur;
+  return NULL;
+}
+
+
 
 
 

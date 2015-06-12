@@ -18,9 +18,10 @@ SignalStreamBuilder::SignalStreamBuilder(const ReferenceAnnotation &refAnno,
 					 Isochore *isochore,
 					 int maxIntronScan,
 					 int minExonLength,
+					 int minIntronLen,
 					 bool allowGains)
   : refAnno(refAnno), events(events), stream(stream), constraints(constraints),
-    isochore(isochore), maxIntronScan(maxIntronScan),
+    isochore(isochore), maxIntronScan(maxIntronScan), minIntronLen(minIntronLen),
     minExonLength(minExonLength), allowGains(allowGains)
 {
   build();
@@ -104,13 +105,51 @@ void SignalStreamBuilder::loss(const VariantEvent &event)
 
 void SignalStreamBuilder::gainATG(int pos,SignalSensor &sensor)
 {
+  // Check whether the new start codon is upstream of the old one;
+  // if not, the scanning model dictates that it won't ever be used
   if(!allowGains) return;
+  SignalPtr oldATG=refAnno.getStartCodon();
+  if(pos>=oldATG->getConsensusPosition()) return;
+
+  // Make a new signal object
+  const Sequence &seq=refAnno.getAltSeq();
+  const String &seqStr=refAnno.getAltSeqStr();
+  const int contextWindowPos=pos-sensor.getConsensusOffset();
+  if(contextWindowPos<0) return;
+  const int contextWindowEnd=contextWindowPos+sensor.getContextWindowLength();
+  if(contextWindowEnd>seqStr.length()) return;
+  const double score=sensor.getLogP(seq,seqStr,contextWindowPos);
+  Signal *signal=new Signal(contextWindowPos,score,sensor,sensor.getGC());
+  stream.add(signal);
+
+  // Relax constraints around the new signal
+  const Interval interval(contextWindowPos,oldATG->getContextWindowEnd());
+  ConstraintInterval constraint(interval,false);
+  constraints.insert(constraint);
 }
 
 
 
 void SignalStreamBuilder::gainTAG(int pos,SignalSensor &sensor)
 {
+  // Check whether the stop codon falls in a coding region
+  const ContentRegion *region=refAnno.getRegions().regionOverlapping(pos);
+  if(!region) INTERNAL_ERROR;
+  const ContentType contentType=region->getType();
+  if(!isCoding(contentType)) return;
+
+  // Create a signal object
+  const int contextWindowPos=pos-sensor.getConsensusOffset();
+  const double score=0;
+  Signal *signal=new Signal(contextWindowPos,score,sensor,sensor.getGC());
+  stream.add(signal);
+
+  // Create unconstrained region: covers entire exon (so exon skipping
+  // is an option) and a fixed portion of the following intron
+  const int contextWindowEnd=contextWindowPos+sensor.getContextWindowLength();
+  const Interval interval(contextWindowPos,contextWindowEnd);
+  ConstraintInterval constraint(interval,false);
+  constraints.insert(constraint);  
 }
 
 
@@ -118,6 +157,24 @@ void SignalStreamBuilder::gainTAG(int pos,SignalSensor &sensor)
 void SignalStreamBuilder::gainGT(int pos,SignalSensor &sensor)
 {
   if(!allowGains) return;
+  const ContentRegion *region=refAnno.getRegions().regionOverlapping(pos);
+  if(!region) INTERNAL_ERROR;
+  const ContentType contentType=region->getType();
+  const Interval &interval=region->getInterval();
+  if(rightSignal(contentType)==GT) { // exonic
+    if(pos-interval.getBegin()<minExonLength) return;
+  }
+  else if(contentType==INTRON) { // intronic
+    if(pos-interval.getBegin()>maxIntronScan) return;
+  }
+  else return;
+
+  // Create unconstrained region
+  const int begin=pos-sensor.getConsensusOffset();
+  const int end=begin+sensor.getContextWindowLength();
+  const Interval cInterval(begin,end);
+  ConstraintInterval constraint(cInterval,false);
+  constraints.insert(constraint);  
 }
 
 
@@ -125,43 +182,71 @@ void SignalStreamBuilder::gainGT(int pos,SignalSensor &sensor)
 void SignalStreamBuilder::gainAG(int pos,SignalSensor &sensor)
 {
   if(!allowGains) return;
-}
+  const ContentRegion *region=refAnno.getRegions().regionOverlapping(pos);
+  if(!region) INTERNAL_ERROR;
+  const ContentType contentType=region->getType();
+  const Interval &interval=region->getInterval();
+  if(leftSignal(contentType)==AG) { // exonic
+    if(interval.getEnd()-pos<minExonLength) return;
+  }
+  else if(contentType==INTRON) { // intronic
+    if(interval.getEnd()-pos>maxIntronScan) return;
+  }
+  else return;
 
-
-
-void SignalStreamBuilder::lossATG(int pos,SignalSensor &sensor)
-{
-  // First, determine interval to scan for other GT sites
-  const ContentRegions &regions=refAnno.getRegions();
-
-  /*
-  const ContentRegion *prev, *next;
-  if(!regions.findJunction(pos,prev,next)) INTERNAL_ERROR;
-  Interval exon=prev->getInterval(), intron=next->getInterval();
-  const int exonBegin=exon.getBegin(), exonEnd=exon.getEnd(),
-    intronEnd=intron.getEnd();
-  int begin=exonBegin+minExonLength; if(begin>exonEnd) begin=exonEnd;
-  int end=exonEnd+maxIntronScan; if(end>intronEnd) end=intronEnd;
-
-  // Perform scanning
-  scan(begin,end,sensor);
-
-  // Create unconstrained region: covers entire exon (so exon skipping
-  // is an option) and a fixed portion of the following intron
-  SignalSensor *AGsensor=isochore->signalTypeToSensor[AG];
-  const int constraintBegin=exonBegin-2-AGsensor->getConsensusOffset();
-  const Interval interval(constraintBegin,end);
-  ConstraintInterval constraint(interval,false);
-  constraints.insert(constraint);
-  */
+  // Create unconstrained region
+  const int begin=pos-sensor.getConsensusOffset();
+  const int end=begin+sensor.getContextWindowLength();
+  const Interval cInterval(begin,end);
+  ConstraintInterval constraint(cInterval,false);
+  constraints.insert(constraint);  
 }
 
 
 
 void SignalStreamBuilder::lossTAG(int pos,SignalSensor &sensor)
 {
+  // See if a loss of a stop codon is relevant here
   if(!allowGains) return; // loss of stop codon = potential gain of coding sequence
+  const ContentRegion *region=refAnno.getRegions().regionOverlapping(pos);
+  if(!region) INTERNAL_ERROR;
+  if(region->getType()!=INTRON) return;
+  
+  // Create unconstrained region: covers entire exon (so exon skipping
+  // is an option) and a fixed portion of the following intron
+  const Interval &intron=region->getInterval();
+  if(intron.length()<2*minIntronLen+minExonLength) return;
+  const int newBegin=intron.getBegin()+minIntronLen;
+  const int newEnd=intron.getEnd()-minIntronLen;
+  if(pos<newBegin || pos>newEnd) return;
+  const Interval interval(newBegin,newEnd);
+  ConstraintInterval constraint(interval,false);
+  constraints.insert(constraint);
+}
 
+
+
+void SignalStreamBuilder::lossATG(int pos,SignalSensor &sensor)
+{
+  // First, determine interval to scan for other ATG sites
+  const ContentRegions &regions=refAnno.getRegions();
+
+  // First, determine interval to scan for other GT sites
+  const ContentRegion *prev, *next;
+  if(!regions.findJunction(pos,prev,next)) INTERNAL_ERROR;
+  Interval UTR=prev->getInterval(), exon=next->getInterval();
+  const int utrBegin=UTR.getBegin(), utrEnd=UTR.getEnd(), exonEnd=exon.getEnd();
+  int begin=utrBegin;
+  int end=exonEnd;
+
+  // Perform scanning
+  scan(begin,end,sensor);
+
+  // Create unconstrained region: covers entire exon (so exon skipping
+  // is an option) and a fixed portion of the following intron
+  const Interval interval(utrBegin,exonEnd);
+  ConstraintInterval constraint(interval,false);
+  constraints.insert(constraint);
 }
 
 

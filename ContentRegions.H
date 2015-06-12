@@ -19,6 +19,7 @@ public:
   const Vector<ContentRegion> &asVector();
   bool findJunction(int pos,const ContentRegion *&preceding,
 		    const ContentRegion *&following) const;
+  ContentRegion *regionOverlapping(int pos) const;
 protected:
   Vector<ContentRegion> regions;
   void init(const GffTranscript &,int seqLen);

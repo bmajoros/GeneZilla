@@ -30,6 +30,7 @@ public:
   const Labeling &getLabeling() const;
   const ContentRegions &getRegions() const;
   const Vector<Signal*> &getSignals() const;
+  SignalPtr getStartCodon() const;
   const String &getAltSeqStr() { return altSeqStr; }
   const Sequence &getAltSeq() { return altSeq; }
 protected:

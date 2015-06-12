@@ -131,6 +131,13 @@ int Signal::getConsensusPosition() const
 
 
 
+int Signal::getContextWindowEnd()
+{
+  return contextWindowPosition+sensor.getContextWindowLength();
+}
+
+
+
 int Signal::getContextWindowLength()
 {
   return sensor.getContextWindowLength();
@@ -373,4 +380,5 @@ bool SignalPosComparator::less(Signal* &a,Signal* &b)
 {
   return a->getContextWindowPosition() < b->getContextWindowPosition();
 }
+
 

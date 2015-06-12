@@ -42,6 +42,7 @@ public:
   void setPredecessor(int phase,BOOM::SmartPointer<Signal>);
   BOOM::SmartPointer<Signal> getPredecessor(int phase);
   int getContextWindowPosition();
+  int getContextWindowEnd(); // index of first base after the window
   int getConsensusPosition() const;
   virtual int getContextWindowLength();
   virtual int getConsensusLength();

@@ -70,6 +70,7 @@ BOOM::Stack<SignalPtr> * CIA::processChunk(const Sequence &substrate,
   priorWeight=isochore->configFile.getFloatOrDie("prior-weight");
   int maxIntronScan=isochore->configFile.getIntOrDie("max-intron-scan-length");
   int minExonLength=isochore->configFile.getIntOrDie("min-variant-exon-length");
+  int minIntronLen=isochore->configFile.getIntOrDie("min-variant-intron-length");
   bool allowSignalGains=isochore->configFile.getBoolOrDie("allow-signal-gains");
 
   // Load reference annotation
@@ -80,7 +81,7 @@ BOOM::Stack<SignalPtr> * CIA::processChunk(const Sequence &substrate,
   // Populate the signal stream
   constraints=new ConstraintIntervals(substrateString.length());
   SignalStreamBuilder ssb(*refAnno,events,signalStream,*constraints,isochore,
-			  maxIntronScan,minExonLength,allowSignalGains);
+			  maxIntronScan,minExonLength,minIntronLen,allowSignalGains);
 
   return mainAlgorithm(substrate,substrateString,osGraph,dumpGraph,
 		       psaFilename);
