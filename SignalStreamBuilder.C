@@ -152,8 +152,11 @@ void SignalStreamBuilder::lossGT(int pos,SignalSensor &sensor)
   // Perform scanning
   scan(begin,end,sensor);
 
-  // Create unconstrained region
-  Interval interval(begin,end);
+  // Create unconstrained region: covers entire exon (so exon skipping
+  // is an option) and a fixed portion of the following intron
+  SignalSensor *AGsensor=isochore->signalTypeToSensor[AG];
+  const int constraintBegin=exonBegin-2-AGsensor->getConsensusOffset();
+  const Interval interval(constraintBegin,end);
   ConstraintInterval constraint(interval,false);
   constraints.insert(constraint);
 }
@@ -175,8 +178,12 @@ void SignalStreamBuilder::lossAG(int pos,SignalSensor &sensor)
   // Perform scanning
   scan(begin,end,sensor);
 
-  // Create unconstrained region
-  Interval interval(begin,end);
+  // Create unconstrained region: covers entire exon (so exon skipping
+  // is an option) and a fixed portion of the preceding intron
+  SignalSensor *GTsensor=isochore->signalTypeToSensor[GT];
+  const int constraintEnd=
+    exonEnd-GTsensor->getConsensusOffset()+GTsensor->getContextWindowLength();
+  const Interval interval(begin,constraintEnd);
   ConstraintInterval constraint(interval,false);
   constraints.insert(constraint);
 }
