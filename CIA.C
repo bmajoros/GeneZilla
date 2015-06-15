@@ -108,9 +108,10 @@ BOOM::Stack<SignalPtr> * CIA::mainAlgorithm(const Sequence &seq,
   buildParseGraph(seq,str);
   reweightGraph();
 
+  BOOM::Stack<SignalPtr> *path=NULL;
   /*
   double parseScore;
-  BOOM::Stack<SignalPtr> *path=parseGraph.findOptimalPath(parseScore);
+  path=parseGraph.findOptimalPath(parseScore);
   generateGff(path,seqLen,parseScore);
   */
   if(dumpGraph) {

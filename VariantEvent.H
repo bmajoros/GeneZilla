@@ -8,6 +8,8 @@
 #define INCL_VariantEvent_H
 #include <iostream>
 #include "BOOM/String.H"
+#include "BOOM/Comparator.H"
+#include "BOOM/Interval.H"
 #include "SignalType.H"
 using namespace std;
 using namespace BOOM;
@@ -33,10 +35,14 @@ VariantEventType varEventTypeFromString(const String &);
 
 class VariantEvent {
 public:
-  VariantEvent(VariantSignalType,VariantEventType,int pos);
+  VariantEvent(VariantSignalType,VariantEventType,int pos,int length);
   VariantSignalType getSignalType() const;
   VariantEventType getEventType() const;
   int getPosition() const;
+  int begin() const;
+  int end() const;
+  int getLength() const;
+  Interval asInterval() const { return Interval(pos,pos+length); }
   bool isGain() const;
   bool isLoss() const;
   bool isIndel() const;
@@ -47,7 +53,14 @@ public:
 protected:
   VariantSignalType varSignalType;
   VariantEventType varEventType;
-  int pos;
+  int pos, length;
+};
+
+
+struct VariantEventComparator : public Comparator<VariantEvent> {
+  bool equal(VariantEvent &a,VariantEvent &b);
+  bool greater(VariantEvent &a,VariantEvent &b);
+  bool less(VariantEvent &a,VariantEvent &b);
 };
 
 #endif

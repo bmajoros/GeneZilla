@@ -10,8 +10,9 @@
 using namespace std;
 
 
-VariantEvent::VariantEvent(VariantSignalType vst,VariantEventType vet,int pos)
-  : varSignalType(vst), varEventType(vet), pos(pos)
+VariantEvent::VariantEvent(VariantSignalType vst,VariantEventType vet,
+			   int pos,int length)
+  : varSignalType(vst), varEventType(vet), pos(pos), length(length)
 {
   // ctor
 }
@@ -129,5 +130,48 @@ bool isSignal(VariantSignalType t)
 {
   return t!=VAR_SIG_INDEL;
 }
+
+
+
+int VariantEvent::begin() const
+{
+  return pos;
+}
+
+
+
+int VariantEvent::end() const
+{
+  return pos+length;
+}
+
+
+
+int VariantEvent::getLength() const
+{
+  return length;
+}
+
+
+
+bool VariantEventComparator::equal(VariantEvent &a,VariantEvent &b)
+{
+  return a.begin()==b.begin();
+}
+
+
+
+bool VariantEventComparator::greater(VariantEvent &a,VariantEvent &b)
+{
+  return a.begin()>b.begin();
+}
+
+
+
+bool VariantEventComparator::less(VariantEvent &a,VariantEvent &b)
+{
+  return a.begin()<b.begin();
+}
+
 
 

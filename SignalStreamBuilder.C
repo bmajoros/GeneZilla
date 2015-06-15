@@ -26,7 +26,7 @@ SignalStreamBuilder::SignalStreamBuilder(const ReferenceAnnotation &refAnno,
     minExonLength(minExonLength), allowGains(allowGains), newSignals(newSignals)
 {
   build();
-  const Vector<Signal*> &signals=signalStream.peek();
+  const Vector<Signal*> &signals=stream.peek();
   for(Vector<Signal*>::const_iterator cur=signals.begin(), end=signals.end() ;
       cur!=end ; ++cur)
     newSignals.insert(*cur);

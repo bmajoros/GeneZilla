@@ -8,6 +8,7 @@
 #define INCL_VariantEvents_H
 #include <iostream>
 #include "BOOM/Vector.H"
+#include "BOOM/Set.H"
 #include "VariantEvent.H"
 using namespace std;
 using namespace BOOM;
@@ -18,9 +19,11 @@ public:
   VariantEvents(const String &gffFile);
   int numEvents() const;
   VariantEvent &getIthEvent(int i);
+  void eventsInInterval(const Interval &,Set<const VariantEvent*> &) const;
 protected:
   Vector<VariantEvent> events;
   void load(const String &filename);
+  void sort();
 };
 
 #endif

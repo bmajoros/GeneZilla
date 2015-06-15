@@ -7,6 +7,7 @@
 #include <iostream>
 #include "VariantEvents.H"
 #include "BOOM/GffReader.H"
+#include "BOOM/VectorSorter.H"
 using namespace std;
 using namespace BOOM;
 
@@ -39,9 +40,32 @@ void VariantEvents::load(const String &filename)
     const GffFeature &feature=**cur;
     const VariantSignalType varSigType=varSigTypeFromString(feature.getFeatureType());
     const VariantEventType varEventType=varEventTypeFromString(feature.getSource());
-    const int pos=feature.getBegin();
-    events.push_back(VariantEvent(varSigType,varEventType,pos));
+    const int pos=feature.getBegin(), length=feature.length();
+    events.push_back(VariantEvent(varSigType,varEventType,pos,length));
     delete &feature;
   }
+  sort();
 }
+
+
+
+void VariantEvents::sort()
+{
+  VariantEventComparator cmp;
+  VectorSorter<VariantEvent> sorter(events,cmp);
+  sorter.sortAscendInPlace();
+}
+
+
+
+void VariantEvents::eventsInInterval(const Interval &I,Set<const VariantEvent*> &into)
+  const
+{
+  for(Vector<VariantEvent>::const_iterator cur=events.begin(), end=events.end() ;
+      cur!=end ; ++cur) {
+    const VariantEvent &event=*cur;
+    if(I.overlaps(event.asInterval())) into.insert(&event);
+  }
+}
+
 
