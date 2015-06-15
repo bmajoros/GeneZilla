@@ -7,6 +7,7 @@
 #ifndef INCL_SignalStreamBuilder_H
 #define INCL_SignalStreamBuilder_H
 #include <iostream>
+#include "BOOM/Set.H"
 #include "ReferenceAnnotation.H"
 #include "VariantEvents.H"
 #include "ConstraintIntervals.H"
@@ -22,6 +23,7 @@ public:
 		      const VariantEvents &,       // input
 		      SignalStream &,              // output
 		      ConstraintIntervals &,       // output
+		      Set<Signal*> &newSignals,    // output
 		      Isochore *,
 		      int maxIntronScan,
 		      int minExonLength,
@@ -33,6 +35,7 @@ protected:
   const VariantEvents &events;
   SignalStream &stream;
   ConstraintIntervals &constraints;
+  Set<Signal*> &newSignals;
   Isochore *isochore;
   bool allowGains;
   int maxIntronScan;

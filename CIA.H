@@ -40,6 +40,7 @@ protected:
   String projectedGFF, labelFile; // filenames
   float priorWeight;
   Array1D<SignalLabelingProfile> signalLabelingProfiles;
+  Set<Signal*> newSignals;
 
   virtual BOOM::Stack<SignalPtr> * mainAlgorithm(const Sequence &,
 						 const BOOM::String &,
@@ -53,6 +54,7 @@ protected:
   void buildParseGraph(const Sequence &seq,const BOOM::String &str);
   void enforceConstraints(SignalPtr);
   void purgeQueues();
+  void reweightGraph();
 };
 
 

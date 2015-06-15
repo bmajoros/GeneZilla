@@ -20,6 +20,7 @@ public:
   void add(Signal *);
   void sort();
   void deduplicate();
+  const Vector<Signal*> &peek() { return signals; }
   void reset();
   Signal *detect(int position);
 protected:

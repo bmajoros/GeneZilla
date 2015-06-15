@@ -15,6 +15,7 @@ SignalStreamBuilder::SignalStreamBuilder(const ReferenceAnnotation &refAnno,
 					 const VariantEvents &events,
 					 SignalStream &stream,
 					 ConstraintIntervals &constraints,
+					 Set<Signal*> &newSignals,
 					 Isochore *isochore,
 					 int maxIntronScan,
 					 int minExonLength,
@@ -22,9 +23,13 @@ SignalStreamBuilder::SignalStreamBuilder(const ReferenceAnnotation &refAnno,
 					 bool allowGains)
   : refAnno(refAnno), events(events), stream(stream), constraints(constraints),
     isochore(isochore), maxIntronScan(maxIntronScan), minIntronLen(minIntronLen),
-    minExonLength(minExonLength), allowGains(allowGains)
+    minExonLength(minExonLength), allowGains(allowGains), newSignals(newSignals)
 {
   build();
+  const Vector<Signal*> &signals=signalStream.peek();
+  for(Vector<Signal*>::const_iterator cur=signals.begin(), end=signals.end() ;
+      cur!=end ; ++cur)
+    newSignals.insert(*cur);
 }
 
 

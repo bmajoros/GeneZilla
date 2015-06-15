@@ -80,8 +80,9 @@ BOOM::Stack<SignalPtr> * CIA::processChunk(const Sequence &substrate,
 
   // Populate the signal stream
   constraints=new ConstraintIntervals(substrateString.length());
-  SignalStreamBuilder ssb(*refAnno,events,signalStream,*constraints,isochore,
-			  maxIntronScan,minExonLength,minIntronLen,allowSignalGains);
+  SignalStreamBuilder ssb(*refAnno,events,signalStream,*constraints,newSignals,
+			  isochore,maxIntronScan,minExonLength,minIntronLen,
+			  allowSignalGains);
 
   return mainAlgorithm(substrate,substrateString,osGraph,dumpGraph,
 		       psaFilename);
@@ -105,10 +106,13 @@ BOOM::Stack<SignalPtr> * CIA::mainAlgorithm(const Sequence &seq,
   }
 
   buildParseGraph(seq,str);
+  reweightGraph();
 
+  /*
   double parseScore;
   BOOM::Stack<SignalPtr> *path=parseGraph.findOptimalPath(parseScore);
   generateGff(path,seqLen,parseScore);
+  */
   if(dumpGraph) {
     parseGraph.setVertexIndices();
     osGraph<<parseGraph<<endl;
@@ -340,6 +344,13 @@ void CIA::enforceConstraints(SignalPtr signal)
   const int pos=signal->getConsensusPosition();
   if(constraints->isConstrained(pos)) purgeQueues();
 }
+
+
+
+void CIA::reweightGraph()
+{
+}
+
 
 
 
