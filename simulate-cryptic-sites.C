@@ -33,7 +33,8 @@ public:
   int main(int argc,char *argv[]);
 private:
   SignalSensor *GTsensor, *AGsensor;
-  String refStr;
+  String refStr; // substrate (DNA, unspliced)
+  String refRNA; // transcipt (spliced)
   Sequence refSeq;
   int refLen;
   GffTranscript *refTrans;
@@ -87,7 +88,7 @@ int Application::main(int argc,char *argv[])
   CommandLine cmd(argc,argv,"");
   if(cmd.numArgs()!=4)
     throw String("\n\
-simulate-cryptic-sites <genezilla.iso> <ref.fasta> <ref.gff> <max-distance>\n\
+simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance>\n\
 ");
   const String isoFile=cmd.arg(0);
   const String refFasta=cmd.arg(1);
@@ -116,7 +117,8 @@ simulate-cryptic-sites <genezilla.iso> <ref.fasta> <ref.gff> <max-distance>\n\
     labeling=Labeling(refLen);
 
     // Load signal sensors
-    float gcContent=GCcontent::get(refTrans->getSequence()); //###
+    refRNA=refTrans->getSequence();
+    float gcContent=GCcontent::get(refRNA);
     Isochore *isochore=isochores.getIsochore(gcContent);
     GTsensor=isochore->signalTypeToSensor[GT];
     AGsensor=isochore->signalTypeToSensor[AG];
@@ -399,7 +401,6 @@ void Application::checkMutation()
 void Application::evaluate(const GffTranscript &trans)
 {
   trans.loadSequence(refStr); 
-  const String refRNA=refTrans->getSequence();
   const String altRNA=trans.getSequence();
   const String refProtein=ProteinTrans::translate(refRNA);
   const String altProtein=ProteinTrans::translate(refRNA);
