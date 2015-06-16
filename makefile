@@ -3422,4 +3422,19 @@ extract-splice-features: \
 		$(OBJ)/CIA.o \
 		$(OBJ)/extract-splice-features.o \
 		$(LIBDIRS) $(LIBS)
-#---------------------------------------------
+#--------------------------------------------------------
+$(OBJ)/simulate-cryptic-sites.o:\
+		simulate-cryptic-sites.C
+	$(CC) $(CFLAGS) -o $(OBJ)/simulate-cryptic-sites.o -c \
+		simulate-cryptic-sites.C
+#---------------------------------------------------------
+simulate-cryptic-sites: \
+		$(OBJ)/Labeling.o \
+		$(OBJ)/simulate-cryptic-sites.o
+	$(CC) $(LDFLAGS) -o simulate-cryptic-sites \
+		$(OBJ)/Labeling.o \
+		$(OBJ)/simulate-cryptic-sites.o \
+		$(LIBS)
+#--------------------------------------------------------
+
+
