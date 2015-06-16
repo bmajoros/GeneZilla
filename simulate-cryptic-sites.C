@@ -117,7 +117,7 @@ simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance>\n\
     numExons=refTrans->numExons();
     labeling=Labeling(refLen);
 
-    // Load signal sensors
+    // Get signal sensors
     refRNA=refTrans->getSequence();
     float gcContent=GCcontent::get(refRNA);
     Isochore *isochore=isochores.getIsochore(gcContent);
@@ -138,7 +138,7 @@ simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance>\n\
       if(exon.hasDonor()) processDonor(exon.getEnd(),maxDistance,i);
       if(exon.hasAcceptor()) processAcceptor(exon.getBegin()-2,maxDistance,i);
     }
-    cout<<nmd<<" / "<<nmdSampleSize<<endl;
+    cout<<nmd<<" / "<<nmdSampleSize<<" = "<<nmd/float(nmdSampleSize)<<endl;
   }
 
   // Report statistics;
