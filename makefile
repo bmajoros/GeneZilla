@@ -3429,12 +3429,117 @@ $(OBJ)/simulate-cryptic-sites.o:\
 		simulate-cryptic-sites.C
 #---------------------------------------------------------
 simulate-cryptic-sites: \
+		$(OBJ)/EvidenceFilter.o \
+		$(OBJ)/RnaJunction.o \
+		$(OBJ)/RnaJunctions.o \
+		$(OBJ)/ParseGraph.o \
+		$(OBJ)/GffPathFromParseGraph.o \
+		$(OBJ)/SignalComparator.o \
+		$(OBJ)/NthOrderStringIterator.o \
+		$(OBJ)/TrainingSequence.o \
+		$(OBJ)/SignalPeptideSensor.o \
+		$(OBJ)/CodonTree.o \
+		$(OBJ)/Isochore.o \
+		$(OBJ)/IsochoreTable.o \
+		$(OBJ)/BranchAcceptor.o \
+		$(OBJ)/ThreePeriodicIMM.o \
+		$(OBJ)/IMM.o \
+		$(OBJ)/EdgeFactory.o \
+		$(OBJ)/MddTree.o \
+		$(OBJ)/Partition.o \
+		$(OBJ)/TreeNode.o \
+		$(OBJ)/GarbageCollector.o \
+		$(OBJ)/Edge.o \
+		$(OBJ)/TopologyLoader.o \
+		$(OBJ)/WAM.o \
+		$(OBJ)/WWAM.o \
+		$(OBJ)/TataCapModel.o \
+		$(OBJ)/TataCapSignal.o \
+		$(OBJ)/MarkovChainCompiler.o \
+		$(OBJ)/Fast3PMC.o \
+		$(OBJ)/FastMarkovChain.o \
+		$(OBJ)/ThreePeriodicMarkovChain.o \
+		$(OBJ)/DiscreteDistribution.o \
+		$(OBJ)/Transitions.o \
+		$(OBJ)/EmpiricalDistribution.o \
+		$(OBJ)/GeometricDistribution.o \
+		$(OBJ)/NoncodingQueue.o \
+		$(OBJ)/IntronQueue.o \
+		$(OBJ)/SignalType.o \
+		$(OBJ)/ContentType.o \
+		$(OBJ)/ModelBuilder.o \
+		$(OBJ)/ScoreAnalyzer.o \
+		$(OBJ)/ContentSensor.o \
+		$(OBJ)/MarkovChain.o \
+		$(OBJ)/WMM.o \
+		$(OBJ)/SignalQueue.o \
+		$(OBJ)/SignalSensor.o \
+		$(OBJ)/Propagator.o \
+		$(OBJ)/Signal.o \
+		$(OBJ)/SignalTypeProperties.o \
 		$(OBJ)/Labeling.o \
+		$(OBJ)/GCcontent.o \
+		$(OBJ)/GZilla.o \
 		$(OBJ)/simulate-cryptic-sites.o
 	$(CC) $(LDFLAGS) -o simulate-cryptic-sites \
+		$(OBJ)/EvidenceFilter.o \
+		$(OBJ)/RnaJunction.o \
+		$(OBJ)/RnaJunctions.o \
+		$(OBJ)/ParseGraph.o \
+		$(OBJ)/GffPathFromParseGraph.o \
+		$(OBJ)/SignalComparator.o \
+		$(OBJ)/NthOrderStringIterator.o \
+		$(OBJ)/TrainingSequence.o \
+		$(OBJ)/SignalPeptideSensor.o \
+		$(OBJ)/CodonTree.o \
+		$(OBJ)/Isochore.o \
+		$(OBJ)/IsochoreTable.o \
+		$(OBJ)/BranchAcceptor.o \
+		$(OBJ)/ThreePeriodicIMM.o \
+		$(OBJ)/IMM.o \
+		$(OBJ)/EdgeFactory.o \
+		$(OBJ)/MddTree.o \
+		$(OBJ)/Partition.o \
+		$(OBJ)/TreeNode.o \
+		$(OBJ)/GarbageCollector.o \
+		$(OBJ)/Edge.o \
+		$(OBJ)/TopologyLoader.o \
+		$(OBJ)/WAM.o \
+		$(OBJ)/WWAM.o \
+		$(OBJ)/TataCapModel.o \
+		$(OBJ)/TataCapSignal.o \
+		$(OBJ)/MarkovChainCompiler.o \
+		$(OBJ)/Fast3PMC.o \
+		$(OBJ)/FastMarkovChain.o \
+		$(OBJ)/ThreePeriodicMarkovChain.o \
+		$(OBJ)/DiscreteDistribution.o \
+		$(OBJ)/Transitions.o \
+		$(OBJ)/EmpiricalDistribution.o \
+		$(OBJ)/GeometricDistribution.o \
+		$(OBJ)/NoncodingQueue.o \
+		$(OBJ)/IntronQueue.o \
+		$(OBJ)/SignalType.o \
+		$(OBJ)/ContentType.o \
+		$(OBJ)/ModelBuilder.o \
+		$(OBJ)/ScoreAnalyzer.o \
+		$(OBJ)/ContentSensor.o \
+		$(OBJ)/MarkovChain.o \
+		$(OBJ)/WMM.o \
+		$(OBJ)/SignalQueue.o \
+		$(OBJ)/SignalSensor.o \
+		$(OBJ)/Propagator.o \
+		$(OBJ)/Signal.o \
+		$(OBJ)/SignalTypeProperties.o \
 		$(OBJ)/Labeling.o \
+		$(OBJ)/GCcontent.o \
+		$(OBJ)/GZilla.o \
 		$(OBJ)/simulate-cryptic-sites.o \
 		$(LIBS)
 #--------------------------------------------------------
-
+$(OBJ)/GCcontent.o:\
+		GCcontent.C\
+		GCcontent.H
+	$(CC) $(CFLAGS) -o $(OBJ)/GCcontent.o -c \
+		GCcontent.C
+#---------------------------------------------------------
 

@@ -11,28 +11,50 @@
 #include "BOOM/GffReader.H"
 #include "BOOM/ProteinTrans.H"
 #include "BOOM/CodonIterator.H"
+#include "BOOM/DnaAlphabet.H"
+#include "IsochoreTable.H"
 #include "Labeling.H"
+#include "GCcontent.H"
 using namespace std;
 using namespace BOOM;
 
+/*
+  Statistics from DBASS:
+  ===> 95% of splicing changes in DBASS activate a site less than 70bp away
+  ===> 93% are less than 50bp
+  ===> 90% are less than 30bp
+ */
+
+Alphabet alphabet=DnaAlphabet::global();
 
 class Application {
 public:
   Application();
   int main(int argc,char *argv[]);
 private:
-  GffTranscript *loadGff(const String &filename);
-  bool detectNMD(GffTranscript &altTrans,const String &altSubstrate);
-  void checkSpliceSites(GffTranscript &refTrans,const String &refSubstrate,
-			GffTranscript &altTrans,const String &altSubstrate);
-  void checkDonor(GffExon &refExon,const String &refSubstrate,
-		  GffExon &altExon,const String &altSubstrate);
-  void checkAcceptor(GffExon &refExon,const String &refSubstrate,
-		     GffExon &altExon,const String &altSubstrate);
+  SignalSensor *GTsensor, *AGsensor;
+  String refStr;
+  Sequence refSeq;
+  int refLen;
+  GffTranscript *refTrans;
+  int numExons;
+  Labeling labeling;
+  int nmd, nmdSampleSize;
+  bool detectNMD(const GffTranscript &altTrans,const String &altSubstrate);
+  //void checkSpliceSites(GffTranscript &refTrans,const String &refSubstrate,
+  //			GffTranscript &altTrans,const String &altSubstrate);
+  //void checkDonor(GffExon &refExon,const String &refSubstrate,
+  //		  GffExon &altExon,const String &altSubstrate);
+  //void checkAcceptor(GffExon &refExon,const String &refSubstrate,
+  //		     GffExon &altExon,const String &altSubstrate);
   String getDonor(GffExon &,const String &substrate,int &pos);
   String getAcceptor(GffExon &,const String &substrate,int &pos);
   void checkFrameshifts(const Labeling &,const GffTranscript &,
-			const String &substrate);
+			const String &substrate);  
+  void computeLabeling(TranscriptList *transcripts,Labeling &);
+  void processDonor(int pos,int maxDistance,int whichExon);
+  void processAcceptor(int pos,int maxDistance,int whichExon);
+  void evaluate(const GffTranscript &);
 };
 
 
@@ -52,6 +74,7 @@ int main(int argc,char *argv[]) {
 
 
 Application::Application()
+  : nmd(0), nmdSampleSize(0)
 {
   // ctor
 }
@@ -62,64 +85,47 @@ int Application::main(int argc,char *argv[])
 {
   // Process command line
   CommandLine cmd(argc,argv,"");
-  if(cmd.numArgs()!=2)
+  if(cmd.numArgs()!=4)
     throw String("\n\
-simulate-cryptic-sites <genezilla.iso> <ref.fasta> <ref.gff>\n\
+simulate-cryptic-sites <genezilla.iso> <ref.fasta> <ref.gff> <max-distance>\n\
 ");
   const String isoFile=cmd.arg(0);
   const String refFasta=cmd.arg(1);
   const String refGff=cmd.arg(2);
+  const int maxDistance=cmd.arg(3).asInt();
 
   // Load input files
-  String def, refSubstrate;
-  FastaReader::load(refFasta,def,refSubstrate);
-  GffTranscript *refTrans=loadGff(refGff);
-  Labeling labeling(labelFile);
+  String def;
+  FastaReader::load(refFasta,def,refStr);
+  refSeq=Sequence(refStr,DnaAlphabet::global());
+  refLen=refStr.length();
+  refTrans=GffReader::longestTranscript(refGff);
+  if(refTrans->getStrand()!='+') 
+    throw refGff+": only the forward strand is currently supported";
+  refTrans->loadSequence(refStr); 
+  numExons=refTrans->numExons();
+  labeling=Labeling(refLen);
 
-  // Translate to proteins
-  refTrans->loadSequence(refSubstrate); 
-  String refDNA=refTrans->getSequence();
-  String refProtein=ProteinTrans::translate(refDNA);
-  if(refProtein.lastChar()!='*') {
-    cout<<"extending"<<endl;
-    refTrans->extendFinalExonBy3(); altTrans->extendFinalExonBy3();
-    refTrans->loadSequence(refSubstrate); 
-    refDNA=refTrans->getSequence();
-    refProtein=ProteinTrans::translate(refDNA);
+  // Load signal sensors
+  GarbageIgnorer gc;
+  IsochoreTable isochores(gc);
+  isochores.load(isoFile);
+  float gcContent=GCcontent::get(refStr);
+  Isochore *isochore=isochores.getIsochore(gcContent);
+  GTsensor=isochore->signalTypeToSensor[GT];
+  AGsensor=isochore->signalTypeToSensor[AG];
+
+  // Iterate over splice sites
+  for(int i=0 ; i<numExons ; ++i) {
+    GffExon &exon=refTrans->getIthExon(i);
+    if(exon.hasDonor()) processDonor(exon.getEnd(),maxDistance,i);
+    if(exon.hasAcceptor()) processAcceptor(exon.getBegin()-2,maxDistance,i);
   }
-  altTrans->loadSequence(altSubstrate);
-  const String altDNA=altTrans->getSequence();
-  const String altProtein=ProteinTrans::translate(altDNA);
-  if(refProtein!=altProtein) cout<<"proteins differ"<<endl;
-
-  // Check for frameshifts
-  checkFrameshifts(labeling,*altTrans,altSubstrate);
-
-  // Check for stop codons
-  const bool stopPresent=altProtein.lastChar()=='*';
-  refProtein.chop(); altProtein.chop();
-  const int firstStop=altProtein.findFirst('*');
-  if(firstStop>=0) {
-    cout<<"premature stop at AA position "<<firstStop<<" in alt protein"<<endl;
-    if(!detectNMD(*altTrans,altSubstrate))
-      cout<<"truncation predicted"<<endl;
-  }
-  else if(!stopPresent) cout<<"missing stop codon"<<endl; 
-  
-  // Check length is divisible by 3
-  if(altDNA.length()%3) cout<<"non-integral number of codons"<<endl;
-  
-  // Check for start codon
-  if(altProtein.length()<1 || altProtein[0]!='M') cout<<"No start codon"<<endl;
-
-  // Check splice sites
-  checkSpliceSites(*refTrans,refSubstrate,*altTrans,altSubstrate);
-
-  return 0;
 }
 
 
 
+/*
 void Application::checkSpliceSites(GffTranscript &refTranscript,
 				   const String &refSubstrate,
 				   GffTranscript &altTranscript,
@@ -169,6 +175,7 @@ void Application::checkAcceptor(GffExon &refExon,const String &refSubstrate,
     if(altAcceptor==*cur) return;
   cout<<"broken acceptor site: "<<altAcceptor<<" at "<<pos<<" in alt sequence"<<endl;
 }
+*/
 
 
 
@@ -204,22 +211,8 @@ String Application::getAcceptor(GffExon &exon,const String &substrate,int &pos)
 
 
 
-GffTranscript *Application::loadGff(const String &filename)
-{
-  GffReader reader(filename);
-  Vector<GffTranscript*> *transcripts=reader.loadTranscripts();
-  const int n=transcripts->size();
-  if(n<1) throw filename+" contains no transcripts";
-  GffTranscript *transcript=(*transcripts)[0];
-  for(int i=1 ; i<n ; ++i) delete (*transcripts)[i];
-  delete transcripts;
-  return transcript;
-}
-
-
-
-bool Application::detectNMD(GffTranscript &transcript,
-				  const String &substrate)
+bool Application::detectNMD(const GffTranscript &transcript,
+			    const String &substrate)
 {
   const int numExons=transcript.getNumExons();
   if(numExons<2) return false;
@@ -264,6 +257,146 @@ void Application::checkFrameshifts(const Labeling &labeling,
     float percentMismatch=int(1000*phaseMismatches/float(total)+5/9.0)/10.0;
     cout<<"frameshift detected: "<<phaseMismatches<<"/"<<total<<" = "
 	<<percentMismatch<<"% labeled exon bases change frame"<<endl;
+  }
+}
+
+
+
+void Application::computeLabeling(TranscriptList *transcripts,
+				  Labeling &refLab)
+{
+  int numTrans=transcripts->size();
+  if(numTrans!=1) throw "Number of transcripts provided must be exactly 1";
+  GffTranscript *transcript=(*transcripts)[0];
+  int begin=transcript->getBegin(), end=transcript->getEnd();
+  char strand=transcript->getStrand();
+  if(strand!='+') throw "only forward-strand features are currently supported";
+  int numExons=transcript->getNumExons();
+  refLab.asArray().setAllTo(LABEL_INTERGENIC);
+  for(int i=begin ; i<end ; ++i) refLab[i]=LABEL_INTRON;
+  int phase=0;
+  for(int i=0 ; i<numExons ; ++i) {
+    GffExon &exon=transcript->getIthExon(i);
+    begin=exon.getBegin(); end=exon.getEnd();
+    for(int j=begin ; j<end ; ++j) {
+      refLab[j]=getExonLabel(phase);
+      phase=(phase+1)%3;
+    }
+  }
+}
+
+
+
+void Application::processDonor(int refPos,int maxDistance,int whichExon)
+{
+  const int consensusOffset=GTsensor->getConsensusOffset();
+  const int contextWindowLen=GTsensor->getContextWindowLength();
+  const float threshold=GTsensor->getCutoff();
+  int firstPos=refPos-maxDistance; if(firstPos<0) firstPos=0;
+  int lastPos=refPos+2+maxDistance; if(lastPos>refLen-2) lastPos=refLen-2;
+  for(int pos=firstPos ; pos<=lastPos ; ++pos) {
+    if(pos==refPos) continue;
+    if(GTsensor->consensusOccursAt(refStr,pos)) {
+      const int begin=pos-consensusOffset;
+      const int end=begin+contextWindowLen;
+      if(end>refLen) continue;
+      const float logP=GTsensor->getLogP(refSeq,refStr,pos-consensusOffset);
+      if(logP>=threshold) {
+	GffTranscript altTrans(*refTrans);
+	altTrans.getIthExon(whichExon).setEnd(pos);
+	evaluate(altTrans);
+      }
+    }
+  }
+}
+
+
+
+void Application::processAcceptor(int refPos,int maxDistance,int whichExon)
+{
+  const int consensusOffset=AGsensor->getConsensusOffset();
+  const int contextWindowLen=AGsensor->getContextWindowLength();
+  const float threshold=AGsensor->getCutoff();
+  int firstPos=refPos-maxDistance; if(firstPos<0) firstPos=0;
+  int lastPos=refPos+2+maxDistance; if(lastPos>refLen-2) lastPos=refLen-2;
+  for(int pos=firstPos ; pos<=lastPos ; ++pos) {
+    if(pos==refPos) continue;
+    if(AGsensor->consensusOccursAt(refStr,pos)) {
+      const int begin=pos-consensusOffset;
+      const int end=begin+contextWindowLen;
+      if(end>refLen) continue;
+      const float logP=AGsensor->getLogP(refSeq,refStr,pos-consensusOffset);
+      if(logP>=threshold) {
+	GffTranscript altTrans(*refTrans);
+	altTrans.getIthExon(whichExon).setBegin(pos);
+	evaluate(altTrans);
+      }
+    }
+  }
+}
+
+
+
+/*
+void Application::checkMutation()
+{
+  // Translate to proteins
+  refTrans->loadSequence(refSubstrate); 
+  String refDNA=refTrans->getSequence();
+  String refProtein=ProteinTrans::translate(refDNA);
+  if(refProtein.lastChar()!='*') {
+    cout<<"extending"<<endl;
+    refTrans->extendFinalExonBy3(); altTrans->extendFinalExonBy3();
+    refTrans->loadSequence(refSubstrate); 
+    refDNA=refTrans->getSequence();
+    refProtein=ProteinTrans::translate(refDNA);
+  }
+  altTrans->loadSequence(altSubstrate);
+  const String altDNA=altTrans->getSequence();
+  const String altProtein=ProteinTrans::translate(altDNA);
+  if(refProtein!=altProtein) cout<<"proteins differ"<<endl;
+
+  // Check for frameshifts
+  checkFrameshifts(labeling,*altTrans,altSubstrate);
+
+  // Check for stop codons
+  const bool stopPresent=altProtein.lastChar()=='*';
+  refProtein.chop(); altProtein.chop();
+  const int firstStop=altProtein.findFirst('*');
+  if(firstStop>=0) {
+    cout<<"premature stop at AA position "<<firstStop<<" in alt protein"<<endl;
+    if(!detectNMD(*altTrans,altSubstrate))
+      cout<<"truncation predicted"<<endl;
+  }
+  else if(!stopPresent) cout<<"missing stop codon"<<endl; 
+  
+  // Check length is divisible by 3
+  if(altDNA.length()%3) cout<<"non-integral number of codons"<<endl;
+  
+  // Check for start codon
+  if(altProtein.length()<1 || altProtein[0]!='M') cout<<"No start codon"<<endl;
+
+  // Check splice sites
+  checkSpliceSites(*refTrans,refSubstrate,*altTrans,altSubstrate);
+
+  return 0;
+}
+*/
+
+
+
+void Application::evaluate(const GffTranscript &trans)
+{
+  trans.loadSequence(refStr); 
+  const String refRNA=refTrans->getSequence();
+  const String altRNA=trans.getSequence();
+  const String refProtein=ProteinTrans::translate(refRNA);
+  const String altProtein=ProteinTrans::translate(refRNA);
+  refProtein.chop(); altProtein.chop();
+  const int firstStop=altProtein.findFirst('*');
+  if(firstStop>=0) {
+    if(!detectNMD(trans,refStr)) ++nmd;
+    ++nmdSampleSize;
   }
 }
 
