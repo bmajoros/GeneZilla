@@ -55,6 +55,7 @@ protected:
   void enforceConstraints(SignalPtr);
   void purgeQueues();
   void reweightGraph();
+  void reweight(Edge &);
 };
 
 

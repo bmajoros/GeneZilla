@@ -350,6 +350,29 @@ void CIA::enforceConstraints(SignalPtr signal)
 
 void CIA::reweightGraph()
 {
+  Set<Signal*> seen;
+  ListQueue<Signal*> Q;
+  for(Vector<SignalPtr>::iterator cur=leftTermini.begin(), end=
+	leftTermini.end() ; cur!=end ; ++cur) Q.enqueue(*cur);
+  while(!Q.isEmpty()) {
+    Signal *signal=Q.dequeue();
+    seen+=signal;
+    Set<Edge*> &edges=signal->getEdgesOut();
+    for(Set<Edge*>::iterator cur=edges.begin() end=edges.end() ;
+	cur!=end ; ++cur) {
+      Edge &edge=*cur;
+      reweight(edge);
+      Signal *right=edge.getRight();
+      if(!seen.isMember(right)) Q.enqueue(right);
+    }
+  }
+}
+
+
+
+void CIA::reweight(Edge &edge)
+{
+  
 }
 
 
