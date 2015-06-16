@@ -99,28 +99,39 @@ simulate-cryptic-sites <genezilla.iso> <ref.fasta> <ref.gff> <max-distance>\n\
   FastaReader::load(refFasta,def,refStr);
   refSeq=Sequence(refStr,DnaAlphabet::global());
   refLen=refStr.length();
-  refTrans=GffReader::longestTranscript(refGff);
-  if(refTrans->getStrand()!='+') 
-    throw refGff+": only the forward strand is currently supported";
-  refTrans->loadSequence(refStr); 
-  numExons=refTrans->numExons();
-  labeling=Labeling(refLen);
-
-  // Load signal sensors
   GarbageIgnorer gc;
   IsochoreTable isochores(gc);
   isochores.load(isoFile);
-  float gcContent=GCcontent::get(refStr);
-  Isochore *isochore=isochores.getIsochore(gcContent);
-  GTsensor=isochore->signalTypeToSensor[GT];
-  AGsensor=isochore->signalTypeToSensor[AG];
 
-  // Iterate over splice sites
-  for(int i=0 ; i<numExons ; ++i) {
-    GffExon &exon=refTrans->getIthExon(i);
-    if(exon.hasDonor()) processDonor(exon.getEnd(),maxDistance,i);
-    if(exon.hasAcceptor()) processAcceptor(exon.getBegin()-2,maxDistance,i);
+  // Process all genes
+  Vector<GffGene> &genes=*GffReader::loadGenes(refGff);
+  for(Vector<GffGene>::iterator cur=genes.begin(), end=genes.end() ;
+      cur!=end ; ++cur) {
+    GffGene &gene=*cur;
+    refTrans=gene.longestTranscript();
+
+    if(refTrans->getStrand()!='+') continue; // ###
+    refTrans->loadSequence(refStr); 
+    numExons=refTrans->numExons();
+    labeling=Labeling(refLen);
+
+    // Load signal sensors
+    float gcContent=GCcontent::get(refTrans->getSequence()); //###
+    Isochore *isochore=isochores.getIsochore(gcContent);
+    GTsensor=isochore->signalTypeToSensor[GT];
+    AGsensor=isochore->signalTypeToSensor[AG];
+
+    // Iterate over splice sites
+    for(int i=0 ; i<numExons ; ++i) {
+      GffExon &exon=refTrans->getIthExon(i);
+      if(exon.hasDonor()) processDonor(exon.getEnd(),maxDistance,i);
+      if(exon.hasAcceptor()) processAcceptor(exon.getBegin()-2,maxDistance,i);
+    }
   }
+
+  // Report statistics;
+  float percentNMD=nmd/float(nmdSampleSize);
+  cout<<"NMD:\t"<<nmd<<" / "<<nmdSampleSize<<" = "<<percentNMD<<endl;
 }
 
 
