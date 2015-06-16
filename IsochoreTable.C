@@ -30,6 +30,8 @@ BOOM::Regex IsochoreTable::lineRegex(
 BOOM::Regex IsochoreTable::globalRegex(
   "GLOBAL\\s+(\\S+)\\s*=\\s*(\\S+)");
 
+// # this is a comment
+BOOM::Regex IsochoreTable::commentRegex("^\\s*#");
 
 
 IsochoreTable::IsochoreTable(GarbageCollector &garbageCollector)
@@ -77,6 +79,7 @@ void IsochoreTable::load(const BOOM::String &filename)
 	  BOOM::String value=globalRegex[2];
 	  pairs.push_back(pair<BOOM::String,BOOM::String>(key,value));
 	}
+      else if(commentRegex.search(line)) continue;
       else if(!line.isEmpty())
 	throw BOOM::String("Syntax error in ISO file:\n")+line;
     }

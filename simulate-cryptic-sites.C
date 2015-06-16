@@ -55,7 +55,7 @@ private:
   void computeLabeling(TranscriptList *transcripts,Labeling &);
   void processDonor(int pos,int maxDistance,int whichExon);
   void processAcceptor(int pos,int maxDistance,int whichExon);
-  void evaluate(const GffTranscript &);
+  void evaluate(GffTranscript &);
 };
 
 
@@ -129,6 +129,7 @@ simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance>\n\
       if(exon.hasDonor()) processDonor(exon.getEnd(),maxDistance,i);
       if(exon.hasAcceptor()) processAcceptor(exon.getBegin()-2,maxDistance,i);
     }
+    cout<<nmd<<" / "<<nmdSampleSize<<endl;
   }
 
   // Report statistics;
@@ -237,7 +238,7 @@ bool Application::detectNMD(const GffTranscript &transcript,
     if(codon.isStop()) {
       const int distance=lastEJC-codon.splicedCoord;
       if(distance>=50) {
-	cout<<"NMD predicted: PTC found "<<distance<<"bp from last EJC"<<endl;
+	//cout<<"NMD predicted: PTC found "<<distance<<"bp from last EJC"<<endl;
 	return true;
       }
     }
@@ -341,7 +342,7 @@ void Application::processAcceptor(int refPos,int maxDistance,int whichExon)
       const float logP=AGsensor->getLogP(refSeq,refStr,pos-consensusOffset);
       if(logP>=threshold) {
 	GffTranscript altTrans(*refTrans);
-	altTrans.getIthExon(whichExon).setBegin(pos);
+	altTrans.getIthExon(whichExon).setBegin(pos+2);
 	evaluate(altTrans);
       }
     }
@@ -398,16 +399,17 @@ void Application::checkMutation()
 
 
 
-void Application::evaluate(const GffTranscript &trans)
+void Application::evaluate(GffTranscript &trans)
 {
   trans.loadSequence(refStr); 
   const String altRNA=trans.getSequence();
   const String refProtein=ProteinTrans::translate(refRNA);
-  const String altProtein=ProteinTrans::translate(refRNA);
+  const String altProtein=ProteinTrans::translate(altRNA);
   refProtein.chop(); altProtein.chop();
+  if(refProtein==altProtein) throw "identical"; // ### debugging
   const int firstStop=altProtein.findFirst('*');
   if(firstStop>=0) {
-    if(!detectNMD(trans,refStr)) ++nmd;
+    if(detectNMD(trans,refStr)) ++nmd;
     ++nmdSampleSize;
   }
 }

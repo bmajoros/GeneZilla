@@ -18,7 +18,7 @@
 
 class IsochoreTable
 {
-  static BOOM::Regex lineRegex, globalRegex;
+  static BOOM::Regex lineRegex, globalRegex, commentRegex;
   BOOM::Vector<Isochore*> isochores;
   BOOM::Vector<float> boundaries;
   int queueCapacity;
