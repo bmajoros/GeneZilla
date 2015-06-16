@@ -41,13 +41,8 @@ private:
   int numExons;
   Labeling labeling;
   int nmd, nmdSampleSize;
+  bool exonSkippingOnly, donorsOnly, acceptorsOnly;
   bool detectNMD(const GffTranscript &altTrans,const String &altSubstrate);
-  //void checkSpliceSites(GffTranscript &refTrans,const String &refSubstrate,
-  //			GffTranscript &altTrans,const String &altSubstrate);
-  //void checkDonor(GffExon &refExon,const String &refSubstrate,
-  //		  GffExon &altExon,const String &altSubstrate);
-  //void checkAcceptor(GffExon &refExon,const String &refSubstrate,
-  //		     GffExon &altExon,const String &altSubstrate);
   String getDonor(GffExon &,const String &substrate,int &pos);
   String getAcceptor(GffExon &,const String &substrate,int &pos);
   void checkFrameshifts(const Labeling &,const GffTranscript &,
@@ -89,11 +84,17 @@ int Application::main(int argc,char *argv[])
   if(cmd.numArgs()!=4)
     throw String("\n\
 simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance>\n\
+  -e = simulate only exon skipping\n\
+  -d = simulate only changes in donor sites\n\
+  -a = simulate only changes in acceptor sites\n\
 ");
   const String isoFile=cmd.arg(0);
   const String refFasta=cmd.arg(1);
   const String refGff=cmd.arg(2);
   const int maxDistance=cmd.arg(3).asInt();
+  exonSkippingOnly=cmd.option('e');
+  donorsOnly=cmd.option('d');
+  acceptorsOnly=cmd.option('a');
 
   // Load input files
   String def;
@@ -125,6 +126,14 @@ simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance>\n\
 
     // Iterate over splice sites
     for(int i=0 ; i<numExons ; ++i) {
+      if(exonSkippingOnly) {
+	if(i>0 && i+1<numExons) {
+	  GffTranscript altTrans(*refTrans);
+	  altTrans.deleteIthExon(i);
+	  evaluate(altTrans);
+	}
+	continue;
+      }
       GffExon &exon=refTrans->getIthExon(i);
       if(exon.hasDonor()) processDonor(exon.getEnd(),maxDistance,i);
       if(exon.hasAcceptor()) processAcceptor(exon.getBegin()-2,maxDistance,i);
@@ -303,6 +312,7 @@ void Application::computeLabeling(TranscriptList *transcripts,
 
 void Application::processDonor(int refPos,int maxDistance,int whichExon)
 {
+  if(acceptorsOnly) return;
   const int consensusOffset=GTsensor->getConsensusOffset();
   const int contextWindowLen=GTsensor->getContextWindowLength();
   const float threshold=GTsensor->getCutoff();
@@ -317,8 +327,9 @@ void Application::processDonor(int refPos,int maxDistance,int whichExon)
       const float logP=GTsensor->getLogP(refSeq,refStr,pos-consensusOffset);
       if(logP>=threshold) {
 	GffTranscript altTrans(*refTrans);
-	altTrans.getIthExon(whichExon).setEnd(pos);
-	evaluate(altTrans);
+	GffExon &exon=altTrans.getIthExon(whichExon);
+	exon.setEnd(pos);
+	if(exon.length()>0) evaluate(altTrans);
       }
     }
   }
@@ -328,6 +339,7 @@ void Application::processDonor(int refPos,int maxDistance,int whichExon)
 
 void Application::processAcceptor(int refPos,int maxDistance,int whichExon)
 {
+  if(donorsOnly) return;
   const int consensusOffset=AGsensor->getConsensusOffset();
   const int contextWindowLen=AGsensor->getContextWindowLength();
   const float threshold=AGsensor->getCutoff();
@@ -342,8 +354,9 @@ void Application::processAcceptor(int refPos,int maxDistance,int whichExon)
       const float logP=AGsensor->getLogP(refSeq,refStr,pos-consensusOffset);
       if(logP>=threshold) {
 	GffTranscript altTrans(*refTrans);
-	altTrans.getIthExon(whichExon).setBegin(pos+2);
-	evaluate(altTrans);
+	GffExon &exon=altTrans.getIthExon(whichExon);
+	exon.setBegin(pos+2);
+	if(exon.length()>0) evaluate(altTrans);
       }
     }
   }
