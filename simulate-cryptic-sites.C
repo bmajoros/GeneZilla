@@ -174,7 +174,9 @@ void Application::report()
     const float nmdOverAll=nmd/float(sampleSize);
     const float percentFrameshift=frameshifts/float(sampleSize);
     const float percentFrameshiftStops=frameshiftStops/float(stops);
-    cout<<"NMD="<<nmd<<" trunc="<<truncations<<" frameshift="<<frameshifts<<" sample="<<sampleSize
+    cout<<"NMD="<<nmd<<" trunc="<<truncations<<" frameshift="<<frameshifts
+	<<" frameshift_stops="<<frameshiftStops
+	<<" sample="<<sampleSize
 	<<" %stops="<<percentStops<<" #nmd/#stops="<<nmdOverStops
 	<<" #trunc/#stops="<<truncOverStops
 	<<" #nmd/#sample="<<nmdOverAll
