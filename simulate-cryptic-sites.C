@@ -40,7 +40,8 @@ private:
   GffTranscript *refTrans;
   int numExons;
   Labeling labeling;
-  int nmd, nmdSampleSize;
+  int nmd, truncations, sampleSize;
+  int maxSampleSize;
   bool exonSkippingOnly, donorsOnly, acceptorsOnly;
   bool detectNMD(const GffTranscript &altTrans,const String &altSubstrate);
   String getDonor(GffExon &,const String &substrate,int &pos);
@@ -51,6 +52,7 @@ private:
   void processDonor(int pos,int maxDistance,int whichExon);
   void processAcceptor(int pos,int maxDistance,int whichExon);
   void evaluate(GffTranscript &);
+  bool refIsPseudogene(GffTranscript &);
 };
 
 
@@ -70,7 +72,7 @@ int main(int argc,char *argv[]) {
 
 
 Application::Application()
-  : nmd(0), nmdSampleSize(0)
+  : nmd(0), truncations(0), sampleSize(0)
 {
   // ctor
 }
@@ -80,13 +82,14 @@ Application::Application()
 int Application::main(int argc,char *argv[])
 {
   // Process command line
-  CommandLine cmd(argc,argv,"");
+  CommandLine cmd(argc,argv,"adem:");
   if(cmd.numArgs()!=4)
     throw String("\n\
 simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance>\n\
   -e = simulate only exon skipping\n\
   -d = simulate only changes in donor sites\n\
   -a = simulate only changes in acceptor sites\n\
+  -m <N> = max sample size is N\n\
 ");
   const String isoFile=cmd.arg(0);
   const String refFasta=cmd.arg(1);
@@ -95,6 +98,7 @@ simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance>\n\
   exonSkippingOnly=cmd.option('e');
   donorsOnly=cmd.option('d');
   acceptorsOnly=cmd.option('a');
+  maxSampleSize=cmd.option('m') ? cmd.optParm('m').asInt() : 0;
 
   // Load input files
   String def;
@@ -111,8 +115,10 @@ simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance>\n\
       cur!=end ; ++cur) {
     GffGene &gene=*cur;
     refTrans=gene.longestTranscript();
+    if(maxSampleSize>0 && sampleSize>maxSampleSize) break;
 
     if(refTrans->getStrand()!='+') continue; // ###
+    if(refIsPseudogene(*refTrans)) continue;
     refTrans->loadSequence(refStr); 
     numExons=refTrans->numExons();
     labeling=Labeling(refLen);
@@ -130,6 +136,15 @@ simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance>\n\
 	if(i>0 && i+1<numExons) {
 	  GffTranscript altTrans(*refTrans);
 	  altTrans.deleteIthExon(i);
+	  //	  cout<<altTrans.getIthExon(i).length()%3<<endl;
+	  //if(altTrans.getIthExon(i).length()%3) continue;
+	  {//###
+	    /*
+	    GffExon &prev=altTrans.getIthExon(i-1), &next=altTrans.getIthExon(i+1);
+	    cout<<prev.getSequence().substr(prev.getSequence().length()-2)<<" "
+		<<next.getSequence().substr(0,2)<<endl;
+	    */
+	  }//###
 	  evaluate(altTrans);
 	}
 	continue;
@@ -138,12 +153,31 @@ simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance>\n\
       if(exon.hasDonor()) processDonor(exon.getEnd(),maxDistance,i);
       if(exon.hasAcceptor()) processAcceptor(exon.getBegin()-2,maxDistance,i);
     }
-    cout<<nmd<<" / "<<nmdSampleSize<<" = "<<nmd/float(nmdSampleSize)<<endl;
+    if(sampleSize>0) {
+      const int stops=nmd+truncations;
+      const float percentStops=stops/float(sampleSize);
+      const float nmdOverStops=nmd/float(stops);
+      const float truncOverStops=truncations/float(stops);
+      const float nmdOverAll=nmd/float(sampleSize);
+      cout<<"NMD="<<nmd<<" trunc="<<truncations<<" sample="<<sampleSize
+	  <<" %stops="<<percentStops<<" #nmd/#stops="<<nmdOverStops
+	  <<" #trunc/#stops="<<truncOverStops
+	  <<" #nmd/#sample="<<nmdOverAll<<endl;
+    }
   }
 
   // Report statistics;
-  float percentNMD=nmd/float(nmdSampleSize);
-  cout<<"NMD:\t"<<nmd<<" / "<<nmdSampleSize<<" = "<<percentNMD<<endl;
+    if(sampleSize>0) {
+      const int stops=nmd+truncations;
+      const float percentStops=stops/float(sampleSize);
+      const float nmdOverStops=nmd/float(stops);
+      const float truncOverStops=truncations/float(stops);
+      const float nmdOverAll=nmd/float(sampleSize);
+      cout<<"NMD="<<nmd<<" trunc="<<truncations<<" sample="<<sampleSize
+	  <<" %stops="<<percentStops<<" #nmd/#stops="<<nmdOverStops
+	  <<" #trunc/#stops="<<truncOverStops
+	  <<" #nmd/#sample="<<nmdOverAll<<endl;
+    }
 }
 
 
@@ -412,6 +446,18 @@ void Application::checkMutation()
 
 
 
+bool Application::refIsPseudogene(GffTranscript &trans)
+{
+  trans.loadSequence(refStr); 
+  const String altRNA=trans.getSequence();
+  const String altProtein=ProteinTrans::translate(altRNA);
+  altProtein.chop();
+  const int firstStop=altProtein.findFirst('*');
+  return firstStop>=0;
+}
+
+
+
 void Application::evaluate(GffTranscript &trans)
 {
   trans.loadSequence(refStr); 
@@ -422,9 +468,12 @@ void Application::evaluate(GffTranscript &trans)
   if(refProtein==altProtein) throw "identical"; // ### debugging
   const int firstStop=altProtein.findFirst('*');
   if(firstStop>=0) {
-    if(detectNMD(trans,refStr)) ++nmd;
-    ++nmdSampleSize;
+    if(maxSampleSize<1 || sampleSize<=maxSampleSize) {
+      if(detectNMD(trans,refStr)) ++nmd;
+      else ++truncations;
+    }
   }
+  ++sampleSize;
 }
 
 
