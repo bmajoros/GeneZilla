@@ -40,7 +40,7 @@ private:
   GffTranscript *refTrans;
   int numExons;
   Labeling labeling;
-  int nmd, truncations, sampleSize;
+  int nmd, truncations, frameshifts, frameshiftStops, sampleSize;
   int maxSampleSize;
   bool exonSkippingOnly, donorsOnly, acceptorsOnly;
   bool detectNMD(const GffTranscript &altTrans,const String &altSubstrate);
@@ -51,8 +51,9 @@ private:
   void computeLabeling(TranscriptList *transcripts,Labeling &);
   void processDonor(int pos,int maxDistance,int whichExon);
   void processAcceptor(int pos,int maxDistance,int whichExon);
-  void evaluate(GffTranscript &);
+  void evaluate(GffTranscript &,bool frameshift);
   bool refIsPseudogene(GffTranscript &);
+  void report();
 };
 
 
@@ -72,7 +73,7 @@ int main(int argc,char *argv[]) {
 
 
 Application::Application()
-  : nmd(0), truncations(0), sampleSize(0)
+  : nmd(0), truncations(0), sampleSize(0), frameshifts(0), frameshiftStops(0)
 {
   // ctor
 }
@@ -135,8 +136,9 @@ simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance>\n\
       if(exonSkippingOnly) {
 	if(i>0 && i+1<numExons) {
 	  GffTranscript altTrans(*refTrans);
+	  const bool frameshift=altTrans.getIthExon(i).length()%3>0;
+	  if(frameshift) ++frameshifts;
 	  altTrans.deleteIthExon(i);
-	  //	  cout<<altTrans.getIthExon(i).length()%3<<endl;
 	  //if(altTrans.getIthExon(i).length()%3) continue;
 	  {//###
 	    /*
@@ -145,7 +147,7 @@ simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance>\n\
 		<<next.getSequence().substr(0,2)<<endl;
 	    */
 	  }//###
-	  evaluate(altTrans);
+	  evaluate(altTrans,frameshift);
 	}
 	continue;
       }
@@ -153,33 +155,35 @@ simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance>\n\
       if(exon.hasDonor()) processDonor(exon.getEnd(),maxDistance,i);
       if(exon.hasAcceptor()) processAcceptor(exon.getBegin()-2,maxDistance,i);
     }
-    if(sampleSize>0) {
-      const int stops=nmd+truncations;
-      const float percentStops=stops/float(sampleSize);
-      const float nmdOverStops=nmd/float(stops);
-      const float truncOverStops=truncations/float(stops);
-      const float nmdOverAll=nmd/float(sampleSize);
-      cout<<"NMD="<<nmd<<" trunc="<<truncations<<" sample="<<sampleSize
-	  <<" %stops="<<percentStops<<" #nmd/#stops="<<nmdOverStops
-	  <<" #trunc/#stops="<<truncOverStops
-	  <<" #nmd/#sample="<<nmdOverAll<<endl;
-    }
+    report();
   }
 
   // Report statistics;
-    if(sampleSize>0) {
-      const int stops=nmd+truncations;
-      const float percentStops=stops/float(sampleSize);
-      const float nmdOverStops=nmd/float(stops);
-      const float truncOverStops=truncations/float(stops);
-      const float nmdOverAll=nmd/float(sampleSize);
-      cout<<"NMD="<<nmd<<" trunc="<<truncations<<" sample="<<sampleSize
-	  <<" %stops="<<percentStops<<" #nmd/#stops="<<nmdOverStops
-	  <<" #trunc/#stops="<<truncOverStops
-	  <<" #nmd/#sample="<<nmdOverAll<<endl;
-    }
+  report();
 }
 
+
+
+void Application::report()
+{
+  if(sampleSize>0) {
+    const int stops=nmd+truncations;
+    const float percentStops=stops/float(sampleSize);
+    const float nmdOverStops=nmd/float(stops);
+    const float truncOverStops=truncations/float(stops);
+    const float nmdOverAll=nmd/float(sampleSize);
+    const float percentFrameshift=frameshifts/float(sampleSize);
+    const float percentFrameshiftStops=frameshiftStops/float(stops);
+    cout<<"NMD="<<nmd<<" trunc="<<truncations<<" frameshift="<<frameshifts<<" sample="<<sampleSize
+	<<" %stops="<<percentStops<<" #nmd/#stops="<<nmdOverStops
+	<<" #trunc/#stops="<<truncOverStops
+	<<" #nmd/#sample="<<nmdOverAll
+	<<" #frameshifts/#sample="<<percentFrameshift
+	<<" %frameshift_stops="<<percentFrameshiftStops
+      //	<<" #stop/#frameshift="<<stops/float(frameshifts)
+	<<endl;
+  }
+}
 
 
 /*
@@ -363,7 +367,11 @@ void Application::processDonor(int refPos,int maxDistance,int whichExon)
 	GffTranscript altTrans(*refTrans);
 	GffExon &exon=altTrans.getIthExon(whichExon);
 	exon.setEnd(pos);
-	if(exon.length()>0) evaluate(altTrans);
+	if(exon.length()>0) {
+	  bool frameshift=posmod(pos-refPos)>0;
+	  if(frameshift) ++frameshifts;
+	  evaluate(altTrans,frameshift);
+	}
       }
     }
   }
@@ -390,59 +398,15 @@ void Application::processAcceptor(int refPos,int maxDistance,int whichExon)
 	GffTranscript altTrans(*refTrans);
 	GffExon &exon=altTrans.getIthExon(whichExon);
 	exon.setBegin(pos+2);
-	if(exon.length()>0) evaluate(altTrans);
+	if(exon.length()>0) {
+	  bool frameshift=posmod(pos-refPos)>0;
+	  if(frameshift) ++frameshifts;
+	  evaluate(altTrans,frameshift);
+	}
       }
     }
   }
 }
-
-
-
-/*
-void Application::checkMutation()
-{
-  // Translate to proteins
-  refTrans->loadSequence(refSubstrate); 
-  String refDNA=refTrans->getSequence();
-  String refProtein=ProteinTrans::translate(refDNA);
-  if(refProtein.lastChar()!='*') {
-    cout<<"extending"<<endl;
-    refTrans->extendFinalExonBy3(); altTrans->extendFinalExonBy3();
-    refTrans->loadSequence(refSubstrate); 
-    refDNA=refTrans->getSequence();
-    refProtein=ProteinTrans::translate(refDNA);
-  }
-  altTrans->loadSequence(altSubstrate);
-  const String altDNA=altTrans->getSequence();
-  const String altProtein=ProteinTrans::translate(altDNA);
-  if(refProtein!=altProtein) cout<<"proteins differ"<<endl;
-
-  // Check for frameshifts
-  checkFrameshifts(labeling,*altTrans,altSubstrate);
-
-  // Check for stop codons
-  const bool stopPresent=altProtein.lastChar()=='*';
-  refProtein.chop(); altProtein.chop();
-  const int firstStop=altProtein.findFirst('*');
-  if(firstStop>=0) {
-    cout<<"premature stop at AA position "<<firstStop<<" in alt protein"<<endl;
-    if(!detectNMD(*altTrans,altSubstrate))
-      cout<<"truncation predicted"<<endl;
-  }
-  else if(!stopPresent) cout<<"missing stop codon"<<endl; 
-  
-  // Check length is divisible by 3
-  if(altDNA.length()%3) cout<<"non-integral number of codons"<<endl;
-  
-  // Check for start codon
-  if(altProtein.length()<1 || altProtein[0]!='M') cout<<"No start codon"<<endl;
-
-  // Check splice sites
-  checkSpliceSites(*refTrans,refSubstrate,*altTrans,altSubstrate);
-
-  return 0;
-}
-*/
 
 
 
@@ -458,7 +422,7 @@ bool Application::refIsPseudogene(GffTranscript &trans)
 
 
 
-void Application::evaluate(GffTranscript &trans)
+void Application::evaluate(GffTranscript &trans,bool frameshift)
 {
   trans.loadSequence(refStr); 
   const String altRNA=trans.getSequence();
@@ -469,6 +433,7 @@ void Application::evaluate(GffTranscript &trans)
   const int firstStop=altProtein.findFirst('*');
   if(firstStop>=0) {
     if(maxSampleSize<1 || sampleSize<=maxSampleSize) {
+      if(frameshift) ++frameshiftStops;
       if(detectNMD(trans,refStr)) ++nmd;
       else ++truncations;
     }
