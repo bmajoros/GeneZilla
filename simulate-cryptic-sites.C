@@ -320,6 +320,7 @@ void Application::processDonor(int refPos,int maxDistance,int whichExon)
   const float threshold=GTsensor->getCutoff();
   int firstPos=refPos-maxDistance; if(firstPos<0) firstPos=0;
   int lastPos=refPos+2+maxDistance; if(lastPos>refLen-2) lastPos=refLen-2;
+  int numStrongCryptic=0;
   for(int pos=firstPos ; pos<=lastPos ; ++pos) {
     if(pos==refPos) continue;
     if(GTsensor->consensusOccursAt(refStr,pos)) {
@@ -328,6 +329,7 @@ void Application::processDonor(int refPos,int maxDistance,int whichExon)
       if(end>refLen) continue;
       const float logP=GTsensor->getLogP(refSeq,refStr,pos-consensusOffset);
       if(logP>=threshold) {
+	++numStrongCryptic;
 	GffTranscript altTrans(*refTrans);
 	GffExon &exon=altTrans.getIthExon(whichExon);
 	exon.setEnd(pos);
@@ -340,6 +342,7 @@ void Application::processDonor(int refPos,int maxDistance,int whichExon)
       }
     }
   }
+  cout<<numStrongCryptic<<" strong cryptic GT sites nearby"<<endl;
 }
 
 
@@ -352,6 +355,7 @@ void Application::processAcceptor(int refPos,int maxDistance,int whichExon)
   const float threshold=AGsensor->getCutoff();
   int firstPos=refPos-maxDistance; if(firstPos<0) firstPos=0;
   int lastPos=refPos+2+maxDistance; if(lastPos>refLen-2) lastPos=refLen-2;
+  int numStrongCryptic=0;
   for(int pos=firstPos ; pos<=lastPos ; ++pos) {
     if(pos==refPos) continue;
     if(AGsensor->consensusOccursAt(refStr,pos)) {
@@ -360,6 +364,7 @@ void Application::processAcceptor(int refPos,int maxDistance,int whichExon)
       if(end>refLen) continue;
       const float logP=AGsensor->getLogP(refSeq,refStr,pos-consensusOffset);
       if(logP>=threshold) {
+	++numStrongCryptic;
 	GffTranscript altTrans(*refTrans);
 	GffExon &exon=altTrans.getIthExon(whichExon);
 	exon.setBegin(pos+2);
@@ -372,6 +377,7 @@ void Application::processAcceptor(int refPos,int maxDistance,int whichExon)
       }
     }
   }
+  cout<<numStrongCryptic<<" strong cryptic AG sites nearby"<<endl;
 }
 
 
@@ -435,7 +441,7 @@ float Application::computePDS(const Sequence &refSeq,const Sequence &altSeq)
 
   // Convert from a similarity score to a dissimilarity score
   //return -score;
-  cout<<1-score<<endl;
+  //cout<<1-score<<endl;
   return 1-score;
 }
 
