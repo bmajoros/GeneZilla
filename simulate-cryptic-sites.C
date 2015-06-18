@@ -4,6 +4,7 @@
  This is OPEN SOURCE SOFTWARE governed by the Gnu General Public
  License (GPL) version 3, as described at www.opensource.org.
  ****************************************************************/
+#include <fstream>
 #include <iostream>
 #include "BOOM/String.H"
 #include "BOOM/CommandLine.H"
@@ -12,6 +13,8 @@
 #include "BOOM/ProteinTrans.H"
 #include "BOOM/CodonIterator.H"
 #include "BOOM/DnaAlphabet.H"
+#include "BOOM/BandedSmithWaterman.H"
+#include "BOOM/AminoAlphabet.H"
 #include "IsochoreTable.H"
 #include "Labeling.H"
 #include "GCcontent.H"
@@ -32,6 +35,7 @@ public:
   Application();
   int main(int argc,char *argv[]);
 private:
+  ofstream osPDS, osAAS;
   SignalSensor *GTsensor, *AGsensor;
   String refStr; // substrate (DNA, unspliced)
   String refRNA; // transcipt (spliced)
@@ -41,8 +45,12 @@ private:
   int numExons;
   Labeling labeling;
   int nmd, truncations, frameshifts, frameshiftStops, sampleSize;
+  int aasPTC, aasSampleSize;
   int maxSampleSize;
   bool exonSkippingOnly, donorsOnly, acceptorsOnly;
+  SubstitutionMatrix<float> *M;
+  float gapOpen,gapExtend;
+  int bandWidth;
   bool detectNMD(const GffTranscript &altTrans,const String &altSubstrate);
   String getDonor(GffExon &,const String &substrate,int &pos);
   String getAcceptor(GffExon &,const String &substrate,int &pos);
@@ -54,6 +62,8 @@ private:
   void evaluate(GffTranscript &,bool frameshift);
   bool refIsPseudogene(GffTranscript &);
   void report();
+  float computePDS(const Sequence &refSeq,const Sequence &altSeq);
+  void simulateAAS();
 };
 
 
@@ -73,7 +83,8 @@ int main(int argc,char *argv[]) {
 
 
 Application::Application()
-  : nmd(0), truncations(0), sampleSize(0), frameshifts(0), frameshiftStops(0)
+  : nmd(0), truncations(0), sampleSize(0), frameshifts(0), frameshiftStops(0),
+    aasPTC(0), aasSampleSize(0)
 {
   // ctor
 }
@@ -84,9 +95,9 @@ int Application::main(int argc,char *argv[])
 {
   // Process command line
   CommandLine cmd(argc,argv,"adem:");
-  if(cmd.numArgs()!=4)
+  if(cmd.numArgs()!=10)
     throw String("\n\
-simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance>\n\
+simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance> <subst.matrix> <gap-open> <gap-extend> <bandwidth> <pds-output.txt> <aas-output.txt>\n\
   -e = simulate only exon skipping\n\
   -d = simulate only changes in donor sites\n\
   -a = simulate only changes in acceptor sites\n\
@@ -96,6 +107,15 @@ simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance>\n\
   const String refFasta=cmd.arg(1);
   const String refGff=cmd.arg(2);
   const int maxDistance=cmd.arg(3).asInt();
+  String matrixFile=cmd.arg(4);
+  gapOpen=-fabs(cmd.arg(5).asDouble());
+  gapExtend=-fabs(cmd.arg(6).asDouble());
+  bandWidth=cmd.arg(7).asInt();
+  String pdsFile=cmd.arg(8);
+  String aasFile=cmd.arg(9);
+  osPDS.open(pdsFile.c_str());
+  osAAS.open(aasFile.c_str());
+  M=new SubstitutionMatrix<float>(matrixFile,AminoAlphabet::global());
   exonSkippingOnly=cmd.option('e');
   donorsOnly=cmd.option('d');
   acceptorsOnly=cmd.option('a');
@@ -139,15 +159,8 @@ simulate-cryptic-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-distance>\n\
 	  const bool frameshift=altTrans.getIthExon(i).length()%3>0;
 	  if(frameshift) ++frameshifts;
 	  altTrans.deleteIthExon(i);
-	  //if(altTrans.getIthExon(i).length()%3) continue;
-	  {//###
-	    /*
-	    GffExon &prev=altTrans.getIthExon(i-1), &next=altTrans.getIthExon(i+1);
-	    cout<<prev.getSequence().substr(prev.getSequence().length()-2)<<" "
-		<<next.getSequence().substr(0,2)<<endl;
-	    */
-	  }//###
 	  evaluate(altTrans,frameshift);
+	  simulateAAS();
 	}
 	continue;
       }
@@ -174,6 +187,7 @@ void Application::report()
     const float nmdOverAll=nmd/float(sampleSize);
     const float percentFrameshift=frameshifts/float(sampleSize);
     const float percentFrameshiftStops=frameshiftStops/float(stops);
+    const float aasPTCpercent=aasPTC/float(aasSampleSize);
     cout<<"NMD="<<nmd<<" trunc="<<truncations<<" frameshift="<<frameshifts
 	<<" frameshift_stops="<<frameshiftStops
 	<<" sample="<<sampleSize
@@ -182,63 +196,11 @@ void Application::report()
 	<<" #nmd/#sample="<<nmdOverAll
 	<<" #frameshifts/#sample="<<percentFrameshift
 	<<" %frameshift_stops="<<percentFrameshiftStops
+	<<" %AAS_PTC="<<aasPTCpercent
       //	<<" #stop/#frameshift="<<stops/float(frameshifts)
 	<<endl;
   }
 }
-
-
-/*
-void Application::checkSpliceSites(GffTranscript &refTranscript,
-				   const String &refSubstrate,
-				   GffTranscript &altTranscript,
-				   const String &altSubstrate)
-{
-  int numExons=refTranscript.getNumExons();
-  if(altTranscript.getNumExons()!=numExons)
-    throw "projected transcript has different number of exons";
-  for(int i=0 ; i<numExons ; ++i) {
-    GffExon &refExon=refTranscript.getIthExon(i);
-    GffExon &altExon=altTranscript.getIthExon(i);
-    if(refExon.hasDonor()) 
-      checkDonor(refExon,refSubstrate,altExon,altSubstrate);
-    if(refExon.hasAcceptor()) 
-      checkAcceptor(refExon,refSubstrate,altExon,altSubstrate);
-  }
-}
-
-
-
-void Application::checkDonor(GffExon &refExon,const String &refSubstrate,
-			     GffExon &altExon,const String &altSubstrate)
-{
-  int pos;
-  const String refDonor=getDonor(refExon,refSubstrate,pos);
-  const String altDonor=getDonor(altExon,altSubstrate,pos);
-  if(altDonor==refDonor) return;
-  if(altDonor=="GT") return;
-  for(Set<String>::const_iterator cur=nonCanonicalGTs.begin(),
-	end=nonCanonicalGTs.end() ; cur!=end ; ++cur)
-    if(altDonor==*cur) return;
-  cout<<"broken donor site: "<<altDonor<<" at "<<pos<<" in alt sequence"<<endl;
-}
-
-
-
-void Application::checkAcceptor(GffExon &refExon,const String &refSubstrate,
-				GffExon &altExon,const String &altSubstrate)
-{
-  int pos;
-  const String refAcceptor=getAcceptor(refExon,refSubstrate,pos);
-  const String altAcceptor=getAcceptor(altExon,altSubstrate,pos);
-  if(altAcceptor==refAcceptor) return;
-  if(altAcceptor=="AG") return;
-  for(Set<String>::const_iterator cur=nonCanonicalAGs.begin(),
-	end=nonCanonicalAGs.end() ; cur!=end ; ++cur)
-    if(altAcceptor==*cur) return;
-  cout<<"broken acceptor site: "<<altAcceptor<<" at "<<pos<<" in alt sequence"<<endl;
-}
-*/
 
 
 
@@ -373,6 +335,7 @@ void Application::processDonor(int refPos,int maxDistance,int whichExon)
 	  bool frameshift=posmod(pos-refPos)>0;
 	  if(frameshift) ++frameshifts;
 	  evaluate(altTrans,frameshift);
+	  simulateAAS();
 	}
       }
     }
@@ -404,6 +367,7 @@ void Application::processAcceptor(int refPos,int maxDistance,int whichExon)
 	  bool frameshift=posmod(pos-refPos)>0;
 	  if(frameshift) ++frameshifts;
 	  evaluate(altTrans,frameshift);
+	  simulateAAS();
 	}
       }
     }
@@ -430,18 +394,80 @@ void Application::evaluate(GffTranscript &trans,bool frameshift)
   const String altRNA=trans.getSequence();
   const String refProtein=ProteinTrans::translate(refRNA);
   const String altProtein=ProteinTrans::translate(altRNA);
+  Sequence refProt(refProtein,AminoAlphabet::global());
+  Sequence altProt(altProtein,AminoAlphabet::global());
   refProtein.chop(); altProtein.chop();
   if(refProtein==altProtein) throw "identical"; // ### debugging
+  bool proteinExists=true;
   const int firstStop=altProtein.findFirst('*');
   if(firstStop>=0) {
     if(maxSampleSize<1 || sampleSize<=maxSampleSize) {
       if(frameshift) ++frameshiftStops;
-      if(detectNMD(trans,refStr)) ++nmd;
+      if(detectNMD(trans,refStr)) { ++nmd; proteinExists=false; }
       else ++truncations;
     }
   }
+  if(proteinExists) {
+    const float pds=computePDS(refProt,altProt);
+    osPDS<<pds<<endl;
+  }
   ++sampleSize;
 }
+
+
+
+float Application::computePDS(const Sequence &refSeq,const Sequence &altSeq)
+{
+  // Compute raw alignment score
+  BandedSmithWaterman<float> aligner(AminoAlphabet::global(),refSeq,altSeq,*M,
+				     gapOpen,gapExtend,bandWidth);
+  Alignment *alignment=aligner.fullAlignment();
+  double score=alignment->getScore();
+  delete alignment;
+  if(score<0) score=0;
+
+  // Normalize by maximal possible score
+  float maxScore=0;
+  int L=refSeq.getLength();
+  for(int i=0 ; i<L ; ++i) maxScore+=(*M)(refSeq[i],refSeq[i]);
+  //score-=maxScore;
+  score/=maxScore;
+
+  // Convert from a similarity score to a dissimilarity score
+  //return -score;
+  cout<<1-score<<endl;
+  return 1-score;
+}
+
+
+
+void Application::simulateAAS()
+{
+  //const int begin=refTrans->getBegin(), end=refTrans->getEnd();
+  refTrans->loadSequence(refStr);
+  const String refRNA=refTrans->getSequence();
+  const int L=refRNA.length();
+  char c=refRNA[RandomNumber(L)];
+  String altRNA=refRNA;
+  int pos=RandomNumber(L);
+  while(altRNA[pos]==c) pos=(pos+1)%L;
+  altRNA[pos]=c;
+  const String refProtein=ProteinTrans::translate(refRNA);
+  const String altProtein=ProteinTrans::translate(altRNA);
+  Sequence refProt(refProtein,AminoAlphabet::global());
+  Sequence altProt(altProtein,AminoAlphabet::global());
+  refProtein.chop(); altProtein.chop();
+
+  // detect NMD
+  const int firstStop=altProtein.findFirst('*');
+  if(firstStop>=0) ++aasPTC;
+  else {
+    const float pds=computePDS(refProt,altProt);
+    osAAS<<pds<<endl;
+  }
+  ++aasSampleSize;
+}
+
 
 
 
