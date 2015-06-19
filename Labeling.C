@@ -12,6 +12,9 @@ using namespace std;
 using namespace BOOM;
 
 
+static const int NumGeneModelLabels=7;
+
+
 ostream &operator<<(ostream &os,GeneModelLabel lab)
 {
   os<<labelToString(lab);
@@ -30,6 +33,7 @@ String labelToString(GeneModelLabel lab)
     case LABEL_EXON_0:     return "E0";
     case LABEL_EXON_1:     return "E1";
     case LABEL_EXON_2:     return "E2";
+    case LABEL_EXON:       return "E";
     }
 }
 
@@ -46,6 +50,7 @@ struct GeneModelLabelMap {
     m["E0"]=LABEL_EXON_0;
     m["E1"]=LABEL_EXON_1;
     m["E2"]=LABEL_EXON_2;
+    m["E"]=LABEL_EXON;
   }
 };
 GeneModelLabelMap GeneModelLabelMap::global;
@@ -68,6 +73,7 @@ GeneModelLabel getExonLabel(int phase)
     case 0: return LABEL_EXON_0;
     case 1: return LABEL_EXON_1;
     case 2: return LABEL_EXON_2;
+    default: return LABEL_EXON;
     }
 }
 
@@ -80,7 +86,8 @@ int getExonPhase(GeneModelLabel lab)
     case LABEL_EXON_0: return 0;
     case LABEL_EXON_1: return 1;
     case LABEL_EXON_2: return 2;
-    default: throw labelToString(lab)+" is not an exon";
+    default: throw labelToString(lab)+
+	" is not an exon or has no annotated phase";
     }
 }
 
@@ -93,6 +100,7 @@ bool isExon(GeneModelLabel lab)
     case LABEL_EXON_0:
     case LABEL_EXON_1:
     case LABEL_EXON_2:
+    case LABEL_EXON:
       return true;
     }
   return false;

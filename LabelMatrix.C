@@ -27,9 +27,10 @@ float LabelMatrix::operator()(GeneModelLabel from,GeneModelLabel to)
 
 void LabelMatrix::load(const String &filename)
 {
-  M.resize(6,6);
+  M.resize(NumGeneModelLabels,NumGeneModelLabels);
   File f(filename);
-  f.getline(); // header -- ignore
+  f.getline(); // comment line -- ignore
+  f.getline(); // header line -- ignore
   for(int i=0 ; i<6 ; ++i) {
     String line=f.getline();
     line.trimWhitespace();
@@ -40,6 +41,16 @@ void LabelMatrix::load(const String &filename)
       M[i][j]=fields[j+1].asFloat();
     delete &fields;
   }
+}
+
+
+
+void LabelMatrix::convertToLogs()
+{
+  const int firstDim=M.getFirstDim(), secondDim=M.getSecondDim();
+  for(int x=0 ; x<firstDim ; ++x)
+    for(int y=0 ; y<secondDim ; ++y)
+      M[x][y]=log(M[x][y]);
 }
 
 

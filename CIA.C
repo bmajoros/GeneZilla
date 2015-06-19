@@ -371,27 +371,6 @@ void CIA::reweightGraph()
 
 
 
-void CIA::reweight(Edge &edge)
-{
-  // First, establish prior mask
-  const int begin=edge.getFeatureBegin();
-  const int end=edge.getFeatureEnd();
-  const int length=end-begin;
-  Array1D<bool> mask(length); mask.setAllTo(false);
-  const bool leftIsNew=newSignals.isMember(edge.getLeft());
-  const bool rightIsNew=newSignals.isMember(edge.getRight());
-  Set<const VariantEvent*> coveredEvents;
-  events.eventsInInterval(Interval(begin,end),coveredEvents);
-  makePriorMask(mask,edge,leftIsNew,rightIsNew,coveredEvents);
-
-  // Apply prior on all unmasked regions
-
-  // Store new score back into edge
-
-}
-
-
-
 void CIA::makePriorMask(Array1D<bool> &mask,const Edge &edge,
 			bool leftIsNew,bool rightIsNew,
 			const Set<const VariantEvent*> &coveredEvents)
@@ -537,6 +516,56 @@ void CIA::maskEvents(Array1D<bool> &mask,const Edge &edge,
 
 
 
+void CIA::reweight(Edge &edge)
+{
+  // First, establish prior mask
+  const Interval featureInterval=edge.getFeatureInterval();
+  const int length=featureInterval.length();
+  Array1D<bool> mask(length); mask.setAllTo(false);
+  const bool leftIsNew=newSignals.isMember(edge.getLeft());
+  const bool rightIsNew=newSignals.isMember(edge.getRight());
+  Set<const VariantEvent*> coveredEvents;
+  events.eventsInInterval(featureInterval,coveredEvents);
+  makePriorMask(mask,edge,leftIsNew,rightIsNew,coveredEvents);
+
+  // Apply prior on all unmasked regions
+  computePrior(edge,mask);
+}
+
+
+
+float CIA::computePrior(const Labeling &refLabels,const Labeling &altLabels,
+			int offset,const Array1D<bool> &mask)
+{
+  float prior=0;
+  const int altLen=altLabels.length();
+  for(int altPos=0, refPos=offset ; altPos<altLen ; ++altPos, ++refPos) {
+    
+  }
+}
+
+
+
+void CIA::computePrior(Edge &edge,const Array1D<bool> &mask)
+{
+  // Compute prior for edge
+  const ContentType contentType=edge.getContentType();
+  switch(contentType) {
+  case INITIAL_EXON:
+  case INTERNAL_EXON:
+  case FINAL_EXON:
+  case SINGLE_EXON:
+  case INTRON:
+  case INTERGENIC:
+  case FIVE_PRIME_UTR:
+  case THREE_PRIME_UTR:
+  default: INTERNAL_ERROR;
+  }
+
+
+  // Compute prior for right vertex
+  
+}
 
 
 

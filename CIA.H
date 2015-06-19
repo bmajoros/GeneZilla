@@ -70,6 +70,9 @@ protected:
 		  const Set<const VariantEvent*> &coveredEvents);
   void regionOverlapping(int pos,ContentType &,Interval &);
   void mask(const Interval &,Array1D<bool> &);
+  void computePrior(Edge &,const Array1D<bool> &mask);
+  float computePrior(const Labeling &refLabels,const Labeling &altLabels,
+		     int offset,const Array1D<bool> &mask);
 };
 
 

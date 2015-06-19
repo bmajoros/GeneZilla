@@ -15,10 +15,13 @@ enum GeneModelLabel {
   LABEL_NONE, // represents "none" or "unknown" or "don't care"
   LABEL_INTERGENIC,
   LABEL_INTRON,
-  LABEL_EXON_0,
-  LABEL_EXON_1,
-  LABEL_EXON_2
+  LABEL_EXON_0, // codon position 0
+  LABEL_EXON_1, // codon position 1
+  LABEL_EXON_2, // codon position 2
+  LABEL_EXON    // any codon position
 };
+static const int NumGeneModelLabels;
+
 ostream &operator<<(ostream &,GeneModelLabel);
 GeneModelLabel strToLabel(const String &);
 String labelToString(GeneModelLabel);
