@@ -3213,8 +3213,10 @@ cia: \
 		$(OBJ)/Signal.o \
 		$(OBJ)/SignalTypeProperties.o \
 		$(OBJ)/GZilla.o \
+		$(OBJ)/PriorMask.o \
 		$(OBJ)/CIA.o
 	$(CC) $(LDFLAGS) -o cia \
+		$(OBJ)/PriorMask.o \
 		$(OBJ)/SignalStreamBuilder.o \
 		$(OBJ)/ContentRegion.o \
 		$(OBJ)/ContentRegions.o \
@@ -3542,4 +3544,9 @@ $(OBJ)/GCcontent.o:\
 	$(CC) $(CFLAGS) -o $(OBJ)/GCcontent.o -c \
 		GCcontent.C
 #---------------------------------------------------------
-
+$(OBJ)/PriorMask.o:\
+		PriorMask.C\
+		PriorMask.H
+	$(CC) $(CFLAGS) -o $(OBJ)/PriorMask.o -c \
+		PriorMask.C
+#---------------------------------------------------------

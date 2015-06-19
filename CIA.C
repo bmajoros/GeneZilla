@@ -371,11 +371,11 @@ void CIA::reweightGraph()
 
 
 
-void CIA::makePriorMask(Array1D<bool> &mask,const Edge &edge,
+void CIA::makePriorMask(Array1D<bool> &mask,int maskOffset,const Edge &edge,
 			bool leftIsNew,bool rightIsNew,
 			const Set<const VariantEvent*> &coveredEvents)
 {
-  if(leftIsNew) maskLeft(mask,edge);
+  if(leftIsNew) maskLeft(mask,maskOffset,edge);
   if(rightIsNew) maskRight(mask,edge);
   if(coveredEvents.size()>0) maskEvents(mask,edge,coveredEvents);
 }
@@ -391,15 +391,16 @@ void CIA::regionOverlapping(int pos,ContentType &contentType,Interval &interval)
 
 
 
-void CIA::mask(const Interval &I,Array1D<bool> &mask)
+void CIA::mask(const Interval &I,Array1D<bool> &mask,int maskOffset)
 {
-  const int begin=I.getBegin(), end=I.getEnd();
+  const int begin=I.getBegin()-maskOffset, end=I.getEnd()-maskOffset;
   for(int i=begin ; i<end ; ++i) mask[i]=true;
 }
 
 
 
-void CIA::maskLeftGT(Array1D<bool> &mask,Signal *signal,const Edge &edge)
+void CIA::maskLeftGT(Array1D<bool> &mask,int maskOffset,Signal *signal,
+		     const Edge &edge)
 {
   const int consensusPos=signal->getConsensusPosition();
   ContentType regionType; Interval regionInterval;
@@ -407,13 +408,14 @@ void CIA::maskLeftGT(Array1D<bool> &mask,Signal *signal,const Edge &edge)
   const Interval edgeInterval=edge.getFeatureInterval();
   if(isCoding(regionType)) {
     Interval maskInterval=regionInterval.intersect(edgeInterval);
-    mask(maskInterval,mask);
+    mask(maskInterval,mask,maskOffset);
   }
 }
 
 
 
-void CIA::maskLeftAG(Array1D<bool> &mask,Signal *signal,const Edge &edge)
+void CIA::maskLeftAG(Array1D<bool> &mask,int maskOffset,Signal *signal,
+		     const Edge &edge)
 {
   const int consensusPos=signal->getConsensusPosition();
   ContentType regionType; Interval regionInterval;
@@ -421,13 +423,14 @@ void CIA::maskLeftAG(Array1D<bool> &mask,Signal *signal,const Edge &edge)
   const Interval edgeInterval=edge.getFeatureInterval();
   if(isIntron(regionType)) {
     Interval maskInterval=regionInterval.intersect(edgeInterval);
-    mask(maskInterval,mask);
+    mask(maskInterval,mask,maskOffset);
   }
 }
 
 
 
-void CIA::maskLeftATG(Array1D<bool> &mask,Signal *signal,const Edge &edge)
+void CIA::maskLeftATG(Array1D<bool> &mask,int maskOffset,Signal *signal,
+		      const Edge &edge)
 {
   const int consensusPos=signal->getConsensusPosition();
   ContentType regionType; Interval regionInterval;
@@ -435,38 +438,39 @@ void CIA::maskLeftATG(Array1D<bool> &mask,Signal *signal,const Edge &edge)
   const Interval edgeInterval=edge.getFeatureInterval();
   if(regionType==FIVE_PRIME_UTR) {
     Interval maskInterval=regionInterval.intersect(edgeInterval);
-    mask(maskInterval,mask);
+    mask(maskInterval,mask,maskOffset);
   }
 }
 
 
 
-void CIA::maskLeft(Array1D<bool> &mask,const Edge &edge)
+void CIA::maskLeft(Array1D<bool> &mask,int maskOffset,const Edge &edge)
 {
   const Signal *signal=edge.getLeft();
   const SignalType signalType=signal->getSignalType();
   switch(signalType) {
-  case GT:  maskLeftGT(mask,signal,edge); break;
-  case AG:  maskLeftAG(mask,signal,edge); break;
-  case ATG: maskLeftATG(mask,signal,edge); break;
+  case GT:  maskLeftGT(mask,maskOffset,signal,edge); break;
+  case AG:  maskLeftAG(mask,maskOffset,signal,edge); break;
+  case ATG: maskLeftATG(mask,maskOffset,signal,edge); break;
   }
 }
 
 
 
-void CIA::maskRight(Array1D<bool> &mask,const Edge &edge)
+void CIA::maskRight(Array1D<bool> &mask,int maskOffset,const Edge &edge)
 {
   const Signal *signal=edge.getRight();
   const SignalType signalType=signal->getSignalType();
   switch(signalType) {
-  case GT:  maskRightGT(mask,signal,edge); break;
-  case AG:  maskRightAG(mask,signal,edge); break;
+  case GT:  maskRightGT(mask,maskOffset,signal,edge); break;
+  case AG:  maskRightAG(mask,maskOffset,signal,edge); break;
   }
 }
 
 
 
-void CIA::maskRightGT(Array1D<bool> &mask,Signal *signal,const Edge &edge)
+void CIA::maskRightGT(Array1D<bool> &mask,int maskOffset,Signal *signal,
+		      const Edge &edge)
 {
   const int consensusPos=signal->getConsensusPosition();
   ContentType regionType; Interval regionInterval;
@@ -474,13 +478,14 @@ void CIA::maskRightGT(Array1D<bool> &mask,Signal *signal,const Edge &edge)
   const Interval edgeInterval=edge.getFeatureInterval();
   if(isIntron(regionType)) {
     Interval maskInterval=regionInterval.intersect(edgeInterval);
-    mask(maskInterval,mask);
+    mask(maskInterval,mask,maskOffset);
   }
 }
 
 
 
-void CIA::maskRightAG(Array1D<bool> &mask,Signal *signal,const Edge &edge)
+void CIA::maskRightAG(Array1D<bool> &mask,int maskOffset,Signal *signal,
+		      const Edge &edge)
 {
   const int consensusPos=signal->getConsensusPosition();
   ContentType regionType; Interval regionInterval;
@@ -488,13 +493,13 @@ void CIA::maskRightAG(Array1D<bool> &mask,Signal *signal,const Edge &edge)
   const Interval edgeInterval=edge.getFeatureInterval();
   if(isCoding(regionType)) {
     Interval maskInterval=regionInterval.intersect(edgeInterval);
-    mask(maskInterval,mask);
+    mask(maskInterval,mask,maskOffset);
   }
 }
 
 
 
-void CIA::maskEvents(Array1D<bool> &mask,const Edge &edge,
+void CIA::maskEvents(Array1D<bool> &mask,int maskOffset,const Edge &edge,
 		     const Set<const VariantEvent*> &coveredEvents)
 {
   const Interval edgeInterval=edge.getFeatureInterval();
@@ -509,7 +514,7 @@ void CIA::maskEvents(Array1D<bool> &mask,const Edge &edge,
       const int pos=(event->getBegin()+event->getEnd())/2;
       regionOverlapping(pos,regionType,regionInterval);
       if(regionType==INTRON) 
-	mask(regionInterval.intersect(edgeInterval),mask);
+	mask(regionInterval.intersect(edgeInterval),mask,maskOffset);
     }
   }
 }
@@ -522,14 +527,15 @@ void CIA::reweight(Edge &edge)
   const Interval featureInterval=edge.getFeatureInterval();
   const int length=featureInterval.length();
   Array1D<bool> mask(length); mask.setAllTo(false);
+  const int maskOffset=featureInterval.getBegin();
   const bool leftIsNew=newSignals.isMember(edge.getLeft());
   const bool rightIsNew=newSignals.isMember(edge.getRight());
   Set<const VariantEvent*> coveredEvents;
   events.eventsInInterval(featureInterval,coveredEvents);
-  makePriorMask(mask,edge,leftIsNew,rightIsNew,coveredEvents);
+  makePriorMask(mask,maskOffset,edge,leftIsNew,rightIsNew,coveredEvents);
 
   // Apply prior on all unmasked regions
-  computePrior(edge,mask);
+  computePrior(edge,mask,maskOffset);
 }
 
 
@@ -537,11 +543,13 @@ void CIA::reweight(Edge &edge)
 float CIA::computePrior(const Labeling &refLabels,const Labeling &altLabels,
 			int offset,const Array1D<bool> &mask)
 {
+  const LabelMatrix &M=refAnno->getMatrix();
   float prior=0;
   const int altLen=altLabels.length();
-  for(int altPos=0, refPos=offset ; altPos<altLen ; ++altPos, ++refPos) {
-    
-  }
+  for(int altPos=0, refPos=offset ; altPos<altLen ; ++altPos, ++refPos)
+    if(!mask[altPos]) 
+      prior+=M(refLabels[refPos],altLabels[altPos]);
+  return prior;
 }
 
 
@@ -550,6 +558,8 @@ void CIA::computePrior(Edge &edge,const Array1D<bool> &mask)
 {
   // Compute prior for edge
   const ContentType contentType=edge.getContentType();
+  const Interval featureInterval=edge.getFeatureInterval();
+  const int maskOffset=featureInterval.getBegin();
   switch(contentType) {
   case INITIAL_EXON:
   case INTERNAL_EXON:
