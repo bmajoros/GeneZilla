@@ -7,6 +7,7 @@
 
 #ifndef INCL_Edge_H
 #define INCL_Edge_H
+#include "BOOM/Interval.H"
 #include "Signal.H"
 #include "genezilla.H"
 #include "ContentType.H"
@@ -38,6 +39,7 @@ public:
   int getFeatureBegin(); // specific to exon/intron/UTR/intergenic
   int getFeatureEnd();   // specific to exon/intron/UTR/intergenic
   int getFeatureLength() {return getFeatureEnd()-getFeatureBegin();}
+  Interval getFeatureInterval() { return Interval(getFeatureBegin(),getFeatureEnd()); }
   ContentType getContentType() const;
   Strand getStrand();
   bool isCoding();

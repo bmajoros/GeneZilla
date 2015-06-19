@@ -64,6 +64,8 @@ protected:
   void maskLeftAG(Array1D<bool> &mask,Signal *,const Edge &);
   void maskLeftATG(Array1D<bool> &mask,Signal *,const Edge &);
   void maskRight(Array1D<bool> &,const Edge &);
+  void maskRightGT(Array1D<bool> &mask,Signal *,const Edge &);
+  void maskRightAG(Array1D<bool> &mask,Signal *,const Edge &);
   void maskEvents(Array1D<bool> &,const Edge &,
 		  const Set<const VariantEvent*> &coveredEvents);
   void regionOverlapping(int pos,ContentType &,Interval &);
