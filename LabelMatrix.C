@@ -31,13 +31,14 @@ void LabelMatrix::load(const String &filename)
   File f(filename);
   f.getline(); // comment line -- ignore
   f.getline(); // header line -- ignore
-  for(int i=0 ; i<6 ; ++i) {
+  for(int i=0 ; i<NumGeneModelLabels ; ++i) {
     String line=f.getline();
     line.trimWhitespace();
     if(line.isEmpty()) continue;
     Vector<String> &fields=*line.getFields();
-    if(fields.size()<7) throw filename+" : error parsing matrix";
-    for(int j=0 ; j<6 ; ++j)
+    if(fields.size()<NumGeneModelLabels+1) 
+      throw filename+" : error parsing matrix";
+    for(int j=0 ; j<NumGeneModelLabels ; ++j)
       M[i][j]=fields[j+1].asFloat();
     delete &fields;
   }
