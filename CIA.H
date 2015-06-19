@@ -56,23 +56,23 @@ protected:
   void purgeQueues();
   void reweightGraph();
   void reweight(Edge &);
-  void makePriorMask(Array1D<bool> &mask,const Edge &,bool leftIsNew,
+  void makePriorMask(PriorMask &,const Edge &,bool leftIsNew,
 		     bool rightIsNew,const Set<const VariantEvent*> 
 		     &coveredEvents);
-  void maskLeft(Array1D<bool> &,const Edge &);
-  void maskLeftGT(Array1D<bool> &mask,Signal *,const Edge &);
-  void maskLeftAG(Array1D<bool> &mask,Signal *,const Edge &);
-  void maskLeftATG(Array1D<bool> &mask,Signal *,const Edge &);
-  void maskRight(Array1D<bool> &,const Edge &);
-  void maskRightGT(Array1D<bool> &mask,Signal *,const Edge &);
-  void maskRightAG(Array1D<bool> &mask,Signal *,const Edge &);
-  void maskEvents(Array1D<bool> &,const Edge &,
+  void maskLeft(PriorMask &,const Edge &);
+  void maskLeftGT(PriorMask &mask,Signal *,const Edge &);
+  void maskLeftAG(PriorMask &mask,Signal *,const Edge &);
+  void maskLeftATG(PriorMask &mask,Signal *,const Edge &);
+  void maskRight(PriorMask &,const Edge &);
+  void maskRightGT(PriorMask &mask,Signal *,const Edge &);
+  void maskRightAG(PriorMask &mask,Signal *,const Edge &);
+  void maskEvents(PriorMask &,const Edge &,
 		  const Set<const VariantEvent*> &coveredEvents);
   void regionOverlapping(int pos,ContentType &,Interval &);
-  void mask(const Interval &,Array1D<bool> &,int maskOffset);
-  void computePrior(Edge &,const Array1D<bool> &mask);
-  float computePrior(const Labeling &refLabels,const Labeling &altLabels,
-		     int offset,const Array1D<bool> &mask);
+  void mask(const Interval &,PriorMask &);
+  void computePrior(Edge &,const PriorMask &mask);
+  float computePrior(const Labeling &altLabels,int offset,const PriorMask &mask);
+  void initLabeling(const Edge &,Labeling &);
 };
 
 
