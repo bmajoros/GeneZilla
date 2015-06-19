@@ -73,6 +73,7 @@ protected:
   void computePrior(Edge &,const PriorMask &mask);
   float computePrior(const Labeling &altLabels,int offset,const PriorMask &mask);
   void initLabeling(const Edge &,Labeling &);
+  void initExonLabeling(int startingPhase,Labeling &);
 };
 
 

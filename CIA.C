@@ -547,18 +547,48 @@ float CIA::computePrior(const Labeling &proposedLabels,int offset,const PriorMas
 
 
 
+void CIA::initExonLabeling(int startingPhase,Labeling &labeling)
+{
+  int L=labeling.length();
+  int phase=startingPhase;
+  for(int i=0 ; i<L ; ++i) {
+    labeling[i]=getExonLabel(phase);
+    phase=(phase+1)%3;
+  }
+}
+
+
+
 void CIA::initLabeling(const Edge &edge,Labeling &labeling)
 {
+  const ContentType contentType=edge.getContentType();
+  const Interval featureInterval=edge.getFeatureInterval();
+  
   switch(contentType) {
-  case INITIAL_EXON:
-  case INTERNAL_EXON:
-  case FINAL_EXON:
-  case SINGLE_EXON:
-  case INTRON:
-  case INTERGENIC:
-  case FIVE_PRIME_UTR:
-  case THREE_PRIME_UTR:
-  default: INTERNAL_ERROR;
+  case INITIAL_EXON: 
+    initExonLabeling(0,labeling); 
+    break;
+  case INTERNAL_EXON: 
+    INTERNAL_ERROR;
+  case FINAL_EXON: 
+    initExonLabeling(posmod(-featureInterval.length()),labeling); 
+    break;
+  case SINGLE_EXON: 
+    initExonLabeling(0,labeling); 
+    break;
+  case INTRON: 
+    labeling.setAllTo(LABEL_INTRON); 
+    break;
+  case INTERGENIC: 
+    labeling.setAllTo(LABEL_INTERGENIC); 
+    break;
+  case FIVE_PRIME_UTR: 
+    labeling.setAllTo(LABEL_INTERGENIC); // ###
+    break;
+  case THREE_PRIME_UTR: 
+    labeling.setAllTo(LABEL_INTERGENIC);  // ###
+    break;
+  default: INTERNAL_ERROR; break;
   }
 }
 
@@ -569,14 +599,21 @@ void CIA::computePrior(Edge &edge,const PriorMask &mask)
   // Compute prior for edge
   const Interval featureInterval=edge.getFeatureInterval();
   const ContentType contentType=edge.getContentType();
-  if(contentType==INTERNAL_EXON()) {
+  float edgePrior=0;
+  if(contentType==INTERNAL_EXON()) { // has three phases
+    ???
   }
-  else {
+  else { // phase can be ignored
+    Labeling labeling(featureInterval.length());
+    initLabeling(edge,labeling);
+    edgePrior=computePrior(labeling,featureInterval.getBegin(),mask);
   }
 
+  // Store the prior in the edge
 
 
   // Compute prior for right vertex
+
   
 }
 

@@ -36,6 +36,7 @@ public:
   Labeling() {}
   void load(const String &filename);
   GeneModelLabel &operator[](int);
+  void setAllTo(GeneModelLabel);
   Array1D<GeneModelLabel> &asArray();
   void printOn(ostream &) const;
   int length() const { return A.size(); }

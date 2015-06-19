@@ -169,3 +169,8 @@ ostream &operator<<(ostream &os,const Labeling &lab)
 
 
 
+void Labeling::setAllTo(GeneModelLabel lab)
+{
+  A.setAllTo(lab);
+}
+
