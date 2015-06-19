@@ -518,6 +518,21 @@ void CIA::maskRightAG(Array1D<bool> &mask,Signal *signal,const Edge &edge)
 void CIA::maskEvents(Array1D<bool> &mask,const Edge &edge,
 		     const Set<const VariantEvent*> &coveredEvents)
 {
+  const Interval edgeInterval=edge.getFeatureInterval();
+  for(Set<const VariantEvent*>::const_iterator cur=coveredEvents.begin(),
+	end=coveredEvents.end() ; cur!=end) {
+    const VariantEvent *event=*cur;
+    const VariantEventType eventType=event->getEventType();
+    const VariantSignalType signalType=event->getSignalType();
+    if(eventType==VAR_EVENT_LOSS && signalType==VAR_SIG_TAG && // loss of stop
+       edge.getContentType()==INTERNAL_EXON) {
+      ContentType regionType; Interval regionInterval;
+      const int pos=(event->getBegin()+event->getEnd())/2;
+      regionOverlapping(pos,regionType,regionInterval);
+      if(regionType==INTRON) 
+	mask(regionInterval.intersect(edgeInterval),mask);
+    }
+  }
 }
 
 
