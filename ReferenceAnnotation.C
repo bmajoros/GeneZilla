@@ -47,6 +47,7 @@ ReferenceAnnotation::~ReferenceAnnotation()
 void ReferenceAnnotation::loadMatrix(const String &filename)
 {
   matrix=new LabelMatrix(filename);
+  matrix->convertToLogs();
 }
 
 

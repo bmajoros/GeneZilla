@@ -69,6 +69,7 @@ public:
   PhasedEdge(double scorePhase0,double scorePhase1,double scorePhase2,
 	     SignalPtr left,SignalPtr right);
   double getEdgeScore(int phase); // phase is of left signal
+  void setEdgeScore(int phase,double);
   double getInductiveScore(int phase); // phase is of left signal
   virtual bool isPhased() const;
   virtual void printOn(ostream &) const;
@@ -91,6 +92,7 @@ class NonPhasedEdge : public Edge
 public:
   NonPhasedEdge(double score,SignalPtr left,SignalPtr right);
   double getEdgeScore();
+  void setEdgeScore(double);
   double getInductiveScore();
   virtual bool isPhased() const;
   virtual void printOn(ostream &) const;

@@ -298,7 +298,7 @@ void CIA::scoreSignalPrior(SignalPtr s)
 	  GeneModelLabel predictedLabel=profile.getLabel(phase,pos-wBegin);
 	  GeneModelLabel priorLabel=refAnno->getLabeling()[pos];
 	  float penalty=priorWeight*
-	    log(refAnno->getMatrix()(priorLabel,predictedLabel));
+	    refAnno->getMatrix()(priorLabel,predictedLabel);
 	  score+=penalty;
 	}
       prop[phase]+=score;
@@ -599,22 +599,25 @@ void CIA::computePrior(Edge &edge,const PriorMask &mask)
   // Compute prior for edge
   const Interval featureInterval=edge.getFeatureInterval();
   const ContentType contentType=edge.getContentType();
-  float edgePrior=0;
-  if(contentType==INTERNAL_EXON()) { // has three phases
-    ???
+  if(contentType==INTERNAL_EXON) { // has three phases
+    for(int phase=0 ; phase<3 ; ++phase) {
+      Labeling labeling(featureInterval.length());
+      initExonLabeling(0,labeling);
+      const float prior=computePrior(labeling,featureInterval.getBegin(),mask);
+      const float newScore=edge.getEdgeScore(phase)+priorWeight*prior;
+      edge.setEdgeScore(phase,newScore);      
+    }
   }
   else { // phase can be ignored
     Labeling labeling(featureInterval.length());
     initLabeling(edge,labeling);
-    edgePrior=computePrior(labeling,featureInterval.getBegin(),mask);
+    const float prior=computePrior(labeling,featureInterval.getBegin(),mask);
+    const float newScore=edge.getEdgeScore()+priorWeight*prior;
+    edge.setEdgeScore(newScore);
   }
 
-  // Store the prior in the edge
-
-
   // Compute prior for right vertex
-
-  
+  scoreSignalPrior(edge.getRight();
 }
 
 

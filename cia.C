@@ -53,10 +53,11 @@ void AppMain(int argc,char *argv[])
     <variant-signals.gff> = GFF file produced by find-variant-signals\n\
     <genezilla.iso> = GeneZilla configuration file, with lambda and label-matrix added\n\
   options:\n\
-      -g file : dump ORF graph into file\n\
-      -S : omit signal scores\n\
-      -C : omit content scores\n\
-      -D : omit duration scores\n\
+      -O : (capital letter O) allow in-frame stOp codons\n\
+      -g file : dump ORF Graph into file\n\
+      -S : omit Signal scores\n\
+      -C : omit Content scores\n\
+      -D : omit Duration scores\n\
 ");
   const String isochoreFilename=cmd.arg(0);
   const String fastaFilename=cmd.arg(1);

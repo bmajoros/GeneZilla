@@ -214,6 +214,13 @@ double PhasedEdge::getEdgeScore(int phase)
 
 
 
+void PhasedEdge::setEdgeScore(int phase,double s)
+{
+  scores[phase]=s;
+}
+
+
+
 bool PhasedEdge::isPhased() const
 {
   return true;
@@ -258,6 +265,13 @@ NonPhasedEdge::NonPhasedEdge(double score,SignalPtr left,SignalPtr right)
 double NonPhasedEdge::getEdgeScore()
 {
   return score;
+}
+
+
+
+void NonPhasedEdge::setEdgeScore(double s)
+{
+  score=s;
 }
 
 
