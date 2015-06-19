@@ -403,8 +403,68 @@ void CIA::makePriorMask(Array1D<bool> &mask,const Edge &edge,
 
 
 
+void CIA::regionOverlapping(int pos,ContentType &contentType,Interval &interval)
+{
+  const ContentRegion *region=refAnno.getRegions().regionOverlapping(pos);
+  contentType=region->getType();
+  interval=region->getInterval();
+}
+
+
+
+void CIA::mask(const Interval &I,Array1D<bool> &mask)
+{
+  const int begin=I.getBegin(), end=I.getEnd();
+  for(int i=begin ; i<end ; ++i) mask[i]=true;
+}
+
+
+
+void CIA::maskLeftGT(Array1D<bool> &mask,Signal *signal,const Edge &edge)
+{
+  const int consensusPos=signal->getConsensusPosition();
+  ContentType regionType; Interval regionInterval;
+  regionOverlapping(consensusPos,regionType,regionInterval);
+  const Interval edgeInterval(edge.getFeatureBegin(),edge.getFeatureEnd());
+  if(isCoding(regionType)) {
+    Interval maskInterval=regionInterval.intersect(edgeInterval);
+    mask(maskInterval,mask);
+  }
+}
+
+
+
+void CIA::maskLeftAG(Array1D<bool> &mask,Signal *signal,const Edge &edge)
+{
+  const int consensusPos=signal->getConsensusPosition();
+  ContentType regionType; Interval regionInterval;
+  regionOverlapping(consensusPos,regionType,regionInterval);
+  const Interval edgeInterval(edge.getFeatureBegin(),edge.getFeatureEnd());
+  if(isIntron(regionType)) {
+    Interval maskInterval=regionInterval.intersect(edgeInterval);
+    mask(maskInterval,mask);
+  }
+}
+
+
+
+void CIA::maskLeftATG(Array1D<bool> &mask,Signal *signal,const Edge &edge)
+{
+}
+
+
+
 void CIA::maskLeft(Array1D<bool> &mask,const Edge &edge)
 {
+  const Signal *signal=edge.getLeft();
+  const SignalType signalType=signal->getSignalType();
+  switch(signalType) {
+  case GT:  maskLeftGT(mask,signal,edge); break;
+  case AG:  maskLeftAG(mask,signal,edge); break;
+  case ATG: maskLeftATG(mask,signal,edge); break;
+  case TAG: 
+  default: return;
+  }
 }
 
 

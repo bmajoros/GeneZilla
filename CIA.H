@@ -60,9 +60,14 @@ protected:
 		     bool rightIsNew,const Set<const VariantEvent*> 
 		     &coveredEvents);
   void maskLeft(Array1D<bool> &,const Edge &);
+  void maskLeftGT(Array1D<bool> &mask,Signal *,const Edge &);
+  void maskLeftAG(Array1D<bool> &mask,Signal *,const Edge &);
+  void maskLeftATG(Array1D<bool> &mask,Signal *,const Edge &);
   void maskRight(Array1D<bool> &,const Edge &);
   void maskEvents(Array1D<bool> &,const Edge &,
 		  const Set<const VariantEvent*> &coveredEvents);
+  void regionOverlapping(int pos,ContentType &,Interval &);
+  void mask(const Interval &,Array1D<bool> &);
 };
 
 
