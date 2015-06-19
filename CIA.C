@@ -9,9 +9,10 @@
 #include "BOOM/FastaReader.H"
 #ifdef REPORT_PROGRESS
 #include "BOOM/Progress.H"
-#include "BOOM/VectorSorter.H"
-#include "SignalStreamBuilder.H"
 #endif
+#include "BOOM/VectorSorter.H"
+#include "BOOM/ListQueue.H"
+#include "SignalStreamBuilder.H"
 
 CIA::CIA(const BOOM::String &PROGRAM_NAME,
 	 const BOOM::String &VERSION,EdgeFactory &edgeFactory,
@@ -358,9 +359,9 @@ void CIA::reweightGraph()
     Signal *signal=Q.dequeue();
     seen+=signal;
     Set<Edge*> &edges=signal->getEdgesOut();
-    for(Set<Edge*>::iterator cur=edges.begin() end=edges.end() ;
+    for(Set<Edge*>::iterator cur=edges.begin(), end=edges.end() ;
 	cur!=end ; ++cur) {
-      Edge &edge=*cur;
+      Edge &edge=**cur;
       reweight(edge);
       Signal *right=edge.getRight();
       if(!seen.isMember(right)) Q.enqueue(right);
@@ -372,8 +373,54 @@ void CIA::reweightGraph()
 
 void CIA::reweight(Edge &edge)
 {
-  
+  // First, establish prior mask
+  const int begin=edge.getFeatureBegin();
+  const int end=edge.getFeatureEnd();
+  const int length=end-begin;
+  Array1D<bool> mask(length); mask.setAllTo(false);
+  const bool leftIsNew=newSignals.isMember(edge.getLeft());
+  const bool rightIsNew=newSignals.isMember(edge.getRight());
+  Set<const VariantEvent*> coveredEvents;
+  events.eventsInInterval(Interval(begin,end),coveredEvents);
+  makePriorMask(mask,edge,leftIsNew,rightIsNew,coveredEvents);
+
+  // Apply prior on all unmasked regions
+
+  // Store new score back into edge
+
 }
+
+
+
+void CIA::makePriorMask(Array1D<bool> &mask,const Edge &edge,
+			bool leftIsNew,bool rightIsNew,
+			const Set<const VariantEvent*> &coveredEvents)
+{
+  if(leftIsNew) maskLeft(mask,edge);
+  if(rightIsNew) maskRight(mask,edge);
+  if(coveredEvents.size()>0) maskEvents(mask,edge,coveredEvents);
+}
+
+
+
+void CIA::maskLeft(Array1D<bool> &mask,const Edge &edge)
+{
+}
+
+
+
+void CIA::maskRight(Array1D<bool> &mask,const Edge &edge)
+{
+}
+
+
+
+void CIA::maskEvents(Array1D<bool> &mask,const Edge &edge,
+		     const Set<const VariantEvent*> &coveredEvents)
+{
+}
+
+
 
 
 

@@ -56,6 +56,13 @@ protected:
   void purgeQueues();
   void reweightGraph();
   void reweight(Edge &);
+  void makePriorMask(Array1D<bool> &mask,const Edge &,bool leftIsNew,
+		     bool rightIsNew,const Set<const VariantEvent*> 
+		     &coveredEvents);
+  void maskLeft(Array1D<bool> &,const Edge &);
+  void maskRight(Array1D<bool> &,const Edge &);
+  void maskEvents(Array1D<bool> &,const Edge &,
+		  const Set<const VariantEvent*> &coveredEvents);
 };
 
 

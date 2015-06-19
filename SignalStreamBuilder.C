@@ -27,9 +27,6 @@ SignalStreamBuilder::SignalStreamBuilder(const ReferenceAnnotation &refAnno,
 {
   build();
   const Vector<Signal*> &signals=stream.peek();
-  for(Vector<Signal*>::const_iterator cur=signals.begin(), end=signals.end() ;
-      cur!=end ; ++cur)
-    newSignals.insert(*cur);
 }
 
 
@@ -42,6 +39,10 @@ void SignalStreamBuilder::build()
       cur!=end ; ++cur) stream.add(*cur);
 
   // Next, add de novo signals caused by mutations
+  /*
+
+  THIS WHOLE BLOCK IS REDUNDANT WITH THE BLOCK BELOW... WHY?
+
   const int numEvents=events.numEvents();
   for(int i=0 ; i<numEvents ; ++i) {
     const VariantEvent &event=events.getIthEvent(i);
@@ -56,11 +57,14 @@ void SignalStreamBuilder::build()
 					 contextWindowPos);
       Signal *signal=new Signal(contextWindowPos,score,*sensor,sensor->getGC());
       stream.add(signal);
+      newSignals.insert(signal);
       cout<<"added de novo "<<signal->getSignalType()<<endl;
     }
   }
+  */
 
   // Finally, do targeted signal sensing in regions around new or broken signals
+  const int numEvents=events.numEvents();
   for(int i=0 ; i<numEvents ; ++i) {
     const VariantEvent &event=events.getIthEvent(i);
     if(event.isGain()) gain(event);
@@ -126,6 +130,7 @@ void SignalStreamBuilder::gainATG(int pos,SignalSensor &sensor)
   const double score=sensor.getLogP(seq,seqStr,contextWindowPos);
   Signal *signal=new Signal(contextWindowPos,score,sensor,sensor.getGC());
   stream.add(signal);
+  newSignals.insert(signal);
 
   // Relax constraints around the new signal
   const Interval interval(contextWindowPos,oldATG->getContextWindowEnd());
@@ -148,6 +153,7 @@ void SignalStreamBuilder::gainTAG(int pos,SignalSensor &sensor)
   const double score=0;
   Signal *signal=new Signal(contextWindowPos,score,sensor,sensor.getGC());
   stream.add(signal);
+  newSignals.insert(signal);
 
   // Create unconstrained region: covers entire exon (so exon skipping
   // is an option) and a fixed portion of the following intron
@@ -174,6 +180,18 @@ void SignalStreamBuilder::gainGT(int pos,SignalSensor &sensor)
   }
   else return;
 
+  // Make a new signal object
+  const Sequence &seq=refAnno.getAltSeq();
+  const String &seqStr=refAnno.getAltSeqStr();
+  const int contextWindowPos=pos-sensor.getConsensusOffset();
+  if(contextWindowPos<0) return;
+  const int contextWindowEnd=contextWindowPos+sensor.getContextWindowLength();
+  if(contextWindowEnd>seqStr.length()) return;
+  const double score=sensor.getLogP(seq,seqStr,contextWindowPos);
+  Signal *signal=new Signal(contextWindowPos,score,sensor,sensor.getGC());
+  stream.add(signal);
+  newSignals.insert(signal);
+
   // Create unconstrained region
   const int begin=pos-sensor.getConsensusOffset();
   const int end=begin+sensor.getContextWindowLength();
@@ -198,6 +216,18 @@ void SignalStreamBuilder::gainAG(int pos,SignalSensor &sensor)
     if(interval.getEnd()-pos>maxIntronScan) return;
   }
   else return;
+
+  // Make a new signal object
+  const Sequence &seq=refAnno.getAltSeq();
+  const String &seqStr=refAnno.getAltSeqStr();
+  const int contextWindowPos=pos-sensor.getConsensusOffset();
+  if(contextWindowPos<0) return;
+  const int contextWindowEnd=contextWindowPos+sensor.getContextWindowLength();
+  if(contextWindowEnd>seqStr.length()) return;
+  const double score=sensor.getLogP(seq,seqStr,contextWindowPos);
+  Signal *signal=new Signal(contextWindowPos,score,sensor,sensor.getGC());
+  stream.add(signal);
+  newSignals.insert(signal);
 
   // Create unconstrained region
   const int begin=pos-sensor.getConsensusOffset();
