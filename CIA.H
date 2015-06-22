@@ -40,6 +40,7 @@ protected:
   ConstraintIntervals *constraints;
   String projectedGFF, labelFile; // filenames
   float priorWeight;
+  bool shouldReweight; // whether to use the prior
   Array1D<SignalLabelingProfile> signalLabelingProfiles;
   Set<Signal*> newSignals;
 

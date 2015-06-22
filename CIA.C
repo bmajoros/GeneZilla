@@ -74,6 +74,7 @@ BOOM::Stack<SignalPtr> * CIA::processChunk(const Sequence &substrate,
   int minIntronLen=isochore->configFile.getIntOrDie("min-variant-intron-length");
   bool allowSignalGains=isochore->configFile.getBoolOrDie("allow-signal-gains");
   bool allowGainExonBrokenStop=isochore->configFile.getBoolOrDie("allow-gain-exon-broken-stop");
+  shouldReweight=!isochore->configFile.getBoolOrDie("no-prior");
 
   // Load reference annotation
   refAnno=new ReferenceAnnotation(projectedGFF,labelFile,matrixFile,*isochore,
@@ -108,7 +109,7 @@ BOOM::Stack<SignalPtr> * CIA::mainAlgorithm(const Sequence &seq,
   }
 
   buildParseGraph(seq,str);
-  reweightGraph();
+  if(shouldReweight) reweightGraph();
 
   BOOM::Stack<SignalPtr> *path=NULL;
   /*
