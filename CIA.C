@@ -109,6 +109,7 @@ BOOM::Stack<SignalPtr> * CIA::mainAlgorithm(const Sequence &seq,
   }
 
   buildParseGraph(seq,str);
+  cout<<"reweighting graph"<<endl;
   if(shouldReweight) reweightGraph();
 
   BOOM::Stack<SignalPtr> *path=NULL;
@@ -131,6 +132,7 @@ BOOM::Stack<SignalPtr> * CIA::mainAlgorithm(const Sequence &seq,
 
 
 
+/*
 void CIA::updateAccumulators(const Sequence &seq,
 				  const BOOM::String &str,
 				  int pos,Symbol base,char c)
@@ -181,7 +183,7 @@ void CIA::updateAccumulators(const Sequence &seq,
     }
   }
 }
-
+*/
 
 
 void CIA::buildParseGraph(const Sequence &seq,const BOOM::String &str)
@@ -521,16 +523,24 @@ void CIA::maskEvents(PriorMask &pmask,const Edge &edge,
 void CIA::reweight(Edge &edge)
 {
   // First, establish prior mask
+TRACE
   const Interval featureInterval=edge.getFeatureInterval();
+TRACE
   PriorMask mask(featureInterval);
+TRACE
   const bool leftIsNew=newSignals.isMember(edge.getLeft());
+TRACE
   const bool rightIsNew=newSignals.isMember(edge.getRight());
+TRACE
   Set<const VariantEvent*> coveredEvents;
   events.eventsInInterval(featureInterval,coveredEvents);
+TRACE
   makePriorMask(mask,edge,leftIsNew,rightIsNew,coveredEvents);
+TRACE
 
   // Apply prior on all unmasked regions
   computePrior(edge,mask);
+TRACE
 }
 
 

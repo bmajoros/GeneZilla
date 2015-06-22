@@ -49,8 +49,10 @@ protected:
 						 ostream &osGraph,
 						 bool dumpGraph,
 						 String psaFilename);
+  /*
   virtual void updateAccumulators(const Sequence &,const BOOM::String &,
 				  int pos,Symbol,char);
+  */
   void scoreSignalPrior(SignalPtr);
   void initSignalLabelingProfiles();
   void buildParseGraph(const Sequence &seq,const BOOM::String &str);

@@ -93,8 +93,8 @@ VariantSignalType varSigTypeFromString(const String &s)
 {
   if(s=="start-codon") return VAR_SIG_ATG;
   if(s=="stop-codon") return VAR_SIG_TAG;
-  if(s=="donor-site") return VAR_SIG_GT;
-  if(s=="acceptor-site") return VAR_SIG_AG;
+  if(s=="donor-site" || s=="donor") return VAR_SIG_GT;
+  if(s=="acceptor-site" || s=="acceptor") return VAR_SIG_AG;
   if(s=="deletion" || s=="insertion") return VAR_SIG_INDEL;
   throw s+" : unknown VariantSignalType";
 };
@@ -115,9 +115,9 @@ SignalType toSignalType(VariantSignalType t)
 {
   switch(t) {
   case VAR_SIG_ATG:    return ATG;
-  case VAR_SIG_TAG:    return ATG;
-  case VAR_SIG_GT:     return ATG;
-  case VAR_SIG_AG:     return ATG;
+  case VAR_SIG_TAG:    return TAG;
+  case VAR_SIG_GT:     return GT;
+  case VAR_SIG_AG:     return AG;
   case VAR_SIG_INDEL: 
   default:
     INTERNAL_ERROR;

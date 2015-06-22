@@ -40,6 +40,7 @@ void VariantEvents::load(const String &filename)
     const GffFeature &feature=**cur;
     const VariantSignalType varSigType=varSigTypeFromString(feature.getFeatureType());
     const VariantEventType varEventType=varEventTypeFromString(feature.getSource());
+    //cout<<"XXX "<<varSigType<<" "<<varEventType<<endl;
     const int pos=feature.getBegin(), length=feature.length();
     events.push_back(VariantEvent(varSigType,varEventType,pos,length));
     delete &feature;

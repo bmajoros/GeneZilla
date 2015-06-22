@@ -56,6 +56,7 @@ bool ContentRegions::findJunction(int pos,const ContentRegion *&preceding,
       preceding=region;
       ++cur;
       following=&*cur;
+      return true;
     }
   }
   return false;
