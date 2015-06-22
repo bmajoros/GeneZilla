@@ -73,6 +73,7 @@ BOOM::Stack<SignalPtr> * CIA::processChunk(const Sequence &substrate,
   int minExonLength=isochore->configFile.getIntOrDie("min-variant-exon-length");
   int minIntronLen=isochore->configFile.getIntOrDie("min-variant-intron-length");
   bool allowSignalGains=isochore->configFile.getBoolOrDie("allow-signal-gains");
+  bool allowGainExonBrokenStop=isochore->configFile.getBoolOrDie("allow-gain-exon-broken-stop");
 
   // Load reference annotation
   refAnno=new ReferenceAnnotation(projectedGFF,labelFile,matrixFile,*isochore,
@@ -83,7 +84,7 @@ BOOM::Stack<SignalPtr> * CIA::processChunk(const Sequence &substrate,
   constraints=new ConstraintIntervals(substrateString.length());
   SignalStreamBuilder ssb(*refAnno,events,signalStream,*constraints,newSignals,
 			  isochore,maxIntronScan,minExonLength,minIntronLen,
-			  allowSignalGains);
+			  allowSignalGains,allowGainExonBrokenStop);
 
   return mainAlgorithm(substrate,substrateString,osGraph,dumpGraph,
 		       psaFilename);

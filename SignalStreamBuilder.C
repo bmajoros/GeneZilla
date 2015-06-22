@@ -20,10 +20,12 @@ SignalStreamBuilder::SignalStreamBuilder(const ReferenceAnnotation &refAnno,
 					 int maxIntronScan,
 					 int minExonLength,
 					 int minIntronLen,
-					 bool allowGains)
+					 bool allowGains,
+					 bool allowGainExonBrokenStop)
   : refAnno(refAnno), events(events), stream(stream), constraints(constraints),
     isochore(isochore), maxIntronScan(maxIntronScan), minIntronLen(minIntronLen),
-    minExonLength(minExonLength), allowGains(allowGains), newSignals(newSignals)
+    minExonLength(minExonLength), allowGains(allowGains), newSignals(newSignals),
+    allowGainExonBrokenStop(allowGainExonBrokenStop)
 {
   build();
   const Vector<Signal*> &signals=stream.peek();
@@ -242,7 +244,7 @@ void SignalStreamBuilder::gainAG(int pos,SignalSensor &sensor)
 void SignalStreamBuilder::lossTAG(int pos,SignalSensor &sensor)
 {
   // See if a loss of a stop codon is relevant here
-  if(!allowGains) return; // loss of stop codon = potential gain of coding sequence
+  if(!allowGainExonBrokenStop) return;
   const ContentRegion *region=refAnno.getRegions().regionOverlapping(pos);
   if(!region) INTERNAL_ERROR;
   if(region->getType()!=INTRON) return;

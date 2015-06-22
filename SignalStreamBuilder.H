@@ -28,8 +28,8 @@ public:
 		      int maxIntronScan,
 		      int minExonLength,
 		      int minIntronLen,
-		      bool allowGains); // also includes *loss* of stop codons
-                                        // (which allows a *gain* of coding exon)
+		      bool allowGains,
+		      bool allowGainExonBrokenStop);
 protected:
   const ReferenceAnnotation &refAnno;
   const VariantEvents &events;
@@ -37,7 +37,7 @@ protected:
   ConstraintIntervals &constraints;
   Set<Signal*> &newSignals;
   Isochore *isochore;
-  bool allowGains;
+  bool allowGains, allowGainExonBrokenStop;
   int maxIntronScan;
   int minExonLength;
   int minIntronLen;
