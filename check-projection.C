@@ -23,6 +23,7 @@ public:
 private:
   Set<String> nonCanonicalGTs, nonCanonicalAGs;
   GffTranscript *loadGff(const String &filename);
+  bool splicingIsOK;
   void parseNoncanonicals(const String &,Set<String> &);
   bool detectNMD(GffTranscript &altTrans,const String &altSubstrate);
   void checkSpliceSites(GffTranscript &refTrans,const String &refSubstrate,
@@ -54,6 +55,7 @@ int main(int argc,char *argv[]) {
 
 
 Application::Application()
+  : splicingIsOK(true)
 {
   // ctor
 }
@@ -85,6 +87,9 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff> <labels.txt>\
   GffTranscript *refTrans=loadGff(refGff), *altTrans=loadGff(altGff);
   Labeling labeling(labelFile);
 
+  // Check splice sites
+  checkSpliceSites(*refTrans,refSubstrate,*altTrans,altSubstrate);
+
   // Translate to proteins
   refTrans->loadSequence(refSubstrate); 
   String refDNA=refTrans->getSequence();
@@ -99,9 +104,15 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff> <labels.txt>\
   altTrans->loadSequence(altSubstrate);
   const String altDNA=altTrans->getSequence();
   const String altProtein=ProteinTrans::translate(altDNA);
-  if(refProtein!=altProtein) cout<<"proteins differ"<<endl;
+  
+  // Check for start codon
+  if(altProtein.length()<1 || altProtein[0]!='M') cout<<"No start codon"<<endl;
+
+  // Everything else depends on splice sites being intact
+  if(!splicingIsOK) return 0;
 
   // Check for frameshifts
+  if(refProtein!=altProtein) cout<<"proteins differ"<<endl;
   checkFrameshifts(labeling,*altTrans,altSubstrate);
 
   // Check for stop codons
@@ -117,12 +128,6 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff> <labels.txt>\
   
   // Check length is divisible by 3
   if(altDNA.length()%3) cout<<"non-integral number of codons"<<endl;
-  
-  // Check for start codon
-  if(altProtein.length()<1 || altProtein[0]!='M') cout<<"No start codon"<<endl;
-
-  // Check splice sites
-  checkSpliceSites(*refTrans,refSubstrate,*altTrans,altSubstrate);
 
   return 0;
 }
@@ -136,7 +141,7 @@ void Application::checkSpliceSites(GffTranscript &refTranscript,
 {
   int numExons=refTranscript.getNumExons();
   if(altTranscript.getNumExons()!=numExons)
-    throw "projected transcript has different number of exons";
+    throw "Internal errror: projected transcript has different number of exons";
   for(int i=0 ; i<numExons ; ++i) {
     GffExon &refExon=refTranscript.getIthExon(i);
     GffExon &altExon=altTranscript.getIthExon(i);
@@ -160,6 +165,7 @@ void Application::checkDonor(GffExon &refExon,const String &refSubstrate,
   for(Set<String>::const_iterator cur=nonCanonicalGTs.begin(),
 	end=nonCanonicalGTs.end() ; cur!=end ; ++cur)
     if(altDonor==*cur) return;
+  splicingIsOK=false;
   cout<<"broken donor site: "<<altDonor<<" at "<<pos<<" in alt sequence"<<endl;
 }
 
@@ -176,6 +182,7 @@ void Application::checkAcceptor(GffExon &refExon,const String &refSubstrate,
   for(Set<String>::const_iterator cur=nonCanonicalAGs.begin(),
 	end=nonCanonicalAGs.end() ; cur!=end ; ++cur)
     if(altAcceptor==*cur) return;
+  splicingIsOK=false;
   cout<<"broken acceptor site: "<<altAcceptor<<" at "<<pos<<" in alt sequence"<<endl;
 }
 
