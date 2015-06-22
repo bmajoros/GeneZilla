@@ -310,6 +310,23 @@ SignalType rightSignal(ContentType contentType)
 
 
 
+ExonType contentTypeToExonType(ContentType ct)
+{
+  switch(ct) {
+    case INITIAL_EXON:             return ET_INITIAL_EXON;
+    case INTERNAL_EXON:            return ET_INTERNAL_EXON;
+    case FINAL_EXON:               return ET_FINAL_EXON;
+    case SINGLE_EXON:              return ET_SINGLE_EXON;
+    case NEG_INITIAL_EXON:         return ET_INITIAL_EXON;
+    case NEG_INTERNAL_EXON:        return ET_INTERNAL_EXON;
+    case NEG_FINAL_EXON:           return ET_FINAL_EXON;
+    case NEG_SINGLE_EXON:          return ET_SINGLE_EXON;
+  default: INTERNAL_ERROR;
+  }
+}
+
+
+
 ContentType exonTypeToContentType(ExonType exonType,
 				  Strand strand)
 {

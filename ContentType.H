@@ -51,6 +51,7 @@ bool isUTR(ContentType);
 SignalType leftSignal(ContentType);
 SignalType rightSignal(ContentType);
 ContentType exonTypeToContentType(ExonType,Strand);
+ExonType contentTypeToExonType(ContentType);
 
 class ContentTypeInitializer
 {

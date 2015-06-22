@@ -13,8 +13,10 @@
 #include "BOOM/Time.H"
 #include "BOOM/Stack.H"
 #include "BOOM/WigBinary.H"
+#include "BOOM/FastaReader.H"
 #include "LightGraph.H"
 #include "TrellisLink.H"
+#include "NMD.H"
 using namespace std;
 using namespace BOOM;
 
@@ -36,6 +38,8 @@ protected:
   int numSupportedIntrons, supportedIntronsEmitted;
   int numSupportedExons, supportedExonsEmitted;
   int transcriptNum;
+  String substrate;
+  NMD nmd;
   int posmod(int x);
   bool autoAssess(Stack<TrellisLink*> &);
   int countSupportedIntrons(LightGraph &);
@@ -84,9 +88,9 @@ void Application::main(int argc,char *argv[])
 {
   // Process command line
   BOOM::CommandLine cmd(argc,argv,"q:u:ia:");
-  if(cmd.numArgs()!=2)
+  if(cmd.numArgs()<2 || cmd.numArgs()>3)
     throw BOOM::String("\n\
-n-best [options] <in.graph> <N> \n\
+n-best [options] <in.graph> <N> [substrate.fasta]\n\
     -q queue-capacity\n\
     -u pileup-file : infer UTR using RNA-seq reads\n\
     -i : emit introns\n\
@@ -97,7 +101,12 @@ n-best [options] <in.graph> <N> \n\
               mode 3 : based on introns, but predict more\n\
 ");
   const String inGraphFile=cmd.arg(0);
-  int N=cmd.arg(1).asInt();
+  const int N=cmd.arg(1).asInt();
+  if(cmd.numArgs()==3) {
+    const String substrateFile=cmd.arg(2);
+    String def;
+    FastaReader::load(substrateFile,def,substrate);
+  }
   if(cmd.option('q')) queueCapacity=cmd.optParm('q').asInt();
   wantIntrons=cmd.option('i');
   const bool autoN=cmd.option('a');
@@ -345,7 +354,6 @@ bool Application::emit(Stack<TrellisLink*> &pStack,LightGraph &G,int parseNum)
   const String contigID=G.getSubstrate();
   const String programName="RSVP";
   cout<<"\n# parse "<<parseNum<<":"<<endl;
-  //int transcriptNum=0;
   Vector<TrellisLink*> pList;
   while(!pStack.isEmpty()) {
     TrellisLink *pl=pStack.pop();
@@ -353,7 +361,8 @@ bool Application::emit(Stack<TrellisLink*> &pStack,LightGraph &G,int parseNum)
   }
   TrellisLink *end=pList[pList.size()-1];
   const float transcriptScore=exp(end->getScore()/G.getSubstrateLength())/.25;
-  //if(transcriptScore<1) return false;
+  GffTranscript transcript(String(transcriptNum),contigID,FORWARD_STRAND,
+				  programName);
   for(Vector<TrellisLink*>::iterator cur=pList.begin(), end=pList.end() ;
       cur!=end ; ++cur) {
     TrellisLink *pl=*cur;
@@ -366,11 +375,13 @@ bool Application::emit(Stack<TrellisLink*> &pStack,LightGraph &G,int parseNum)
     int startPos=e->getBegin()+1;
     int endPos=e->getEnd();
     Strand strand=e->getStrand();
+    if(strand!=FORWARD_STRAND) transcript.setStrand(strand);
     int length=endPos-startPos+1;
     int phase=e->propagateBackward(pl->getPhase());
     int displayPhase=
       strand==FORWARD_STRAND ? phase : posmod(pl->getPhase()+1);
-    String scoreString=String(exp(e->getScore(phase)/length)/.25);
+    float score=exp(e->getScore(phase)/length)/.25;
+    String scoreString=String(score);
     if(((edgeType==INITIAL_EXON || edgeType==SINGLE_EXON) && 
 	strand==FORWARD_STRAND)
 	|| ((edgeType==FINAL_EXON || edgeType==SINGLE_EXON) && 
@@ -385,7 +396,23 @@ bool Application::emit(Stack<TrellisLink*> &pStack,LightGraph &G,int parseNum)
       "transcript_score="<<transcriptScore<<";"<<"sup="<<support<<";"<<endl;
     predictUTR(edgeType,strand,startPos-1,endPos,contigID,parseString,
 	       transcriptID,programName,transcriptScore);
+    GffExon *exon=new GffExon(contentTypeToExonType(edgeType),startPos-1,
+			      endPos,transcript,true,score,true,phase);
+    transcript.addExon(exon);
   }
+  String flags;
+  if(substrate.length()>0) {
+    const PTC_TYPE ptcType=nmd.predict(transcript,substrate);
+    switch(ptcType) {
+    case PTC_NONE: break;
+    case PTC_NMD: flags="/PTC=nmd"; break;
+    case PTC_TRUNCATION: flags="/PTC=truncation"; break;
+    }
+  }
+  cout<<contigID << "\t" << programName << "\t" << "transcript" << 
+    "\t" << transcript.getBegin()+1 << "\t" << transcript.getEnd() << "\t" 
+      << transcriptScore << "\t" << transcript.getStrand() << "\t" << "." << "\t" 
+      << "/transcript_id=" << transcriptNum << " " << flags <<endl;
   return true;
 }
 

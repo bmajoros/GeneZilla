@@ -404,6 +404,7 @@ $(OBJ)/n-best.o:\
 		n-best.C
 #---------------------------------------------------------
 n-best: \
+		$(OBJ)/NMD.o \
 		$(OBJ)/n-best.o \
 		$(OBJ)/LightGraph.o \
 		$(OBJ)/LightEdge.o \
@@ -412,6 +413,7 @@ n-best: \
 		$(OBJ)/TrellisLink.o \
 		$(OBJ)/ContentType.o
 	$(CC) $(LDFLAGS) -o n-best \
+		$(OBJ)/NMD.o \
 		$(OBJ)/n-best.o \
 		$(OBJ)/LightGraph.o \
 		$(OBJ)/LightEdge.o \
@@ -3549,4 +3551,10 @@ $(OBJ)/PriorMask.o:\
 		PriorMask.H
 	$(CC) $(CFLAGS) -o $(OBJ)/PriorMask.o -c \
 		PriorMask.C
+#---------------------------------------------------------
+$(OBJ)/NMD.o:\
+		NMD.C\
+		NMD.H
+	$(CC) $(CFLAGS) -o $(OBJ)/NMD.o -c \
+		NMD.C
 #---------------------------------------------------------
