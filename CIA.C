@@ -523,37 +523,35 @@ void CIA::maskEvents(PriorMask &pmask,const Edge &edge,
 void CIA::reweight(Edge &edge)
 {
   // First, establish prior mask
-TRACE
   const Interval featureInterval=edge.getFeatureInterval();
-TRACE
   PriorMask mask(featureInterval);
-TRACE
   const bool leftIsNew=newSignals.isMember(edge.getLeft());
-TRACE
   const bool rightIsNew=newSignals.isMember(edge.getRight());
-TRACE
   Set<const VariantEvent*> coveredEvents;
   events.eventsInInterval(featureInterval,coveredEvents);
-TRACE
   makePriorMask(mask,edge,leftIsNew,rightIsNew,coveredEvents);
-TRACE
 
   // Apply prior on all unmasked regions
   computePrior(edge,mask);
-TRACE
 }
 
 
 
 float CIA::computePrior(const Labeling &proposedLabels,int offset,const PriorMask &mask)
 {
+TRACE
   const Labeling &priorLabels=refAnno->getLabeling();
+TRACE
   const LabelMatrix &M=refAnno->getMatrix();
+TRACE
   float prior=0;
+TRACE
   const int edgeLen=proposedLabels.length();
+TRACE
   for(int altPos=0, refPos=offset ; altPos<edgeLen ; ++altPos, ++refPos)
     if(!mask.lookup(refPos)) 
       prior+=M(priorLabels[refPos],proposedLabels[altPos]);
+TRACE
   return prior;
 }
 
