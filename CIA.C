@@ -384,7 +384,7 @@ void CIA::makePriorMask(PriorMask &mask,const Edge &edge,
 
 void CIA::regionOverlapping(int pos,ContentType &contentType,Interval &interval)
 {
-  const ContentRegion *region=refAnno.getRegions().regionOverlapping(pos);
+  const ContentRegion *region=refAnno->getRegions().regionOverlapping(pos);
   contentType=region->getType();
   interval=region->getInterval();
 }
@@ -399,7 +399,7 @@ void CIA::mask(const Interval &I,PriorMask &mask)
 
 
 
-void CIA::maskLeftGT(PriorMask &mask,Signal *signal,const Edge &edge)
+void CIA::maskLeftGT(PriorMask &pmask,Signal *signal,const Edge &edge)
 {
   const int consensusPos=signal->getConsensusPosition();
   ContentType regionType; Interval regionInterval;
@@ -407,13 +407,13 @@ void CIA::maskLeftGT(PriorMask &mask,Signal *signal,const Edge &edge)
   const Interval edgeInterval=edge.getFeatureInterval();
   if(isCoding(regionType)) {
     Interval maskInterval=regionInterval.intersect(edgeInterval);
-    mask(maskInterval,mask);
+    mask(maskInterval,pmask);
   }
 }
 
 
 
-void CIA::maskLeftAG(PriorMask &mask,Signal *signal,const Edge &edge)
+void CIA::maskLeftAG(PriorMask &pmask,Signal *signal,const Edge &edge)
 {
   const int consensusPos=signal->getConsensusPosition();
   ContentType regionType; Interval regionInterval;
@@ -421,13 +421,13 @@ void CIA::maskLeftAG(PriorMask &mask,Signal *signal,const Edge &edge)
   const Interval edgeInterval=edge.getFeatureInterval();
   if(isIntron(regionType)) {
     Interval maskInterval=regionInterval.intersect(edgeInterval);
-    mask(maskInterval,mask);
+    mask(maskInterval,pmask);
   }
 }
 
 
 
-void CIA::maskLeftATG(PriorMask &mask,Signal *signal,const Edge &edge)
+void CIA::maskLeftATG(PriorMask &pmask,Signal *signal,const Edge &edge)
 {
   const int consensusPos=signal->getConsensusPosition();
   ContentType regionType; Interval regionInterval;
@@ -435,7 +435,7 @@ void CIA::maskLeftATG(PriorMask &mask,Signal *signal,const Edge &edge)
   const Interval edgeInterval=edge.getFeatureInterval();
   if(regionType==FIVE_PRIME_UTR) {
     Interval maskInterval=regionInterval.intersect(edgeInterval);
-    mask(maskInterval,mask);
+    mask(maskInterval,pmask);
   }
 }
 
@@ -466,7 +466,7 @@ void CIA::maskRight(PriorMask &mask,const Edge &edge)
 
 
 
-void CIA::maskRightGT(PriorMask &mask,Signal *signal,const Edge &edge)
+void CIA::maskRightGT(PriorMask &pmask,Signal *signal,const Edge &edge)
 {
   const int consensusPos=signal->getConsensusPosition();
   ContentType regionType; Interval regionInterval;
@@ -474,13 +474,13 @@ void CIA::maskRightGT(PriorMask &mask,Signal *signal,const Edge &edge)
   const Interval edgeInterval=edge.getFeatureInterval();
   if(isIntron(regionType)) {
     Interval maskInterval=regionInterval.intersect(edgeInterval);
-    mask(maskInterval,mask);
+    mask(maskInterval,pmask);
   }
 }
 
 
 
-void CIA::maskRightAG(PriorMask &mask,Signal *signal,const Edge &edge)
+void CIA::maskRightAG(PriorMask &pmask,Signal *signal,const Edge &edge)
 {
   const int consensusPos=signal->getConsensusPosition();
   ContentType regionType; Interval regionInterval;
@@ -488,28 +488,28 @@ void CIA::maskRightAG(PriorMask &mask,Signal *signal,const Edge &edge)
   const Interval edgeInterval=edge.getFeatureInterval();
   if(isCoding(regionType)) {
     Interval maskInterval=regionInterval.intersect(edgeInterval);
-    mask(maskInterval,mask);
+    mask(maskInterval,pmask);
   }
 }
 
 
 
-void CIA::maskEvents(PriorMask &mask,const Edge &edge,
+void CIA::maskEvents(PriorMask &pmask,const Edge &edge,
 		     const Set<const VariantEvent*> &coveredEvents)
 {
   const Interval edgeInterval=edge.getFeatureInterval();
   for(Set<const VariantEvent*>::const_iterator cur=coveredEvents.begin(),
-	end=coveredEvents.end() ; cur!=end) {
+	end=coveredEvents.end() ; cur!=end ; ++cur) {
     const VariantEvent *event=*cur;
     const VariantEventType eventType=event->getEventType();
     const VariantSignalType signalType=event->getSignalType();
     if(eventType==VAR_EVENT_LOSS && signalType==VAR_SIG_TAG && // loss of stop
        edge.getContentType()==INTERNAL_EXON) {
       ContentType regionType; Interval regionInterval;
-      const int pos=(event->getBegin()+event->getEnd())/2;
+      const int pos=(event->begin()+event->end())/2;
       regionOverlapping(pos,regionType,regionInterval);
       if(regionType==INTRON) 
-	mask(regionInterval.intersect(edgeInterval),mask);
+	mask(regionInterval.intersect(edgeInterval),pmask);
     }
   }
 }
@@ -539,7 +539,7 @@ float CIA::computePrior(const Labeling &proposedLabels,int offset,const PriorMas
   const LabelMatrix &M=refAnno->getMatrix();
   float prior=0;
   const int edgeLen=proposedLabels.length();
-  for(int altPos=0, refPos=offset ; altPos<altLen ; ++altPos, ++refPos)
+  for(int altPos=0, refPos=offset ; altPos<edgeLen ; ++altPos, ++refPos)
     if(!mask.lookup(refPos)) 
       prior+=M(priorLabels[refPos],proposedLabels[altPos]);
   return prior;
@@ -600,24 +600,26 @@ void CIA::computePrior(Edge &edge,const PriorMask &mask)
   const Interval featureInterval=edge.getFeatureInterval();
   const ContentType contentType=edge.getContentType();
   if(contentType==INTERNAL_EXON) { // has three phases
+    PhasedEdge &phasedEdge=dynamic_cast<PhasedEdge&>(edge);
     for(int phase=0 ; phase<3 ; ++phase) {
       Labeling labeling(featureInterval.length());
       initExonLabeling(0,labeling);
       const float prior=computePrior(labeling,featureInterval.getBegin(),mask);
-      const float newScore=edge.getEdgeScore(phase)+priorWeight*prior;
-      edge.setEdgeScore(phase,newScore);      
+      const float newScore=phasedEdge.getEdgeScore(phase)+priorWeight*prior;
+      phasedEdge.setEdgeScore(phase,newScore);      
     }
   }
   else { // phase can be ignored
+    NonPhasedEdge &unphasedEdge=dynamic_cast<NonPhasedEdge&>(edge);
     Labeling labeling(featureInterval.length());
     initLabeling(edge,labeling);
     const float prior=computePrior(labeling,featureInterval.getBegin(),mask);
-    const float newScore=edge.getEdgeScore()+priorWeight*prior;
-    edge.setEdgeScore(newScore);
+    const float newScore=unphasedEdge.getEdgeScore()+priorWeight*prior;
+    unphasedEdge.setEdgeScore(newScore);
   }
 
   // Compute prior for right vertex
-  scoreSignalPrior(edge.getRight();
+  scoreSignalPrior(edge.getRight());
 }
 
 

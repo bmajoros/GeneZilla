@@ -4,6 +4,7 @@
  This is OPEN SOURCE SOFTWARE governed by the Gnu General Public
  License (GPL) version 3, as described at www.opensource.org.
  ****************************************************************/
+#include <math.h>
 #include <iostream>
 #include "LabelMatrix.H"
 #include "BOOM/File.H"

@@ -19,7 +19,7 @@ public:
   bool lookup(int geneRelativeCoord) const;
   void mask(int geneRelativeCoord);
 protected:
-  Array1D<bool> mask;
+  Array1D<bool> M;
   Interval interval;
   int mapToLocal(int geneRelativeCoord) const;
 };

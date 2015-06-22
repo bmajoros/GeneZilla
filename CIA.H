@@ -12,6 +12,7 @@
 #include "ReferenceAnnotation.H"
 #include "SignalStream.H"
 #include "ConstraintIntervals.H"
+#include "PriorMask.H"
 
 /****************************************************************
                             class CIA

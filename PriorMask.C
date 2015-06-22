@@ -12,23 +12,23 @@ using namespace BOOM;
 
 
 PriorMask::PriorMask(const Interval &featureInterval)
-  : interval(interval), mask(featureInterval.length())
+  : interval(interval), M(featureInterval.length())
 {
-  mask.setAllTo(false);
+  M.setAllTo(false);
 }
 
 
 
 bool PriorMask::lookup(int geneRelativeCoord) const
 {
-  return mask[mapToLocal(geneRelativeCoord)];
+  return M[mapToLocal(geneRelativeCoord)];
 }
 
 
 
 void PriorMask::mask(int geneRelativeCoord)
 {
-  mask[mapToLocal(geneRelativeCoord)]=true;
+  M[mapToLocal(geneRelativeCoord)]=true;
 }
 
 

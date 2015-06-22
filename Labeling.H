@@ -20,7 +20,7 @@ enum GeneModelLabel {
   LABEL_EXON_2, // codon position 2
   LABEL_EXON    // any codon position
 };
-static const int NumGeneModelLabels;
+static const int NumGeneModelLabels=7;
 
 ostream &operator<<(ostream &,GeneModelLabel);
 GeneModelLabel strToLabel(const String &);

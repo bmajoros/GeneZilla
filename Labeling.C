@@ -12,8 +12,6 @@ using namespace std;
 using namespace BOOM;
 
 
-static const int NumGeneModelLabels=7;
-
 
 ostream &operator<<(ostream &os,GeneModelLabel lab)
 {
