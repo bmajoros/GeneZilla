@@ -539,19 +539,18 @@ void CIA::reweight(Edge &edge)
 
 float CIA::computePrior(const Labeling &proposedLabels,int offset,const PriorMask &mask)
 {
-TRACE
   const Labeling &priorLabels=refAnno->getLabeling();
-TRACE
   const LabelMatrix &M=refAnno->getMatrix();
-TRACE
   float prior=0;
-TRACE
   const int edgeLen=proposedLabels.length();
+  for(int altPos=0, refPos=offset ; altPos<edgeLen ; ++altPos, ++refPos) {
 TRACE
-  for(int altPos=0, refPos=offset ; altPos<edgeLen ; ++altPos, ++refPos)
-    if(!mask.lookup(refPos)) 
+  if(!mask.lookup(refPos)) {
+TRACE
       prior+=M(priorLabels[refPos],proposedLabels[altPos]);
 TRACE
+  }
+  }
   return prior;
 }
 
