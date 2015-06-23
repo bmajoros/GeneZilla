@@ -614,6 +614,7 @@ void CIA::computePrior(Edge &edge,const PriorMask &mask)
       initExonLabeling(0,labeling);
       const float prior=computePrior(labeling,featureInterval.getBegin(),mask);
       const float newScore=phasedEdge.getEdgeScore(phase)+priorWeight*prior;
+      //      cout<<"XXX "<<phase<<" "<<phasedEdge.getEdgeScore(phase)<<" => "<<newScore<<endl;
       phasedEdge.setEdgeScore(phase,newScore);      
     }
   }
@@ -624,6 +625,7 @@ void CIA::computePrior(Edge &edge,const PriorMask &mask)
     const float prior=computePrior(labeling,featureInterval.getBegin(),mask);
     for(int phase=0 ; phase<3 ; ++phase) {
       const float newScore=phasedEdge.getEdgeScore(phase)+priorWeight*prior;
+      //      cout<<"YYY "<<phase<<" "<<phasedEdge.getEdgeScore(phase)<<" => "<<newScore<<endl;
       phasedEdge.setEdgeScore(phase,newScore);      
     }
   }
@@ -633,6 +635,7 @@ void CIA::computePrior(Edge &edge,const PriorMask &mask)
     initLabeling(edge,labeling);
     const float prior=computePrior(labeling,featureInterval.getBegin(),mask);
     const float newScore=unphasedEdge.getEdgeScore()+priorWeight*prior;
+    //    cout<<"ZZZ "<<unphasedEdge.getEdgeScore()<<" => "<<newScore<<endl;
     unphasedEdge.setEdgeScore(newScore);
   }
 
