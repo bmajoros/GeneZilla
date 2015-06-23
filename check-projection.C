@@ -95,7 +95,7 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff> <labels.txt>\
   String refDNA=refTrans->getSequence();
   String refProtein=ProteinTrans::translate(refDNA);
   if(refProtein.lastChar()!='*') {
-    cout<<"extending"<<endl;
+    //    cout<<"extending"<<endl;
     refTrans->extendFinalExonBy3(); altTrans->extendFinalExonBy3();
     refTrans->loadSequence(refSubstrate); 
     refDNA=refTrans->getSequence();

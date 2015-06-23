@@ -303,6 +303,7 @@ void CIA::scoreSignalPrior(SignalPtr s)
       if(priorWeight>0)
 	for(int pos=wBegin ; pos<wEnd ; ++pos) {
 	  GeneModelLabel predictedLabel=profile.getLabel(phase,pos-wBegin);
+	  if(pos>=seqLen) INTERNAL_ERROR; // ###
 	  GeneModelLabel priorLabel=refAnno->getLabeling()[pos];
 	  float penalty=priorWeight*
 	    refAnno->getMatrix()(priorLabel,predictedLabel);
@@ -545,6 +546,10 @@ float CIA::computePrior(const Labeling &proposedLabels,int offset,const PriorMas
   float prior=0;
   const int edgeLen=proposedLabels.length();
   for(int altPos=0, refPos=offset ; altPos<edgeLen ; ++altPos, ++refPos) {
+    if(refPos>=seqLen) INTERNAL_ERROR;//###
+    if(altPos>=seqLen) INTERNAL_ERROR;//###
+    //    cout<<altPos<<" "<<refPos<<" "<<seqLen<<endl;
+    //    cout<<priorLabels.length()<<" "<<proposedLabels.length()<<endl;
     if(!mask.lookup(refPos)) {
       prior+=M(priorLabels[refPos],proposedLabels[altPos]);
     }
@@ -557,6 +562,7 @@ float CIA::computePrior(const Labeling &proposedLabels,int offset,const PriorMas
 void CIA::initExonLabeling(int startingPhase,Labeling &labeling)
 {
   int L=labeling.length();
+  if(L>seqLen) INTERNAL_ERROR;//###
   int phase=startingPhase;
   for(int i=0 ; i<L ; ++i) {
     labeling[i]=getExonLabel(phase);

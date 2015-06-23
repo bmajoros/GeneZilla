@@ -352,7 +352,7 @@ void Application::emitHeader()
 bool Application::emit(Stack<TrellisLink*> &pStack,LightGraph &G,int parseNum)
 {
   const String contigID=G.getSubstrate();
-  const String programName="RSVP";
+  const String programName="GENEZILLA";
   //cout<<"\n# parse "<<parseNum<<":"<<endl;
   cout<<"\n#======================================================================"<<endl;
   Vector<TrellisLink*> pList;
@@ -409,7 +409,7 @@ bool Application::emit(Stack<TrellisLink*> &pStack,LightGraph &G,int parseNum)
     const PTC_TYPE ptcType=nmd.predict(transcript,substrate);
     switch(ptcType) {
     case PTC_NONE: break;
-    case PTC_NMD: flags="/PTC=nmd"; break;
+    case PTC_NMD: flags="/PTC=NMD"; break;
     case PTC_TRUNCATION: flags="/PTC=truncation"; break;
     }
   }

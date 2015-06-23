@@ -43,7 +43,7 @@ int main(int argc,char *argv[]) {
 void AppMain(int argc,char *argv[])
 {
   // Process command line
-  BOOM::CommandLine cmd(argc,argv,"g:CDS");
+  BOOM::CommandLine cmd(argc,argv,"g:CDSO");
   if(cmd.numArgs()!=5)
     throw BOOM::String(
 "\ncia <genezilla.iso> <alt.fasta> <projected.labels> <projected.gff> <variant-signals.gff>\n\
