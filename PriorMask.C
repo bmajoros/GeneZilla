@@ -12,7 +12,7 @@ using namespace BOOM;
 
 
 PriorMask::PriorMask(const Interval &featureInterval)
-  : interval(interval), M(featureInterval.length())
+  : interval(featureInterval), M(featureInterval.length())
 {
   M.setAllTo(false);
 }
@@ -35,6 +35,10 @@ void PriorMask::mask(int geneRelativeCoord)
 
 int PriorMask::mapToLocal(int geneRelativeCoord) const
 {
+  if(!interval.contains(geneRelativeCoord)) 
+    throw String("bad coordinate in PriorMask::mapToLocal(): ")+
+      geneRelativeCoord+" not in interval "+interval.getBegin()+
+      ","+interval.getEnd();
   return geneRelativeCoord-interval.getBegin();
 }
 

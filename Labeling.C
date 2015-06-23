@@ -33,6 +33,7 @@ String labelToString(GeneModelLabel lab)
     case LABEL_EXON_2:     return "E2";
     case LABEL_EXON:       return "E";
     }
+  throw String("Invalid GeneModelLabel: ")+int(lab);
 }
 
 
@@ -139,6 +140,8 @@ void Labeling::load(const String &filename)
 
 GeneModelLabel &Labeling::operator[](int i)
 {
+  if(i<0 || i>A.size()) 
+    throw String("Index ")+i+" is out of range for labeling on (0,"+A.size()+")";
   return A[i];
 }
 

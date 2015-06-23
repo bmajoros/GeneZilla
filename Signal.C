@@ -334,7 +334,6 @@ bool Signal::isRightTerminus()
 
 void Signal::printOn(ostream &os) const
 {
-  //os<<getSignalType()<<"@"<<getConsensusPosition();
   os<<getSignalType()<<"@"<<getConsensusPosition()<<":"<<*propagators[propagators[1] ? 1 :0];
 }
 
