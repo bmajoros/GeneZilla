@@ -109,8 +109,10 @@ BOOM::Stack<SignalPtr> * CIA::mainAlgorithm(const Sequence &seq,
   }
 
   buildParseGraph(seq,str);
-  cerr<<"reweighting graph"<<endl;
-  if(shouldReweight) reweightGraph();
+  if(shouldReweight) {
+    cerr<<"reweighting graph"<<endl;
+    reweightGraph();
+  }
 
   BOOM::Stack<SignalPtr> *path=NULL;
   /*
