@@ -23,7 +23,7 @@ NMD::NMD(int dist)
 PTC_TYPE NMD::predict(GffTranscript &transcript,const String &substrate)
 {
   const int numExons=transcript.getNumExons();
-  if(numExons<1) "no exons in transcript";
+  if(numExons<1) return PTC_NONE;
   const int lastExonLen=transcript.getIthExon(numExons-1).length();
   const int lastEJC=transcript.getSplicedLength()-lastExonLen;
   CodonIterator iter(transcript,substrate);

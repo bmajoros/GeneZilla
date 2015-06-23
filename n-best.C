@@ -353,7 +353,8 @@ bool Application::emit(Stack<TrellisLink*> &pStack,LightGraph &G,int parseNum)
 {
   const String contigID=G.getSubstrate();
   const String programName="RSVP";
-  cout<<"\n# parse "<<parseNum<<":"<<endl;
+  //cout<<"\n# parse "<<parseNum<<":"<<endl;
+  cout<<"\n#======================================================================"<<endl;
   Vector<TrellisLink*> pList;
   while(!pStack.isEmpty()) {
     TrellisLink *pl=pStack.pop();
@@ -363,6 +364,7 @@ bool Application::emit(Stack<TrellisLink*> &pStack,LightGraph &G,int parseNum)
   const float transcriptScore=exp(end->getScore()/G.getSubstrateLength())/.25;
   GffTranscript transcript(String(transcriptNum),contigID,FORWARD_STRAND,
 				  programName);
+  int numExons=0;
   for(Vector<TrellisLink*>::iterator cur=pList.begin(), end=pList.end() ;
       cur!=end ; ++cur) {
     TrellisLink *pl=*cur;
@@ -371,6 +373,7 @@ bool Application::emit(Stack<TrellisLink*> &pStack,LightGraph &G,int parseNum)
     const ContentType edgeType=dropStrand(e->getEdgeType());
     if(edgeType==INTERGENIC) continue;
     if(edgeType==INTRON && !wantIntrons) continue;
+    ++numExons;
     String etString=contentTypeNiceString(edgeType);
     int startPos=e->getBegin()+1;
     int endPos=e->getEnd();
@@ -400,6 +403,7 @@ bool Application::emit(Stack<TrellisLink*> &pStack,LightGraph &G,int parseNum)
 			      endPos,transcript,true,score,true,phase);
     transcript.addExon(exon);
   }
+  if(numExons<1) return false;
   String flags;
   if(substrate.length()>0) {
     const PTC_TYPE ptcType=nmd.predict(transcript,substrate);
@@ -421,6 +425,7 @@ bool Application::emit(Stack<TrellisLink*> &pStack,LightGraph &G,int parseNum)
 void Application::emitFooter(LightGraph &G,
 			     BOOM::Vector<TrellisLink> &parseList) 
 {
+  cout<<"\n#======================================================================"<<endl;
   cout<<"\n# sequence length: "<<G.getSubstrateLength()<<endl;
 }
 
