@@ -10,6 +10,7 @@
 #include "BOOM/FastaReader.H"
 #include "BOOM/Constants.H"
 #include "BOOM/CigarString.H"
+#include "BOOM/Set.H"
 using namespace std;
 
 #ifdef EXPLICIT_GRAPHS
@@ -48,6 +49,8 @@ public:
   void AppMain(int argc,char *argv[]);
 protected:
   String refSubstrate, altSubstrate;
+  Vector<GffTranscript*> *transcripts;
+  Set<String> seen;
   bool parseVariantLine(const String &line,VariantRegion &);
   void applySensor(SignalSensor &,const VariantRegion &,Sequence &refSeq,
 		   Sequence &altSeq,const String &refSeqStr,const String 
@@ -58,6 +61,7 @@ protected:
 	    const String &status);
   void emitIndels(const CigarAlignment &);
   int mapConsensus(int refPos,const CigarAlignment &);
+  bool findInRefAnno(SignalPtr);
 };
 
 
@@ -98,16 +102,18 @@ void Application::AppMain(int argc,char *argv[])
 {
   // Process command line
   BOOM::CommandLine cmd(argc,argv,"s:i:c:o:I:tP:SCDO");
-  if(cmd.numArgs()!=5)
+  if(cmd.numArgs()!=6)
     throw BOOM::String(
-    "\nfind-variant-signals <variants.txt> <ref.fasta> <alt.fasta> <ref-alt.cigar> <*.iso>\n");
+    "\nfind-variant-signals <variants.txt> <ref.fasta> <ref.gff> <alt.fasta> <ref-alt.cigar> <*.iso>\n");
   const String variantFilename=cmd.arg(0);
   const String refFasta=cmd.arg(1);
-  const String altFasta=cmd.arg(2);
-  const String cigarFile=cmd.arg(3);
-  const String isochoreFilename=cmd.arg(4);
+  const String refGff=cmd.arg(2);
+  const String altFasta=cmd.arg(3);
+  const String cigarFile=cmd.arg(4);
+  const String isochoreFilename=cmd.arg(5);
   alphabet=DnaAlphabet::global();
-  
+  transcripts=GffReader::loadTranscripts(refGff);
+
   // Load sequences & alignment
   EdgeFactory factory;
   int transcriptId=-1;
@@ -187,7 +193,8 @@ void Application::applySensor(SignalSensor &sensor,const VariantRegion &region,
     if(end+windowLen>refLen) end=refLen-windowLen;
     for(int r=begin ; r<=end ; ++r) {
       SignalPtr signal=sensor.detect(refSeq,refSeqStr,r);
-      if(signal) {
+      if(signal && (signal->getSignalType()==TAG || 
+		    findInRefAnno(signal))) {
 	Set<int> altPositions;
 	mapWindow(r,windowLen,alignment,altPositions,altLen);
 	bool found=false;
@@ -257,6 +264,9 @@ void Application::mapWindow(int refBegin,int windowLen,
 void Application::emit(SignalPtr signal,int consPos,const String &substrate,
 		       const String &status)
 {
+  const String key=signalTypeToString(signal->getSignalType())+consPos;
+  if(seen.isMember(key)) return;
+  seen+=key;
   cout<<substrate<<"\t"<<status<<"\t"<<signalTypeToName(signal->getSignalType())
       <<"\t"<<consPos+1<<"\t"<<consPos+signal->getConsensusLength()<<"\t"<<".\t"
       <<signal->getStrand()<<"\t0"<<endl;
@@ -296,6 +306,45 @@ int Application::mapConsensus(int refPos,const CigarAlignment &alignment)
 {
   while(refPos>0 && alignment[refPos]==CIGAR_UNDEFINED) --refPos;
   return alignment[refPos];
+}
+
+
+
+bool Application::findInRefAnno(SignalPtr s)
+{
+  switch(s->getSignalType()) {
+  case ATG: {
+    for(Vector<GffTranscript*>::iterator cur=transcripts->begin(),
+	  end=transcripts->end() ; cur!=end ; ++cur) {
+      if((*cur)->getBegin()==s->getConsensusPosition()) return true;
+    }}
+    return false;
+  case TAG: INTERNAL_ERROR; // handled separately
+  case GT:
+  case GT_U12: {
+    for(Vector<GffTranscript*>::iterator cur=transcripts->begin(),
+	  end=transcripts->end() ; cur!=end ; ++cur) {
+      (*cur)->setExonTypes();
+      const int N=(*cur)->getNumExons();
+      for(int i=0 ; i<N ; ++i) {
+	GffExon &exon=(*cur)->getIthExon(i);
+	if(exon.hasDonor() &&
+	   exon.getEnd()==s->getConsensusPosition()) return true;
+      }}}
+    return false;
+  case AG:
+  case AG_U12: {
+    for(Vector<GffTranscript*>::iterator cur=transcripts->begin(),
+	  end=transcripts->end() ; cur!=end ; ++cur) {
+      (*cur)->setExonTypes();
+      const int N=(*cur)->getNumExons();
+      for(int i=0 ; i<N ; ++i) {
+	GffExon &exon=(*cur)->getIthExon(i);
+	if(exon.hasAcceptor() &&
+	   exon.getBegin()-2==s->getConsensusPosition()) return true;
+      }}}
+    return false;
+  }
 }
 
 

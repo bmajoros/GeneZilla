@@ -37,3 +37,17 @@ const Interval &ContentRegion::getInterval() const
 }
 
 
+void ContentRegion::printOn(ostream &os) const
+{
+  os<<"("<<interval.getBegin()<<"-"<<interval.getEnd()<<"="<<type<<")";
+}
+
+
+
+ostream &operator<<(ostream &os,const ContentRegion &region)
+{
+  region.printOn(os);
+  return os;
+}
+
+

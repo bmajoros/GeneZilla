@@ -27,7 +27,7 @@
 #include "GeometricDistribution.H"
 #include "Transitions.H"
 #include "IsochoreFile.H"
-#include "GffReader.H"
+//#include "GffReader.H"
 #include "TopologyLoader.H"
 #include "Edge.H"
 #include "GarbageCollector.H"

@@ -293,7 +293,10 @@ void SignalStreamBuilder::lossGT(int pos,SignalSensor &sensor)
   // First, determine interval to scan for other GT sites
   const ContentRegions &regions=refAnno.getRegions();
   const ContentRegion *prev, *next;
-  if(!regions.findJunction(pos,prev,next)) INTERNAL_ERROR;
+  if(!regions.findJunction(pos,prev,next)) {
+    cout<<pos<<" "<<regions<<endl;
+    INTERNAL_ERROR;
+  }
   Interval exon=prev->getInterval(), intron=next->getInterval();
   const int exonBegin=exon.getBegin(), exonEnd=exon.getEnd(),
     intronEnd=intron.getEnd();

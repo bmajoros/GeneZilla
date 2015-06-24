@@ -18,10 +18,13 @@ public:
   ContentRegion(ContentType,int begin,int end);
   ContentType getType() const;
   const Interval &getInterval() const;
+  void printOn(ostream &) const;
 protected:
   Interval interval;
   ContentType type;
 };
+
+ostream &operator<<(ostream &,const ContentRegion &);
 
 #endif
 

@@ -74,5 +74,21 @@ ContentRegion *ContentRegions::regionOverlapping(int pos) const
 
 
 
+void ContentRegions::printOn(ostream &os) const
+{
+  for(Vector<ContentRegion>::const_iterator cur=regions.begin(), 
+	end=regions.end() ; cur!=end ; ++cur) {
+    os<<*cur;
+    if(cur+1!=end) os<<",";
+  }
+}
+
+
+
+ostream &operator<<(ostream &os,const ContentRegions &r)
+{
+  r.printOn(os);
+  return os;
+}
 
 
