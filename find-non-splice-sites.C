@@ -23,6 +23,7 @@ using namespace BOOM;
 #endif
 
 Alphabet alphabet=DnaAlphabet::global();
+int CONTEXT_LENGTH=80;
 
 class Application {
 public:
@@ -37,6 +38,7 @@ private:
   ofstream osProximalGT, osIntronicGT, osProximalAG, osIntronicAG;
   void processDonor(int consensusPos,int maxDistance);
   void processAcceptor(int consensusPos,int maxDistance);
+  void processIntron(int begin,int end);
 };
 
 
@@ -120,6 +122,8 @@ find-non-splice-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-proximal-distan
 	GffExon &exon=transcript->getIthExon(i);
 	if(exon.hasDonor()) processDonor(exon.getEnd(),maxDistance);
 	if(exon.hasAcceptor()) processAcceptor(exon.getBegin()-2,maxDistance);
+	processIntron(exon.getEnd()+intronMargin,
+		      transcript->getIthExon(i+1).getBegin()-intronMargin);
       }
     }
   }
@@ -141,7 +145,7 @@ void Application::processDonor(int consensusPos,int maxDistance)
     SignalPtr signal=GTsensor->detect(substrate,substrateStr,pos);
     if(signal) {
       const double score=signal->contextWindowScore();
-      String seq=substrateStr.substr(newConsensusPos-80,162);
+      String seq=substrateStr.substr(newConsensusPos-CONTEXT_LENGTH,CONTEXT_LENGTH*2+2);
       String defline=String(">")+nextDonorID+" /score="+score;
       fastaWriter.addToFasta(defline,seq.c_str(),osProximalGT);
       ++nextDonorID;
@@ -153,8 +157,56 @@ void Application::processDonor(int consensusPos,int maxDistance)
 
 void Application::processAcceptor(int consensusPos,int maxDistance)
 {
+  const int consensusOffset=AGsensor->getConsensusOffset();
+  const int contextWindowLen=AGsensor->getContextWindowLength();
+  //cout<<AGsensor->getLogP(substrate,substrateStr,consensusPos-consensusOffset)<<endl;
+  int begin=consensusPos-maxDistance, end=consensusPos+maxDistance+2;
+  if(begin<0) begin=0;
+  if(end>substrateLen-contextWindowLen) end=substrateLen-contextWindowLen;
+  for(int pos=begin ; pos<end ; ++pos) {
+    const int newConsensusPos=pos+consensusOffset;
+    if(newConsensusPos==consensusPos) continue;
+    SignalPtr signal=AGsensor->detect(substrate,substrateStr,pos);
+    if(signal) {
+      const double score=signal->contextWindowScore();
+      String seq=substrateStr.substr(newConsensusPos-CONTEXT_LENGTH,CONTEXT_LENGTH*2+2);
+      String defline=String(">")+nextAcceptorID+" /score="+score;
+      fastaWriter.addToFasta(defline,seq.c_str(),osProximalAG);
+      ++nextAcceptorID;
+    }
+  }
 }
 
 
+
+void Application::processIntron(int begin,int end)
+{
+  const int GTconsensusOffset=GTsensor->getConsensusOffset();
+  const int GTcontextWindowLen=GTsensor->getContextWindowLength();
+  const int AGconsensusOffset=AGsensor->getConsensusOffset();
+  const int AGcontextWindowLen=AGsensor->getContextWindowLength();
+  for(int pos=begin ; pos<end-GTcontextWindowLen ; ++pos) {
+    SignalPtr signal=GTsensor->detect(substrate,substrateStr,pos);
+    if(signal) {
+      const double score=signal->contextWindowScore();
+      const int consensusPos=pos+GTconsensusOffset;
+      String seq=substrateStr.substr(consensusPos-CONTEXT_LENGTH,CONTEXT_LENGTH*2+2);
+      String defline=String(">")+nextDonorID+" /score="+score;
+      fastaWriter.addToFasta(defline,seq.c_str(),osIntronicGT);
+      ++nextDonorID;
+    }
+  }
+  for(int pos=begin ; pos<end-AGcontextWindowLen ; ++pos) {
+    SignalPtr signal=AGsensor->detect(substrate,substrateStr,pos);
+    if(signal) {
+      const double score=signal->contextWindowScore();
+      const int consensusPos=pos+AGconsensusOffset;
+      String seq=substrateStr.substr(consensusPos-CONTEXT_LENGTH,CONTEXT_LENGTH*2+2);
+      String defline=String(">")+nextAcceptorID+" /score="+score;
+      fastaWriter.addToFasta(defline,seq.c_str(),osIntronicAG);
+      ++nextAcceptorID;
+    }
+  }
+}
 
 
