@@ -10,16 +10,17 @@
 #include "BOOM/CommandLine.H"
 #include "BOOM/FastaReader.H"
 #include "BOOM/GffReader.H"
-#include "BOOM/ProteinTrans.H"
-#include "BOOM/CodonIterator.H"
 #include "BOOM/DnaAlphabet.H"
-#include "BOOM/BandedSmithWaterman.H"
-#include "BOOM/AminoAlphabet.H"
+#include "BOOM/FastaWriter.H"
 #include "IsochoreTable.H"
 #include "Labeling.H"
 #include "GCcontent.H"
 using namespace std;
 using namespace BOOM;
+
+#ifdef EXPLICIT_GRAPHS
+#error Please edit genezilla.H, comment out the definition of EXPLICIT_GRAPHS, and do a complete rebuild of all object files!
+#endif
 
 Alphabet alphabet=DnaAlphabet::global();
 
@@ -31,7 +32,9 @@ private:
   SignalSensor *GTsensor, *AGsensor;
   Sequence substrate;
   String substrateStr;
-  int substrateLen;
+  int substrateLen, nextDonorID, nextAcceptorID;
+  FastaWriter fastaWriter;
+  ofstream osProximalGT, osIntronicGT, osProximalAG, osIntronicAG;
   void processDonor(int consensusPos,int maxDistance);
   void processAcceptor(int consensusPos,int maxDistance);
 };
@@ -53,6 +56,7 @@ int main(int argc,char *argv[]) {
 
 
 Application::Application()
+  : nextDonorID(1), nextAcceptorID(1)
 {
   // ctor
 }
@@ -63,17 +67,19 @@ int Application::main(int argc,char *argv[])
 {
   // Process command line
   CommandLine cmd(argc,argv,"");
-  if(cmd.numArgs()!=7)
+  if(cmd.numArgs()!=9)
     throw String("\n\
-find-non-splice-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-proximal-distance> <intron-margin> <out-proximal-sites.fasta> <out-intronic-sites.fasta>\n\
+find-non-splice-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-proximal-distance> <intron-margin> <out-proximal-GT.fasta> <out-intronic-GT.fasta> <out-proximal-AG.fasta> <out-intronic-AG.fasta>\n\
 ");
   const String isoFile=cmd.arg(0);
   const String chrFasta=cmd.arg(1);
   const String gffFile=cmd.arg(2);
   const int maxDistance=cmd.arg(3).asInt();
   const int intronMargin=cmd.arg(4).asInt();
-  const String proximalFile=cmd.arg(5);
-  const String intronicFile=cmd.arg(6);
+  const String proximalGTFile=cmd.arg(5);
+  const String intronicGTFile=cmd.arg(6);
+  const String proximalAGFile=cmd.arg(7);
+  const String intronicAGFile=cmd.arg(8);
 
   // Load input files
   String def;
@@ -83,6 +89,10 @@ find-non-splice-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-proximal-distan
   GarbageIgnorer gc;
   IsochoreTable isochores(gc);
   isochores.load(isoFile);
+  osProximalGT.open(proximalGTFile.c_str());
+  osIntronicGT.open(intronicGTFile.c_str());
+  osProximalAG.open(proximalAGFile.c_str());
+  osIntronicAG.open(intronicAGFile.c_str());
 
   // Process all genes
   Vector<GffGene> &genes=*GffReader::loadGenes(gffFile);
@@ -119,6 +129,22 @@ find-non-splice-sites <genezilla.iso> <chr.fasta> <chr.gff> <max-proximal-distan
 
 void Application::processDonor(int consensusPos,int maxDistance)
 {
+  const int consensusOffset=GTsensor->getConsensusOffset();
+  const int contextWindowLen=GTsensor->getContextWindowLength();
+  int begin=consensusPos-maxDistance, end=consensusPos+maxDistance+2;
+  if(begin<0) begin=0;
+  if(end>substrateLen-contextWindowLen) end=substrateLen-contextWindowLen;
+  for(int pos=begin ; pos<end ; ++pos) {
+    const int newConsensusPos=pos+consensusOffset;
+    if(newConsensusPos==consensusPos) continue;
+    SignalPtr signal=GTsensor->detect(substrate,substrateStr,pos);
+    if(signal) {
+      const double score=signal->contextWindowScore();
+      String seq=substrateStr.substr(newConsensusPos-80,162);
+      String defline=String(">")+nextDonorID+" /score="+score;
+      fastaWriter.addToFasta(defline,seq.c_str(),osProximalGT);
+    }
+  }
 }
 
 
