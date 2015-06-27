@@ -11,7 +11,7 @@ use FastaWriter;
 use ProgramName;
 $|=1;
 
-my $MAX_DUPLICATE_COUNT=1; # set to 1 to eliminate duplicates
+my $MAX_DUPLICATE_COUNT=100; # set to 1 to eliminate duplicates
 
 # PROCESS THE COMMAND LINE
 my $name=ProgramName::get();
@@ -31,15 +31,15 @@ my %stopCodons;
 foreach my $codon (@stopCodons) {$stopCodons{$codon}=1}
 
 # SET SOME LIMITS
-my $MAX_EXONS=1000; #10000;
-my $MAX_DONORS=1000; #500000;
-my $MAX_ACCEPTORS=1000; #500000;
-my $MAX_START_CODONS=1000; #50000;
+my $MAX_EXONS=1000000; #10000;
+my $MAX_DONORS=1000000; #500000;
+my $MAX_ACCEPTORS=1000000; #500000;
+my $MAX_START_CODONS=100000; #50000;
 my $MAX_STOP_CODONS=1000; #50000;
-my $MAX_INTRONS=1000; #10000;
+my $MAX_INTRONS=1000000; #10000;
 my $MAX_INTERGENICS=1000; #10000;
 my $MAX_UTRS=1000; #10000;
-my $MAX_TOTAL_LENGTH=300000; #1000000;
+my $MAX_TOTAL_LENGTH=30000000; #1000000;
 my $DONOR_CONTEXT_BEGIN=-80;
 my $DONOR_CONTEXT_LENGTH=162;
 my $ACCEPTOR_CONTEXT_BEGIN=-80;
@@ -48,7 +48,7 @@ my $START_CONTEXT_BEGIN=-80;
 my $START_CONTEXT_LENGTH=163;
 my $STOP_CONTEXT_BEGIN=-80;
 my $STOP_CONTEXT_LENGTH=163;
-my $MAX_INTERGENIC=1000;
+my $MAX_INTERGENIC=10000;
 my $UTR_EXTENT=50;
 my ($numInitialExons,$numFinalExons,$numInternalExons,$numSingleExons,
     $numDonors,$numAcceptors,$numStartCodons,$numStopCodons,
@@ -204,7 +204,8 @@ while(1)
 		my $frame=$exon->{frame};
 		$sequence=$exon->getSequence();
 		my $length=length($sequence);
-		my $signature="0,$length";
+		my $sigBegin=$lastExon->getBegin();
+		my $signature="$sigBegin,$length"; #"0,$length";
 		$featureTypes{$signature}="internal-exon";
 		if($numInternalExons<$MAX_EXONS &&
 		   $totalInternalExon<$MAX_TOTAL_LENGTH &&
@@ -245,7 +246,7 @@ while(1)
 		$writer->addToFasta(">$transcriptId",$context,\*DONORS);
 		++$numDonors;
 	      }
-	    
+
 	    my $exonNum=$numExons-1;
 	    my $lastExon=$transcript->getIthExon($exonNum);
 	    $sigBegin=$lastExon->getBegin()-2;

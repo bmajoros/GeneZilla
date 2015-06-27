@@ -81,7 +81,7 @@ int Application::main(int argc,char *argv[])
   if(wantText) textFilename=cmd.optParm('t');
 
   ContentSensor *sensor=ContentSensor::load(modelFilename);
-  sensor=sensor->reverseComplement();
+  //sensor=sensor->reverseComplement();
   bool phased=sensor->isPhased();
   File *os[3];
   ostream *tos[3];
