@@ -24,6 +24,8 @@ using namespace BOOM;
 
 Alphabet alphabet=DnaAlphabet::global();
 int CONTEXT_LENGTH=80;
+const float MEAN_DONOR_SCORE=-17.2;
+const float MEAN_ACCEPTOR_SCORE=-24.4;
 
 class Application {
 public:
@@ -189,6 +191,7 @@ void Application::processIntron(int begin,int end)
     SignalPtr signal=GTsensor->detect(substrate,substrateStr,pos);
     if(signal) {
       const double score=signal->contextWindowScore();
+      if(score<MEAN_DONOR_SCORE) continue;
       const int consensusPos=pos+GTconsensusOffset;
       String seq=substrateStr.substr(consensusPos-CONTEXT_LENGTH,CONTEXT_LENGTH*2+2);
       String defline=String(">")+nextDonorID+" /score="+score;
@@ -200,6 +203,7 @@ void Application::processIntron(int begin,int end)
     SignalPtr signal=AGsensor->detect(substrate,substrateStr,pos);
     if(signal) {
       const double score=signal->contextWindowScore();
+      if(score<MEAN_ACCEPTOR_SCORE) continue;
       const int consensusPos=pos+AGconsensusOffset;
       String seq=substrateStr.substr(consensusPos-CONTEXT_LENGTH,CONTEXT_LENGTH*2+2);
       String defline=String(">")+nextAcceptorID+" /score="+score;
