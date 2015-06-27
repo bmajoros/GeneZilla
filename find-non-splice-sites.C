@@ -131,6 +131,7 @@ void Application::processDonor(int consensusPos,int maxDistance)
 {
   const int consensusOffset=GTsensor->getConsensusOffset();
   const int contextWindowLen=GTsensor->getContextWindowLength();
+  //cout<<GTsensor->getLogP(substrate,substrateStr,consensusPos-consensusOffset)<<endl;
   int begin=consensusPos-maxDistance, end=consensusPos+maxDistance+2;
   if(begin<0) begin=0;
   if(end>substrateLen-contextWindowLen) end=substrateLen-contextWindowLen;
@@ -143,6 +144,7 @@ void Application::processDonor(int consensusPos,int maxDistance)
       String seq=substrateStr.substr(newConsensusPos-80,162);
       String defline=String(">")+nextDonorID+" /score="+score;
       fastaWriter.addToFasta(defline,seq.c_str(),osProximalGT);
+      ++nextDonorID;
     }
   }
 }
