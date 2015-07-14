@@ -175,7 +175,7 @@ void Application::parseChromLine(const Vector<String> &fields)
     f->print(String("\t")+id);
   }
   for(Vector<File*>::iterator cur=files.begin(), end=files.end() ; 
-      cur!=end ; ++cur) (*cur)->print(String("\t"));
+      cur!=end ; ++cur) (*cur)->print(String("\n"));
 }
 
 
@@ -215,7 +215,7 @@ void Application::parseVariant(const Vector<String> &fields)
     indiv.file->print(String("\t")+fields[i+9]);
   }
   for(Vector<File*>::iterator cur=files.begin(), end=files.end() ; 
-      cur!=end ; ++cur) (*cur)->print(String("\t"));
+      cur!=end ; ++cur) (*cur)->print(String("\n"));
 }
 
 
