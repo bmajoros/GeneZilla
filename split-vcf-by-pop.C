@@ -206,7 +206,8 @@ void Application::parseVariant(const Vector<String> &fields)
     return;
   }
   if(SNPsOnly && (ref.size()!=1 || alt.size()!=1)) return;
-  String base=chr+"\t"+pos+"\t"+id+"\t"+ref+"\t"+alt;
+  String base=fields[0];
+  for(int i=1 ; i<9 ; ++i) base+=String("\t")+fields[i];
   for(Vector<File*>::iterator cur=files.begin(), end=files.end() ; 
       cur!=end ; ++cur) (*cur)->print(base);
   const int numIndiv=fields.size()-9;
