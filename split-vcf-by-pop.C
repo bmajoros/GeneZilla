@@ -10,6 +10,7 @@
 #include "BOOM/File.H"
 #include "BOOM/Vector.H"
 #include "BOOM/Map.H"
+#include "BOOM/Set.H"
 #include "BOOM/Regex.H"
 using namespace std;
 using namespace BOOM;
@@ -36,9 +37,12 @@ public:
 protected:
   Vector<Individual> individuals;
   Vector<Variant> variants;
+  Set<String> populations;
+  Map<String,String> indivToPop;
+  Map<String,File*> popToFile;
   void loadPops(const String &filename);
 
-  void filter(File &infile,File &outfile);
+  void filter(File &infile);
   void parseChromLine(const Vector<String> &);
   void parseVariant(const Vector<String> &);
   void parseGenotype(const String &,int gt[2]);
@@ -76,23 +80,36 @@ int Application::main(int argc,char *argv[])
 {
   // Process command line
   CommandLine cmd(argc,argv,"cf:qsv");
-  if(cmd.numArgs()!=3)
+  if(cmd.numArgs()!=2)
     throw String("\n\
-split-vcf-by-pop <in.vcf> <pop.txt> <out.vcf>\n\
+split-vcf-by-pop <in.vcf> <pop.txt>\n\
     pop.txt has 2 columns: individual ID, and population name\n\
+    output files will be named: <pop>.vcf\n\
 ");
   const String infile=cmd.arg(0);
   const String popFile=cmd.arg(1);
-  const String outfile=cmd.arg(2);
 
   // Read population assignments
   loadPops(popFile);
 
   // Open VCF files
-  File in(infile), out(outfile,"w");
+  File in(infile);
+  Vector<File*> files;
+  for(Set<String>::iterator cur=populations.begin(), end=populations.end() ;
+      cur!=end ; ++cur) {
+    String pop=*cur;
+    String filename=pop+".vcf";
+    File *f=new File(filename,"w");
+    popToFile[pop]=f;
+    files.push_back(f);
+  }
 
   // Perform conversion
-  filter(in,out);
+  filter(in);
+
+  // Clean up
+  for(Vector<File*>::cur=files.begin(), end=files.end() ; cur!=end ; ++cur)
+    (*cur)->close();
 
   return 0;
 }
@@ -102,12 +119,20 @@ split-vcf-by-pop <in.vcf> <pop.txt> <out.vcf>\n\
 void Application::loadPops(const String &filename)
 {
   File f(filename);
-  
+  while(!f.eof()) {
+    String line=f.getline();
+    if(line.isEmpty()) continue;
+    Vector<String> fields; line.getFields(fields);
+    if(fields.size()<2) continue;
+    String indivID=fields[0], pop=fields[1];
+    indivToPop[indivID]=pop;
+    populations+=pop;
+  }
 }
 
 
 
-void Application::filter(File &infile,File &outfile)
+void Application::filter(File &infile)
 {
   while(!infile.eof()) {
     String line=infile.getline();
