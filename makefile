@@ -3671,3 +3671,14 @@ find-non-splice-sites: \
 		$(OBJ)/find-non-splice-sites.o \
 		$(LIBS)
 #--------------------------------------------------------
+$(OBJ)/split-vcf-by-pop.o:\
+		split-vcf-by-pop.C
+	$(CC) $(CFLAGS) -o $(OBJ)/split-vcf-by-pop.o -c \
+		split-vcf-by-pop.C
+#---------------------------------------------------------
+split-vcf-by-pop: \
+		$(OBJ)/split-vcf-by-pop.o
+	$(CC) $(LDFLAGS) -o split-vcf-by-pop \
+		$(OBJ)/split-vcf-by-pop.o \
+		$(LIBS)
+#--------------------------------------------------------
