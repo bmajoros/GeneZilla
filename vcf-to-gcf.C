@@ -92,6 +92,7 @@ int Application::main(int argc,char *argv[])
   CommandLine cmd(argc,argv,"cf:qsv");
   if(cmd.numArgs()!=2)
     throw String("\nvcf-to-gcf [options] <in.vcf> <out.gcf>\n\
+   both input and output files can be zipped (use .gz as suffix)\n\
    -f regions.bed : keep only variants in these regions\n\
         (coordinates are 0-based, end is not inclusive)\n\
    -c : prepend \"chr\" before chromosome names\n\
@@ -114,10 +115,14 @@ int Application::main(int argc,char *argv[])
   File *vcf=gzipRegex.match(infile) ? 
     new Pipe(String("cat ")+infile+" | gunzip","r") : 
     new File(infile);
-  File gcf(outfile,"w");
+  File *gcf=gzipRegex.match(outfile) ?
+    new Pipe(String("gzip > ")+outfile,"w") :
+    new File(outfile,"w");
+  //File gcf(outfile,"w");
 
   // Perform conversion
-  convert(*vcf,gcf);
+  convert(*vcf,*gcf);
+  vcf->close(); gcf->close();
 
   return 0;
 }
