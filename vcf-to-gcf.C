@@ -8,6 +8,7 @@
 #include "BOOM/String.H"
 #include "BOOM/CommandLine.H"
 #include "BOOM/File.H"
+#include "BOOM/Pipe.H"
 #include "BOOM/Vector.H"
 #include "BOOM/Map.H"
 #include "BOOM/Regex.H"
@@ -44,6 +45,7 @@ protected:
   Vector<Individual> individuals;
   Vector<Variant> variants;
   Regex dnaRegex;
+  Regex gzipRegex;
   bool wantFilter;
   bool prependChr;
   bool SNPsOnly;
@@ -77,7 +79,7 @@ int main(int argc,char *argv[])
 
 
 Application::Application()
-  : dnaRegex("[^ACGTacgt]")
+  : dnaRegex("[^ACGTacgt]"), gzipRegex(".*\\.gz")
 {
   // ctor
 }
@@ -109,10 +111,13 @@ int Application::main(int argc,char *argv[])
   if(wantFilter) loadRegions(cmd.optParm('f'));
 
   // Open files
-  File vcf(infile), gcf(outfile,"w");
+  File *vcf=gzipRegex.match(infile) ? 
+    new Pipe(String("cat ")+infile+" | gunzip","r") : 
+    new File(infile);
+  File gcf(outfile,"w");
 
   // Perform conversion
-  convert(vcf,gcf);
+  convert(*vcf,gcf);
 
   return 0;
 }

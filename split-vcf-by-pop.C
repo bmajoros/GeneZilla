@@ -74,17 +74,18 @@ int Application::main(int argc,char *argv[])
 {
   // Process command line
   CommandLine cmd(argc,argv,"cqsv");
-  if(cmd.numArgs()!=1)
+  if(cmd.numArgs()!=2)
     throw String("\n\
-cat in.vcf.fz | gunzip | split-vcf-by-pop <pop.txt>\n\
+cat in.vcf.fz | gunzip | split-vcf-by-pop <pop.txt> <prefix>\n\
    pop.txt has 2 columns: individual ID, and population name\n\
-   output files will be named: <pop>.vcf\n\
+   output files will be named: <prefix>-<pop>.vcf\n\
    -c : prepend \"chr\" before chromosome names\n\
    -s : SNPs only\n\
    -v : variable sites only\n\
    -q : quiet (no warnings)\n\
 ");
   const String popFile=cmd.arg(0);
+  const String prefix=cmd.arg(1);
   variableOnly=cmd.option('v');
   prependChr=cmd.option('c');
   SNPsOnly=cmd.option('s');
@@ -97,7 +98,7 @@ cat in.vcf.fz | gunzip | split-vcf-by-pop <pop.txt>\n\
   for(Set<String>::iterator cur=populations.begin(), end=populations.end() ;
       cur!=end ; ++cur) {
     String pop=*cur;
-    String filename=pop+".vcf";
+    String filename=prefix+"-"+pop+".vcf";
     File *f=new File(filename,"w");
     popToFile[pop]=f;
     files.push_back(f);
