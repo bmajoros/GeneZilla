@@ -3682,3 +3682,16 @@ split-vcf-by-pop: \
 		$(OBJ)/split-vcf-by-pop.o \
 		$(LIBS)
 #--------------------------------------------------------
+
+#--------------------------------------------------------
+$(OBJ)/remove-unpaired-reads.o:\
+		remove-unpaired-reads.C
+	$(CC) $(CFLAGS) -o $(OBJ)/remove-unpaired-reads.o -c \
+		remove-unpaired-reads.C
+#---------------------------------------------------------
+remove-unpaired-reads: \
+		$(OBJ)/remove-unpaired-reads.o
+	$(CC) $(LDFLAGS) -o remove-unpaired-reads \
+		$(OBJ)/remove-unpaired-reads.o \
+		$(LIBS)
+#---------------------------------------------
