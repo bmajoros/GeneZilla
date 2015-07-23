@@ -343,7 +343,9 @@ void Application::parseVariantSM(const Vector<String> &fields,File &temp,
   for(int i=0 ; i<numIndiv ; ++i) {
     const String &genotype=fields[i+9];
     for(int j=0 ; j<entrySize ; ++j) buffer[j]=' ';
+    for(int j=0 ; j<genotype.length() ; ++j) buffer[j]=genotype[j];
     temp.seek(i*rowSize+variantNum*entrySize);
+    //cout<<"seek "<<i*rowSize+variantNum*entrySize<<" "<<genotype<<endl;
     temp.write(entrySize,reinterpret_cast<void*>(buffer));
   }
   delete [] buffer;
@@ -370,7 +372,9 @@ void Application::convertSM(File &infile,File &outfile,const String &tempfile)
   }
   
   // Convert the binary temp file into output GCF file
-  outputSM(temp,outfile,entrySize);
+  temp.close();
+  File tempRead(tempfile,"r");
+  outputSM(tempRead,outfile,entrySize);
 }
 
 
