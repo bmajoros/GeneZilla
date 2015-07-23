@@ -89,7 +89,7 @@ classify-content <pos.model> <neg.model> <test.fasta>\n\
       double ratio=exp(posScore-negScore);
       cout<<ratio<<endl;
     }
-    else cout<<posScore<<endl;
+    else cout<<posScore/L<<endl;
   }
   
   return 0;
