@@ -54,13 +54,16 @@ protected:
   void loadRegions(const String &filename);
   void convert(File &infile,File &outfile);
   void convertSM(File &infile,File &outfile,const String &tempfile);
-  void proprocess(File &infile);
+  void preprocess(File &infile);
   void parseChromLine(const Vector<String> &);
   void parseVariant(const Vector<String> &);
+  void parseVariantSM(const Vector<String> &fields,File &temp,
+		      int variantNum,int entrySize);
   void parseVariantAndGenotypes(const Vector<String> &);
   void parseGenotype(const String &,int gt[2]);
   bool keep(const String &chr,int pos);
   void output(File &outfile);
+  void outputSM(File &temp,File &out,int entrySize);
 };
 
 
@@ -291,7 +294,7 @@ void Application::output(File &out)
 
 
 
-void Application::proprocess(File &infile)
+void Application::preprocess(File &infile)
 {
   while(!infile.eof()) {
     String line=infile.getline();
@@ -324,16 +327,19 @@ void Application::parseVariantSM(const Vector<String> &fields,File &temp,
     if(!seenZero || !seenOne) return;
   }
   if(fields.size()<10 || fields[6]!="PASS" || fields[8]!="GT") return;
+  const String chr=fields[0];
+  if(prependChr) chr=String("chr")+chr;
   const int pos=fields[1].asInt()-1; // VCF files are 1-based
   if(wantFilter && !keep(chr,pos)) return;
+  const String ref=fields[3];
+  const String alt=fields[4];
   if(dnaRegex.search(ref) || dnaRegex.search(alt)) return; // nonstandard characters
   if(ref.contains("<") || alt.contains("<")) return;
   if(SNPsOnly && (ref.size()!=1 || alt.size()!=1)) return;
 
-  // Seek to appropriate cell in binary temp file
-
   // Parse genotypes & store in binary temp file
   char *buffer=new char[entrySize];
+  const int numIndiv=individuals.size();
   for(int i=0 ; i<numIndiv ; ++i) {
     const String &genotype=fields[i+9];
     for(int j=0 ; j<entrySize ; ++j) buffer[j]=' ';
@@ -359,12 +365,45 @@ void Application::convertSM(File &infile,File &outfile,const String &tempfile)
     line.trimWhitespace();
     Vector<String> &fields=*line.getFields();
     if(fields.size()>0 && fields[0][0]!='#') 
-      parseVariantSM(fields,variantNum++,entrySize);
+      parseVariantSM(fields,temp,variantNum++,entrySize);
     delete &fields;
   }
   
   // Convert the binary temp file into output GCF file
+  outputSM(temp,outfile,entrySize);
+}
 
+
+
+void Application::outputSM(File &temp,File &out,int entrySize)
+{
+  // Output list of variants
+  const int numVariants=variants.size();
+  for(int i=0 ; i<numVariants ; ++i) {
+    const Variant &v=variants[i];
+    out.print(v.asString());
+    out.print(i+1<numVariants ? "\t" : "\n");
+  }
+  if(numVariants==0) out.print("\n");
+
+  // Output individual genotypes
+  const int numIndiv=individuals.size();
+  temp.seek(0);
+  char *buffer=new char[entrySize+1];
+  buffer[entrySize]='\0';
+  for(int i=0 ; i<numIndiv ; ++i) {
+    const Individual &indiv=individuals[i];
+    if(numVariants==0) { out.print(indiv.id+"\n"); continue; }
+    out.print(indiv.id+"\t");
+    for(int i=0 ; i<numVariants ; ++i) {
+      temp.read(entrySize,reinterpret_cast<void*>(buffer));
+      String genotype(buffer);
+      genotype.trimWhitespace();
+      out.print(genotype);
+      out.print(i+1<numVariants ? "\t" : "\n");
+    }
+  }
+  delete buffer;
 }
 
 
