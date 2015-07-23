@@ -63,7 +63,7 @@ Application::Application()
 int Application::main(int argc,char *argv[])
 {
   // Process command line
-  CommandLine cmd(argc,argv,"");
+  CommandLine cmd(argc,argv,"n");
   if(cmd.numArgs()!=3)
     throw String("\n\
 classify-content <pos.model> <neg.model> <test.fasta>\n\
