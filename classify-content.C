@@ -16,11 +16,12 @@ using namespace BOOM;
 
 PureDnaAlphabet alphabet;
 
-class Application
-{
+class Application {
 public:
   Application();
   int main(int argc,char *argv[]);
+protected:
+  bool useLLR;
 };
 
 
@@ -64,13 +65,17 @@ int Application::main(int argc,char *argv[])
   // Process command line
   CommandLine cmd(argc,argv,"");
   if(cmd.numArgs()!=3)
-    throw String("classify-content <pos.model> <neg.model> <test.fasta>");
+    throw String("\n\
+classify-content <pos.model> <neg.model> <test.fasta>\n\
+   -n = ignore negative model\n\
+");
   String posFilename=cmd.arg(0);
   String negFilename=cmd.arg(1);
   String testFilename=cmd.arg(2);
+  useLLR=!cmd.option('n');
 
   ContentSensor *posModel=ContentSensor::load(posFilename);
-  ContentSensor *negModel=ContentSensor::load(negFilename);
+  ContentSensor *negModel=useLLR ? ContentSensor::load(negFilename) : NULL;
   FastaReader reader(testFilename,alphabet);
   String defline, seqstr;
   while(reader.nextSequence(defline,seqstr)) {
@@ -78,10 +83,13 @@ int Application::main(int argc,char *argv[])
     int L=seq.getLength();
     double posScore=
       posModel->scoreSubsequence(seq,seqstr,0,L,0);
-    double negScore=
-      negModel->scoreSubsequence(seq,seqstr,0,L,0);
-    double ratio=exp(posScore-negScore);
-    cout<<ratio<<endl;
+    if(useLLR) {
+      double negScore=
+	negModel->scoreSubsequence(seq,seqstr,0,L,0);
+      double ratio=exp(posScore-negScore);
+      cout<<ratio<<endl;
+    }
+    else cout<<posScore<<endl;
   }
   
   return 0;
