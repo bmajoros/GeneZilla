@@ -57,7 +57,7 @@ protected:
   void convertSM(File &infile,File &outfile,const String &tempfile);
   void preprocess(File &infile);
   void parseChromLine(const Vector<String> &);
-  void parseVariant(const Vector<String> &);
+  bool parseVariant(const Vector<String> &);
   void parseVariantSM(const Vector<String> &fields,File &temp,
 		      int &variantNum,int entrySize);
   void parseVariantAndGenotypes(const Vector<String> &);
@@ -200,7 +200,7 @@ void Application::parseChromLine(const Vector<String> &fields)
 
 void Application::parseVariantAndGenotypes(const Vector<String> &fields)
 {
-  parseVariant(fields);
+  if(!parseVariant(fields)) return;
   const int numIndiv=fields.size()-9;
   int gt[2];
   for(int i=0 ; i<numIndiv ; ++i) {
@@ -213,26 +213,27 @@ void Application::parseVariantAndGenotypes(const Vector<String> &fields)
 
 
 
-void Application::parseVariant(const Vector<String> &fields)
+bool Application::parseVariant(const Vector<String> &fields)
 {
-  if(variableOnly && !variableSite(fields)) return;
-  if(fields.size()<10 || fields[6]!="PASS" || fields[8]!="GT") return;
+  if(variableOnly && !variableSite(fields)) return false;
+  if(fields.size()<10 || fields[6]!="PASS" || fields[8]!="GT") return false;
   const String chr=fields[0];
   if(prependChr) chr=String("chr")+chr;
   const int pos=fields[1].asInt()-1; // VCF files are 1-based
-  if(wantFilter && !keep(chr,pos)) return;
+  if(wantFilter && !keep(chr,pos)) return false;
   const String id=fields[2];
   if(id==".") id=chr+"@"+pos;
   const String ref=fields[3];
   const String alt=fields[4];
   if(dnaRegex.search(ref) || dnaRegex.search(alt)) 
-    return; // nonstandard characters
+    return false; // nonstandard characters
   if(ref.contains("<") || alt.contains("<")) {
     if(!quiet) cerr<<"skipping "<<id<<" : nonstandard variant"<<endl;
-    return;
+    return false;
   }
-  if(SNPsOnly && (ref.size()!=1 || alt.size()!=1)) return;
+  if(SNPsOnly && (ref.size()!=1 || alt.size()!=1)) return false;
   variants.push_back(Variant(chr,pos,ref,alt,id));
+  return true;
 }
 
 
@@ -358,7 +359,6 @@ void Application::parseVariantSM(const Vector<String> &fields,File &temp,
     for(int j=0 ; j<entrySize ; ++j) buffer[j]=' ';
     for(int j=0 ; j<genotype.length() ; ++j) buffer[j]=genotype[j];
     temp.seek(i*rowSize+variantNum*entrySize);
-    //cout<<"seek "<<i*rowSize+variantNum*entrySize<<" "<<genotype<<endl;
     temp.write(entrySize,reinterpret_cast<void*>(buffer));
   }
   delete [] buffer;
