@@ -12,6 +12,7 @@
 #include "BOOM/Vector.H"
 #include "BOOM/Map.H"
 #include "BOOM/Regex.H"
+#include "BOOM/GCF.H"
 using namespace std;
 using namespace BOOM;
 
@@ -64,6 +65,7 @@ protected:
   bool keep(const String &chr,int pos);
   void output(File &outfile);
   void outputSM(File &temp,File &out,int entrySize);
+  bool variableSite(const Vector<String> &fields);
 };
 
 
@@ -131,7 +133,7 @@ int Application::main(int argc,char *argv[])
   if(smallmem) {
     preprocess(*vcf);
     delete vcf;
-    vcf=gzipRegex.match(infile) ?                                                                                   
+    vcf=gzipRegex.match(infile) ?  
       new Pipe(String("cat ")+infile+" | gunzip","r") :
       new File(infile); 
     convertSM(*vcf,*gcf,cmd.optParm('m'));
@@ -213,16 +215,7 @@ void Application::parseVariantAndGenotypes(const Vector<String> &fields)
 
 void Application::parseVariant(const Vector<String> &fields)
 {
-  if(variableOnly) {
-    bool seenZero=false, seenOne=false;
-    for(int i=9 ; i<fields.size() ; ++i) {
-      const String &field=fields[i];
-      if(field.length()!=3) throw String("Bad field in VCF: ")+field;
-      if(field[0]=='0' || field[3]=='0') seenZero=true;
-      if(field[0]=='1' || field[3]=='1') seenOne=true;
-    }
-    if(!seenZero || !seenOne) return;
-  }
+  if(variableOnly && !variableSite(fields)) return;
   if(fields.size()<10 || fields[6]!="PASS" || fields[8]!="GT") return;
   const String chr=fields[0];
   if(prependChr) chr=String("chr")+chr;
@@ -232,7 +225,8 @@ void Application::parseVariant(const Vector<String> &fields)
   if(id==".") id=chr+"@"+pos;
   const String ref=fields[3];
   const String alt=fields[4];
-  if(dnaRegex.search(ref) || dnaRegex.search(alt)) return; // nonstandard characters
+  if(dnaRegex.search(ref) || dnaRegex.search(alt)) 
+    return; // nonstandard characters
   if(ref.contains("<") || alt.contains("<")) {
     if(!quiet) cerr<<"skipping "<<id<<" : nonstandard variant"<<endl;
     return;
@@ -245,10 +239,16 @@ void Application::parseVariant(const Vector<String> &fields)
 
 void Application::parseGenotype(const String &s,int gt[2])
 {
-  if(s.length()!=3) throw String("can't parse genotype in vcf file: ")+s;
-  if(s[1]!='|') throw "vcf file does not appear to be phased";
-  gt[0]=s[0]-'0';
-  gt[1]=s[2]-'0';
+  if(s.length()==3) {
+    if(s[1]!='|') throw "vcf file does not appear to be phased";
+    gt[0]=s[0]-'0';
+    gt[1]=s[2]-'0';
+  }
+  else if(s.length()==1) {
+    gt[0]=s[0]-'0';
+    gt[1]=HG_NONE;
+  }
+  else throw String("can't parse genotype in vcf file: ")+s;
 }
 
 
@@ -286,7 +286,8 @@ void Application::output(File &out)
     const  Vector<int> &var0=indiv.variants[0], &var1=indiv.variants[1];
     const int numVariants=var0.size();
     for(int i=0 ; i<numVariants ; ++i) {
-      out.print(String(var0[i]) + "|" + var1[i]);
+      if(var1[i]==HG_NONE) out.print(String(var0[i]));
+      else out.print(String(var0[i]) + "|" + var1[i]);
       out.print(i+1<numVariants ? "\t" : "\n");
     }
   }
@@ -310,22 +311,33 @@ void Application::preprocess(File &infile)
 
 
 
+bool Application::variableSite(const Vector<String> &fields)
+{
+  bool seenZero=false, seenOne=false;
+  for(int i=9 ; i<fields.size() ; ++i) {
+    const String &field=fields[i];
+    if(field.length()==3) {
+      if(field[0]=='0' || field[3]=='0') seenZero=true;
+      if(field[0]=='1' || field[3]=='1') seenOne=true;
+    }
+    else if(field.length()==1) {
+      if(field[0]=='0') seenZero=true;
+      if(field[0]=='1') seenOne=true;
+    }
+    else throw String("Bad field in VCF: ")+field;
+  }
+  return seenZero && seenOne;
+}
+
+
+
 void Application::parseVariantSM(const Vector<String> &fields,File &temp,
 				 int &variantNum,int entrySize)
 {
   // Parse the line
   const int numVariants=variants.size();
   const int rowSize=numVariants*entrySize;
-  if(variableOnly) {
-    bool seenZero=false, seenOne=false;
-    for(int i=9 ; i<fields.size() ; ++i) {
-      const String &field=fields[i];
-      if(field.length()!=3) throw String("Bad field in VCF: ")+field;
-      if(field[0]=='0' || field[3]=='0') seenZero=true;
-      if(field[0]=='1' || field[3]=='1') seenOne=true;
-    }
-    if(!seenZero || !seenOne) return;
-  }
+  if(variableOnly && !variableSite(fields)) return;
   if(fields.size()<10 || fields[6]!="PASS" || fields[8]!="GT") return;
   const String chr=fields[0];
   if(prependChr) chr=String("chr")+chr;
@@ -333,7 +345,8 @@ void Application::parseVariantSM(const Vector<String> &fields,File &temp,
   if(wantFilter && !keep(chr,pos)) return;
   const String ref=fields[3];
   const String alt=fields[4];
-  if(dnaRegex.search(ref) || dnaRegex.search(alt)) return; // nonstandard characters
+  if(dnaRegex.search(ref) || dnaRegex.search(alt)) 
+    return; // nonstandard characters
   if(ref.contains("<") || alt.contains("<")) return;
   if(SNPsOnly && (ref.size()!=1 || alt.size()!=1)) return;
 
@@ -369,7 +382,6 @@ void Application::convertSM(File &infile,File &outfile,const String &tempfile)
     line.trimWhitespace();
     Vector<String> &fields=*line.getFields();
     if(fields.size()>0 && fields[0][0]!='#') 
-      //parseVariantSM(fields,temp,variantNum++,entrySize); // ### bug!
       parseVariantSM(fields,temp,variantNum,entrySize);
     delete &fields;
   }
