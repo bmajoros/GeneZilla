@@ -58,7 +58,7 @@ protected:
   void parseChromLine(const Vector<String> &);
   void parseVariant(const Vector<String> &);
   void parseVariantSM(const Vector<String> &fields,File &temp,
-		      int variantNum,int entrySize);
+		      int &variantNum,int entrySize);
   void parseVariantAndGenotypes(const Vector<String> &);
   void parseGenotype(const String &,int gt[2]);
   bool keep(const String &chr,int pos);
@@ -311,7 +311,7 @@ void Application::preprocess(File &infile)
 
 
 void Application::parseVariantSM(const Vector<String> &fields,File &temp,
-				 int variantNum,int entrySize)
+				 int &variantNum,int entrySize)
 {
   // Parse the line
   const int numVariants=variants.size();
@@ -349,6 +349,7 @@ void Application::parseVariantSM(const Vector<String> &fields,File &temp,
     temp.write(entrySize,reinterpret_cast<void*>(buffer));
   }
   delete [] buffer;
+  ++variantNum;
 }
 
 
@@ -367,7 +368,8 @@ void Application::convertSM(File &infile,File &outfile,const String &tempfile)
     line.trimWhitespace();
     Vector<String> &fields=*line.getFields();
     if(fields.size()>0 && fields[0][0]!='#') 
-      parseVariantSM(fields,temp,variantNum++,entrySize);
+      //parseVariantSM(fields,temp,variantNum++,entrySize); // ### bug!
+      parseVariantSM(fields,temp,variantNum,entrySize);
     delete &fields;
   }
   
