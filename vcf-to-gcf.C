@@ -126,7 +126,7 @@ int Application::main(int argc,char *argv[])
     new Pipe(String("cat ")+infile+" | gunzip","r") : 
     new File(infile);
   File *gcf=gzipRegex.match(outfile) ?
-    new Pipe(String("gzip > ")+outfile,"w") :
+    new Pipe(String("bgzip > ")+outfile,"w") :
     new File(outfile,"w");
 
   // Perform conversion
