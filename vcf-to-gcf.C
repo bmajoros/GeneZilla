@@ -350,6 +350,7 @@ void Application::parseVariantSM(const Vector<String> &fields,File &temp,
   }
   delete [] buffer;
   ++variantNum;
+  if(variantNum>=numVariants) INTERNAL_ERROR;
 }
 
 
