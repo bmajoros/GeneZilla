@@ -1,46 +1,120 @@
 #!/usr/bin/perl
 use strict;
+use GffTranscriptReader;
 
-die "cia.pl <ref.fasta> <ref.gff> <alt.fasta>" unless @ARGV==3;
-my ($refFasta,$refGff,$altFasta)=@ARGV;
+my $MODEL="/home/bmajoros/splicing/model/no-UTR.iso";
+my $NUC_MATRIX="/home/bmajoros/alignment/matrices/NUC.4.4";
+my $GAP_OPEN=10;
+my $GAP_EXTEND=1;
+my $BANDWIDTH=100;
 
-System("gz/fastas-are-identical gi_91176336_ref_NM_138383.2_.broken.fa  gi_91176336_ref_NM_138383.2_.fixed.fa");
-#no
+die "cia.pl <dir> <ID> <ref.fasta> <ref.gff> <alt.fasta>" unless @ARGV==5;
+my ($dir,$ID,$refFasta,$refGff,$altFasta)=@ARGV;
 
-System("grep CDS gi_91176336_ref_NM_138383.2_.gff > CDS.gff");
+#================================================================
+# Do some initialization
+#================================================================
+my $GZ=$ENV{'GENEZILLA'};
+if($GZ eq "") { die "Please set GENEZILLA environment variable\n" }
+unless (`which fasta-seq-length.pl`=~/\/fasta-seq-length.pl/)
+ { die "Can't find perl script fasta-seq-length.pl" }
+my $cdsGff="$dir/$ID-cds.gff";
+my $cigarFile="$dir/$ID.cigar";
+my $labelFile="$dir/$ID.lab";
+my $projectedGff="$dir/$ID-projected.gff";
+my $variantsFile="$dir/$ID.variants";
+my $signalsFile="$dir/$ID.signals";
+my $graphFile="$dir/$ID.graph";
+my $projectorReport="$dir/$ID-report.txt";
 
-System("fasta-seq-length.pl gi_91176336_ref_NM_138383.2_.fixed.fa");
-#26847 bp
+#================================================================
+# First, check whether sequences have changed
+#================================================================
 
-System("revcomp-gff.pl CDS.gff 26847 > tmp.gff ; mv tmp.gff CDS.gff");
+my $changed=`$GZ/fastas-are-identical $refFasta $altFasta`;
+if($changed eq "no") {
+  print "No sequence changes -- terminating with no further analysis\n";
+  exit(0);
+}
 
-System("revcomp-fasta.pl gi_91176336_ref_NM_138383.2_.fixed.fa > gi_91176336_ref_NM_138383.2_.fixed.fasta");
+#================================================================
+# Exract CDS portion of gene model
+#================================================================
 
-System("revcomp-fasta.pl gi_91176336_ref_NM_138383.2_.broken.fa > gi_91176336_ref_NM_138383.2_.broken.fasta");
+System("grep CDS $refGff > $cdsGff");
 
-System("gz/BOOM/banded-smith-waterman -q -c cigar/gi_91176336_ref_NM_138383.2_.cigar /home/bmajoros/alignment/matrices/NUC.4.4 10 1 gi_91176336_ref_NM_138383.2_.fixed.fasta  gi_91176336_ref_NM_138383.2_.broken.fasta  DNA 100 > /dev/null");
-#7422M2I2M1D19422M
+#================================================================
+# Reverse-complement files if necessary
+#================================================================
 
-System("gz/project-annotation CDS.gff gi_91176336_ref_NM_138383.2_.fixed.fasta  gi_91176336_ref_NM_138383.2_.broken.fasta  cigar/gi_91176336_ref_NM_138383.2_.cigar  gi_91176336_ref_NM_138383.2_.lab  gi_91176336_ref_NM_138383.2_.projected.gff");
+my $refLen=0+`fasta-seq-length.pl $refFasta`;
+my $strand=getStrand($refGff);
+if($strand eq "-") {
+  System("revcomp-gff.pl $cdsGff $refLen > $ID.tmp ; mv $ID.tmp $cdsGff");
+  System("revcomp-fasta.pl $refFasta > $ID.tmp ; mv $ID.tmp $refFasta");
+  System("revcomp-fasta.pl $altFasta > $ID.tmp ; mv $ID.tmp $altFasta");
+}
 
-System("gz/check-projection  gi_91176336_ref_NM_138383.2_.fixed.fasta  CDS.gff    gi_91176336_ref_NM_138383.2_.broken.fasta   gi_91176336_ref_NM_138383.2_.projected.gff   gi_91176336_ref_NM_138383.2_.lab");
+#================================================================
+# Align sequences to get CIGAR string
+#================================================================
 
-System("gz/find-variants  gi_91176336_ref_NM_138383.2_.fixed.fasta  gi_91176336_ref_NM_138383.2_.broken.fasta  cigar/gi_91176336_ref_NM_138383.2_.cigar  >  gi_91176336_ref_NM_138383.2_.variants");
+System("$GZ/BOOM/banded-smith-waterman -q -c $cigarFile $NUC_MATRIX $GAP_OPEN $GAP_EXTEND $refFasta $altFasta DNA $BANDWIDTH > /dev/null");
 
-System("gz/find-variant-signals  gi_91176336_ref_NM_138383.2_.variants   gi_91176336_ref_NM_138383.2_.fixed.fasta   CDS.gff   gi_91176336_ref_NM_138383.2_.broken.fasta    cigar/gi_91176336_ref_NM_138383.2_.cigar   ~/splicing/model/no-UTR.iso  >  signals.gff");
+#================================================================
+# Project annotation from ref to anno ("Blind Projector")
+#================================================================
 
-System("gz/cia -O -g gi_91176336_ref_NM_138383.2_.graph   ~/splicing/model/no-UTR.iso   gi_91176336_ref_NM_138383.2_.broken.fasta  gi_91176336_ref_NM_138383.2_.lab    gi_91176336_ref_NM_138383.2_.projected.gff   signals.gff");
+System("$GZ/project-annotation $cdsGff $refFasta $altFasta $cigarFile $labelFile $projectedGff");
 
-System("gz/n-best");
+#================================================================
+# Check whether the projected gene model is broken
+#================================================================
+
+System("$GZ/check-projection $refFasta $cdsGff $altFasta $projectedGff $labelFile> $projectorReport");
+
+#================================================================
+# Find sequence variants and variant signals
+#================================================================
+
+System("$GZ/find-variants $refFasta $altFasta $cigarFile > $variantsFile");
+
+System("$GZ/find-variant-signals $variantsFile $refFasta $cdsGff $altFasta $cigarFile $MODEL > $signalsFile");
+
+#================================================================
+# Build ORF graph using CIA model
+#================================================================
+
+System("$GZ/cia -O -g $graphFile $MODEL $altFasta $labelFile $projectedGff $signalsFile");
+
+#================================================================
+# Extract N best paths from graph
+#================================================================
+
+die;
+
+System("$GZ/n-best");
 
 
+
+
+#========================================================================
+# SUBROUTINES
 #========================================================================
 sub System {
   my ($cmd)=@_;
   print "$cmd\n";
-  #system($cmd);
+  system($cmd);
 }
 #========================================================================
+sub getStrand {
+  my ($gff)=@_;
+  my $reader=new GffTranscriptReader();
+  my $genes=$reader->loadGenes($gff);
+  die "no genes in GFF file" unless @$genes>0;
+  my $gene=$genes->[0];
+  return $gene->getStrand();
+}
 #========================================================================
 #========================================================================
 #========================================================================

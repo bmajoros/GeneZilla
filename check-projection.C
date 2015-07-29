@@ -127,7 +127,7 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff> <labels.txt>\
   else if(!stopPresent) cout<<"missing stop codon"<<endl; 
   
   // Check length is divisible by 3
-  if(altDNA.length()%3) cout<<"non-integral number of codons"<<endl;
+  //if(altDNA.length()%3) cout<<"non-integral number of codons"<<endl;
 
   return 0;
 }
