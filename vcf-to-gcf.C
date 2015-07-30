@@ -132,9 +132,9 @@ int Application::main(int argc,char *argv[])
     new File(outfile,"w");
 
   // Perform conversion
+  timer.startCounting();
   if(smallmem) {
     cerr<<"preprocessing..."<<endl;
-    timer.startCounting();
     preprocess(*vcf);
     delete vcf;
     vcf=gzipRegex.match(infile) ?  
