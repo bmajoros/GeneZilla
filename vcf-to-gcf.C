@@ -35,7 +35,7 @@ struct Variant {
 
 struct Individual {
   String id;
-  Vector<int> variants[2]; // Only for diploid species!
+  Vector<String> genotypes;
 };
 
 class Application {
@@ -47,8 +47,7 @@ protected:
   Map<String,Vector<Region> > regions;
   Vector<Individual> individuals;
   Vector<Variant> variants;
-  Regex dnaRegex;
-  Regex gzipRegex;
+  Regex gzipRegex; // *.gz
   bool wantFilter;
   bool prependChr;
   bool SNPsOnly;
@@ -65,7 +64,6 @@ protected:
   void parseVariantSM(const Vector<String> &fields,File &temp,
 		      int &variantNum,int entrySize);
   void parseVariantAndGenotypes(const Vector<String> &);
-  void parseGenotype(const String &,int gt[2]);
   bool keep(const String &chr,int pos);
   void output(File &outfile);
   void outputSM(File &temp,File &out,int entrySize);
@@ -91,7 +89,7 @@ int main(int argc,char *argv[])
 
 
 Application::Application()
-  : dnaRegex("[^ACGTacgt]"), gzipRegex(".*\\.gz")
+  : gzipRegex(".*\\.gz")
 {
   // ctor
 }
@@ -111,7 +109,7 @@ int Application::main(int argc,char *argv[])
    -s : SNPs only\n\
    -v : variable sites only\n\
    -q : quiet (no warnings)\n\
-   -m <tempfile> : small memory footprint\n\
+   -m <tempfile> : small memory footprint (may be slow)\n\
 ");
   const String infile=cmd.arg(0);
   const String outfile=cmd.arg(1);
@@ -210,29 +208,11 @@ void Application::parseVariantAndGenotypes(const Vector<String> &fields)
 {
   if(!parseVariant(fields)) return;
   const int numIndiv=fields.size()-9;
-  int gt[2];
   for(int i=0 ; i<numIndiv ; ++i) {
-    parseGenotype(fields[i+9],gt);
+    const String &genotype=fields[i+9];
     Individual &indiv=individuals[i];
-    indiv.variants[0].push_back(gt[0]);
-    indiv.variants[1].push_back(gt[1]);
+    indiv.genotypes.push_back(genotype);
   }
-}
-
-
-
-void Application::parseGenotype(const String &s,int gt[2])
-{
-  if(s.length()==3) {
-    if(s[1]!='|') throw "vcf file does not appear to be phased";
-    gt[0]=s[0]-'0';
-    gt[1]=s[2]-'0';
-  }
-  else if(s.length()==1) {
-    gt[0]=s[0]-'0';
-    gt[1]=HG_NONE;
-  }
-  else throw String("can't parse genotype in vcf file: ")+s;
 }
 
 
@@ -267,11 +247,9 @@ void Application::output(File &out)
     const Individual &indiv=*cur;
     if(numVariants==0) { out.print(indiv.id+"\n"); continue; }
     out.print(indiv.id+"\t");
-    const  Vector<int> &var0=indiv.variants[0], &var1=indiv.variants[1];
-    const int numVariants=var0.size();
+    const int numVariants=indiv.genotypes.size();
     for(int i=0 ; i<numVariants ; ++i) {
-      if(var1[i]==HG_NONE) out.print(String(var0[i]));
-      else out.print(String(var0[i]) + "|" + var1[i]);
+      out.print(indiv.genotypes[i]);
       out.print(i+1<numVariants ? "\t" : "\n");
     }
   }
@@ -329,12 +307,6 @@ bool Application::parseVariant(const Vector<String> &fields,
   if(id==".") id=chr+"@"+pos;
   ref=fields[3];
   alt=fields[4];
-  if(dnaRegex.search(ref) || dnaRegex.search(alt)) 
-    return false; // nonstandard characters
-  if(ref.contains("<") || alt.contains("<")) {
-    if(!quiet) cerr<<"skipping "<<id<<" : nonstandard variant"<<endl;
-    return false;
-  }
   if(SNPsOnly && (ref.size()!=1 || alt.size()!=1)) return false;
   return true;
 }
@@ -356,20 +328,6 @@ void Application::parseVariantSM(const Vector<String> &fields,File &temp,
 				 int &variantNum,int entrySize)
 {
   // Parse the line
-  /*
-  if(variableOnly && !variableSite(fields)) return;
-  if(fields.size()<10 || fields[6]!="PASS" || fields[8]!="GT") return;
-  const String chr=fields[0];
-  if(prependChr) chr=String("chr")+chr;
-  const int pos=fields[1].asInt()-1; // VCF files are 1-based
-  if(wantFilter && !keep(chr,pos)) return;
-  const String ref=fields[3];
-  const String alt=fields[4];
-  if(dnaRegex.search(ref) || dnaRegex.search(alt)) 
-    return; // nonstandard characters
-  if(ref.contains("<") || alt.contains("<")) return;
-  if(SNPsOnly && (ref.size()!=1 || alt.size()!=1)) return;
-  */
   String chr, ref, alt, id;
   int pos;
   if(!parseVariant(fields,chr,pos,ref,alt,id)) return;
@@ -387,6 +345,10 @@ void Application::parseVariantSM(const Vector<String> &fields,File &temp,
   for(int i=0 ; i<numIndiv ; ++i) {
     const String &genotype=fields[i+9];
     for(int j=0 ; j<entrySize ; ++j) buffer[j]=' ';
+    if(genotype.length()>entrySize) {
+      cerr<<"Genotype length "<<genotype.length()<<" > "<<entrySize<<endl;
+      INTERNAL_ERROR;
+    }
     for(int j=0 ; j<genotype.length() ; ++j) buffer[j]=genotype[j];
     temp.seek(i*rowSize+variantNum*entrySize);
     temp.write(entrySize,reinterpret_cast<void*>(buffer));
