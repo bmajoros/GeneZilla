@@ -59,6 +59,8 @@ protected:
   void convertSM(File &infile,File &outfile,const String &tempfile);
   void preprocess(File &infile);
   void parseChromLine(const Vector<String> &);
+  bool parseVariant(const Vector<String> &fields,String &chr,int &pos,
+		    String &ref,String &alt,String &id);
   bool parseVariant(const Vector<String> &);
   void parseVariantSM(const Vector<String> &fields,File &temp,
 		      int &variantNum,int entrySize);
@@ -219,31 +221,6 @@ void Application::parseVariantAndGenotypes(const Vector<String> &fields)
 
 
 
-bool Application::parseVariant(const Vector<String> &fields)
-{
-  if(variableOnly && !variableSite(fields)) return false;
-  if(fields.size()<10 || fields[6]!="PASS" || fields[8]!="GT") return false;
-  const String chr=fields[0];
-  if(prependChr) chr=String("chr")+chr;
-  const int pos=fields[1].asInt()-1; // VCF files are 1-based
-  if(wantFilter && !keep(chr,pos)) return false;
-  const String id=fields[2];
-  if(id==".") id=chr+"@"+pos;
-  const String ref=fields[3];
-  const String alt=fields[4];
-  if(dnaRegex.search(ref) || dnaRegex.search(alt)) 
-    return false; // nonstandard characters
-  if(ref.contains("<") || alt.contains("<")) {
-    if(!quiet) cerr<<"skipping "<<id<<" : nonstandard variant"<<endl;
-    return false;
-  }
-  if(SNPsOnly && (ref.size()!=1 || alt.size()!=1)) return false;
-  variants.push_back(Variant(chr,pos,ref,alt,id));
-  return true;
-}
-
-
-
 void Application::parseGenotype(const String &s,int gt[2])
 {
   if(s.length()==3) {
@@ -338,14 +315,48 @@ bool Application::variableSite(const Vector<String> &fields)
 
 
 
+bool Application::parseVariant(const Vector<String> &fields,
+			       String &chr,int &pos,String &ref,
+			       String &alt,String &id)
+{
+  if(variableOnly && !variableSite(fields)) return false;
+  if(fields.size()<10 || fields[6]!="PASS" || fields[8]!="GT") return false;
+  chr=fields[0];
+  if(prependChr) chr=String("chr")+chr;
+  pos=fields[1].asInt()-1; // VCF files are 1-based
+  if(wantFilter && !keep(chr,pos)) return false;
+  id=fields[2];
+  if(id==".") id=chr+"@"+pos;
+  ref=fields[3];
+  alt=fields[4];
+  if(dnaRegex.search(ref) || dnaRegex.search(alt)) 
+    return false; // nonstandard characters
+  if(ref.contains("<") || alt.contains("<")) {
+    if(!quiet) cerr<<"skipping "<<id<<" : nonstandard variant"<<endl;
+    return false;
+  }
+  if(SNPsOnly && (ref.size()!=1 || alt.size()!=1)) return false;
+  return true;
+}
+
+
+
+bool Application::parseVariant(const Vector<String> &fields)
+{
+  String chr, ref, alt, id;
+  int pos;
+  if(!parseVariant(fields,chr,pos,ref,alt,id)) return false;
+  variants.push_back(Variant(chr,pos,ref,alt,id));
+  return true;
+}
+
+
+
 void Application::parseVariantSM(const Vector<String> &fields,File &temp,
 				 int &variantNum,int entrySize)
 {
-  const int numVariants=variants.size();
-  if(variantNum>=numVariants) INTERNAL_ERROR;
-
   // Parse the line
-  const int rowSize=numVariants*entrySize;
+  /*
   if(variableOnly && !variableSite(fields)) return;
   if(fields.size()<10 || fields[6]!="PASS" || fields[8]!="GT") return;
   const String chr=fields[0];
@@ -358,8 +369,19 @@ void Application::parseVariantSM(const Vector<String> &fields,File &temp,
     return; // nonstandard characters
   if(ref.contains("<") || alt.contains("<")) return;
   if(SNPsOnly && (ref.size()!=1 || alt.size()!=1)) return;
+  */
+  String chr, ref, alt, id;
+  int pos;
+  if(!parseVariant(fields,chr,pos,ref,alt,id)) return;
+
+  const int numVariants=variants.size();
+  if(variantNum>=numVariants) {
+    cerr<<variantNum<<" >= "<<numVariants<<endl;
+    INTERNAL_ERROR;
+  }
 
   // Parse genotypes & store in binary temp file
+  const int rowSize=numVariants*entrySize;
   char *buffer=new char[entrySize];
   const int numIndiv=individuals.size();
   for(int i=0 ; i<numIndiv ; ++i) {
