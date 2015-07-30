@@ -48,7 +48,7 @@ System("grep CDS $refGff > $cdsGff");
 #================================================================
 
 my $refLen=0+`fasta-seq-length.pl $refFasta`;
-my $strand=getStrand($refGff);
+my $strand=getStrand($cdsGff);
 if($strand eq "-") {
   System("revcomp-gff.pl $cdsGff $refLen > $ID.tmp ; mv $ID.tmp $cdsGff");
   System("revcomp-fasta.pl $refFasta > $ID.tmp ; mv $ID.tmp $refFasta");

@@ -117,7 +117,8 @@ SignalPtr ReferenceAnnotation::getStartCodon() const
   for(Vector<Signal*>::const_iterator cur=signals.begin(), end=signals.end() ;
       cur!=end ; ++cur)
     if((*cur)->getSignalType()==ATG) return (*cur);
-  throw "Start codon not found in ReferenceAnnotation::getStartCodon()";
+  return NULL;
+  //throw "Start codon not found in ReferenceAnnotation::getStartCodon()";
 }
 
 
@@ -165,5 +166,17 @@ const Vector<Signal*> &ReferenceAnnotation::getSignals() const
   return signals;
 }
 
+
+
+int ReferenceAnnotation::getStartPosition() const
+{
+  const Vector<ContentRegion> &regions=contentRegions->asVector();
+  for(Vector<ContentRegion>::const_iterator cur=regions.begin(), end=
+	regions.end() ; cur!=end ; ++cur) {
+    const ContentRegion &region=*cur;
+    if(isCoding(region.getType())) return region.getInterval().getBegin();
+  }
+  throw "Can't find start position in ReferenceAnnotation::getStartPosition()";
+}
 
 

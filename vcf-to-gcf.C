@@ -335,8 +335,10 @@ bool Application::variableSite(const Vector<String> &fields)
 void Application::parseVariantSM(const Vector<String> &fields,File &temp,
 				 int &variantNum,int entrySize)
 {
-  // Parse the line
   const int numVariants=variants.size();
+  if(variantNum>=numVariants) INTERNAL_ERROR;
+
+  // Parse the line
   const int rowSize=numVariants*entrySize;
   if(variableOnly && !variableSite(fields)) return;
   if(fields.size()<10 || fields[6]!="PASS" || fields[8]!="GT") return;
@@ -363,7 +365,6 @@ void Application::parseVariantSM(const Vector<String> &fields,File &temp,
   }
   delete [] buffer;
   ++variantNum;
-  if(variantNum>=numVariants) INTERNAL_ERROR;
 }
 
 

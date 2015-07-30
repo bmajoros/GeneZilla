@@ -146,8 +146,12 @@ void Application::AppMain(int argc,char *argv[])
       SignalSensor *sensor=*cur;
       if(sensor->getStrand()!=PLUS_STRAND) continue;
       if(dropStrand(sensor->getSignalType())==TAG) sensor->ignoreCutoff();
-      applySensor(*sensor,region,refSeq,altSeq,refSeqStr,altSeqStr,
-		  alignment,revAlign);
+      switch(dropStrand(sensor->getSignalType())) {
+	case ATG: case TAG: case GT: case AG:
+	  applySensor(*sensor,region,refSeq,altSeq,refSeqStr,altSeqStr,
+		      alignment,revAlign);
+	  break;
+	}
     }
   }
 

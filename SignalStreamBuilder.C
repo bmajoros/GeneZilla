@@ -120,7 +120,7 @@ void SignalStreamBuilder::gainATG(int pos,SignalSensor &sensor)
   // if not, the scanning model dictates that it won't ever be used
   if(!allowGains) return;
   SignalPtr oldATG=refAnno.getStartCodon();
-  if(pos>=oldATG->getConsensusPosition()) return;
+  if(oldATG && pos>=oldATG->getConsensusPosition()) return;
 
   // Make a new signal object
   const Sequence &seq=refAnno.getAltSeq();
@@ -135,7 +135,9 @@ void SignalStreamBuilder::gainATG(int pos,SignalSensor &sensor)
   newSignals.insert(signal);
 
   // Relax constraints around the new signal
-  const Interval interval(contextWindowPos,oldATG->getContextWindowEnd());
+  const Interval interval;
+  if(oldATG) interval=Interval(contextWindowPos,oldATG->getContextWindowEnd());
+  else interval=Interval(contextWindowPos,refAnno.getStartPosition());
   ConstraintInterval constraint(interval,false);
   constraints.insert(constraint);
 }
@@ -350,7 +352,7 @@ void SignalStreamBuilder::scan(int begin,int end,SignalSensor &sensor)
   const String &seqStr=refAnno.getAltSeqStr();
   end-=sensor.getContextWindowLength();
   for(int pos=begin ; pos<end ; ++pos) {
-    SignalPtr signal=sensor.detect(seq,seqStr,pos);
+    Signal *signal=sensor.detect(seq,seqStr,pos);
     if(signal) stream.add(signal);
   }
 }
