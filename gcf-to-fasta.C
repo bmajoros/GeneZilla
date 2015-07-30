@@ -236,7 +236,7 @@ void Application::emit(const String &individualID,const Vector<Genotype> &loci,o
     Array1D<int> deltas(PLOIDY); deltas.setAllTo(0); // for indels
     const Region &region=*cur;
     String seq[PLOIDY]; for(int i=0 ; i<PLOIDY ; ++i) seq[i]=region.seq;
-    for(int i=0 ; i<numVariants ; ++i) {
+    for(int i=0 ; i<numVariants ; ++i) { // ### SLOW!!
       const Variant &variant=variants[i];
       const int localPos=variant.pos-region.begin;
       if(region.contains(variant)) {
