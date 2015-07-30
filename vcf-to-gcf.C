@@ -13,6 +13,7 @@
 #include "BOOM/Map.H"
 #include "BOOM/Regex.H"
 #include "BOOM/GCF.H"
+#include "BOOM/Time.H"
 using namespace std;
 using namespace BOOM;
 
@@ -42,6 +43,7 @@ public:
   Application();
   int main(int argc,char *argv[]);
 protected:
+  Time timer;
   Map<String,Vector<Region> > regions;
   Vector<Individual> individuals;
   Vector<Variant> variants;
@@ -131,6 +133,8 @@ int Application::main(int argc,char *argv[])
 
   // Perform conversion
   if(smallmem) {
+    cerr<<"preprocessing..."<<endl;
+    timer.startCounting();
     preprocess(*vcf);
     delete vcf;
     vcf=gzipRegex.match(infile) ?  
@@ -140,6 +144,8 @@ int Application::main(int argc,char *argv[])
   }
   else convert(*vcf,*gcf);
   vcf->close(); gcf->close();
+  cerr<<"done."<<endl;
+  cerr<<timer.elapsedTime()<<endl;
 
   return 0;
 }
@@ -371,6 +377,8 @@ void Application::parseVariantSM(const Vector<String> &fields,File &temp,
 
 void Application::convertSM(File &infile,File &outfile,const String &tempfile)
 {
+  cerr<<timer.elapsedTime()<<endl;
+  cerr<<"writing binary file..."<<endl;
   // First, allocate binary file to store genotypes
   File temp(tempfile,"w");
   const int numIndiv=individuals.size(), numVariants=variants.size();
@@ -389,6 +397,8 @@ void Application::convertSM(File &infile,File &outfile,const String &tempfile)
   
   // Convert the binary temp file into output GCF file
   temp.close();
+  cerr<<timer.elapsedTime()<<endl;
+  cerr<<"converting binary file to text..."<<endl;
   File tempRead(tempfile,"r");
   outputSM(tempRead,outfile,entrySize);
 }
