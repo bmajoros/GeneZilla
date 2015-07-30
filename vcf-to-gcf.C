@@ -379,10 +379,18 @@ void Application::convertSM(File &infile,File &outfile,const String &tempfile)
 {
   cerr<<timer.elapsedTime()<<endl;
   cerr<<"writing binary file..."<<endl;
+
   // First, allocate binary file to store genotypes
   File temp(tempfile,"w");
   const int numIndiv=individuals.size(), numVariants=variants.size();
   const int entrySize=3;
+  const int rowSize=numVariants*entrySize;
+  const int totalSize=numIndiv*rowSize;
+  const int lastEntry=totalSize-entrySize;
+  temp.seek(lastEntry);
+  char *buffer=new char[entrySize];
+  temp.write(entrySize,reinterpret_cast<void*>(buffer));
+  delete [] buffer;
 
   // Reprocess the input file, store genotypes in the binary file
   int variantNum=0;
