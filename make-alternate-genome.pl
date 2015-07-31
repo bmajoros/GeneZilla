@@ -86,6 +86,7 @@ exit;
 # Clean up
 #==============================================================
 
+foreach my $file (@fastaFiles) { $file->close() }
 unlink($refGeneFasta);
 unlink($altGeneFasta);
 unlink($tempBedFile);
@@ -99,17 +100,20 @@ sub getIndividualList {
   my @files=`ls $vcfDir/*.vcf.gz`;
   die "no VCF files found\n" unless @files>0;
   my $file=$files[0];
+  my $individuals=[];
   open(IN,$file) || die "can't open file $file\n";
   while(<IN>) {
+    chomp;
     if(/^\s*#CHROM/) {
       my @fields=split;
-      my $individuals=[];
       my $numFields=@fields;
       for(my $i=9 ; $i<$numFields ; ++$i)
 	{ push @$individuals,$fields[$i] }
+      last;
     }
   }
   close(IN);
+  return $individuals;
 }
 #==============================================================
 # writeBed4($chr,$begin,$end,$name,$tempBedFile);
@@ -148,6 +152,7 @@ sub initChrToVCF {
   my ($dir)=@_;
   my @files=`ls $dir/*.vcf.gz`;
   foreach my $file (@files) {
+    chomp $file;
     if($file=~/(chr[A-Za-z\d]+)/) {
       my $chr=$1;
       $chrToVCF{$chr}=$file;
