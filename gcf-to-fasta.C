@@ -88,7 +88,7 @@ int main(int argc,char *argv[])
 
 Application::Application()
   : twoBitToFa("twoBitToFa"), gzRegex("gz$"),
-    copyNumberRegex("<CN(\d+)>")
+    copyNumberRegex("<CN(\\d+)>")
 {
   // ctor
 }
