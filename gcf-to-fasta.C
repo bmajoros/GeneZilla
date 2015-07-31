@@ -10,10 +10,11 @@
 #include "BOOM/CommandLine.H"
 #include "BOOM/FastaReader.H"
 #include "BOOM/FastaWriter.H"
-#include "BOOM/File.H"
+#include "BOOM/Pipe.H"
 #include "BOOM/Vector.H"
 #include "BOOM/Array1D.H"
 #include "BOOM/ProteinTrans.H"
+#include "BOOM/Regex.H"
 using namespace std;
 using namespace BOOM;
 
@@ -52,6 +53,7 @@ public:
   Application();
   int main(int argc,char *argv[]);
 protected:
+  Regex gzRegex;
   String twoBitToFa;
   Vector<Variant> variants;
   FastaWriter writer;
@@ -82,7 +84,7 @@ int main(int argc,char *argv[])
 
 
 Application::Application()
-  : twoBitToFa("twoBitToFa")
+  : twoBitToFa("twoBitToFa"), gzRegex("gz$")
 {
   // ctor
 }
@@ -112,9 +114,11 @@ int Application::main(int argc,char *argv[])
   loadRegions(regionsFilename,genomeFilename,fastaFilename);
 
   // Process GCF file
-  File gcf(gcfFilename);
+  File *gcf=gzRegex.search(gcfFilename) ? new GunzipPipe(gcfFilename)
+    : new File(gcfFilename);
   ofstream os(fastaFilename.c_str());
-  convert(gcf,os,genomeFilename);
+  convert(*gcf,os,genomeFilename);
+  delete gcf;
 
   return 0;
 }
