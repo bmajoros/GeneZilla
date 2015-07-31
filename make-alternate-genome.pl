@@ -27,11 +27,12 @@ my ($vcfDir,$twoBitFile,$gffFile,$outDir)=@ARGV;
 my %chrToVCF;
 initChrToVCF($vcfDir);
 my $refGeneFasta="$outDir/refgene.fasta";
-my $altGeneFasta="$outDir/altgene.fast";
+my $altGeneFasta="$outDir/altgene.fasta";
 my $tempBedFile="$outDir/temp.bed";
 my $geneVcfFile="$outDir/gene.vcf.gz";
 my $geneGcfFile="$outDir/gene.gcf.gz";
 my $GZ=$ENV{"GENEZILLA"};
+my $fastaWriter=new FastaWriter;
 
 #==============================================================
 # Make FASTA files for each individual
@@ -39,12 +40,19 @@ my $GZ=$ENV{"GENEZILLA"};
 
 my $individuals=getIndividualList($vcfDir);
 my $numIndiv=@$individuals;
-my @fastaFiles;
+my (@fastaFiles,%fastaFiles);
 for(my $i=0 ; $i<$numIndiv ; ++$i) {
   my $indiv=$individuals->[$i];
-  push @fastaFiles,new FileHandle(">$outDir/$indiv-1.fasta");
-  push @fastaFiles,new FileHandle(">$outDir/$indiv-2.fasta");
+  my $fh1=new FileHandle(">$outDir/$indiv-1.fasta");
+  my $fh2=new FileHandle(">$outDir/$indiv-2.fasta");
+  $fastaFiles{$indiv}=[$fh1,$fh2];
+  push @fastaFiles,$fh1;
+  push @fastaFiles,$fh2;
 }
+my $fh1=new FileHandle(">$outDir/ref-1.fasta");
+my $fh2=new FileHandle(">$outDir/ref-2.fasta");
+$fastaFiles{"reference"}=[$fh1,$fh2];
+push @fastaFiles,$fh1; push @fastaFiles,$fh2;
 
 #==============================================================
 # Load gene coordinates from GFF file
@@ -71,14 +79,22 @@ for(my $i=0 ; $i<$numGenes ; ++$i) {
   writeBed3($chr,$begin,$end,$tempBedFile);
   System("tabix -h $chrVcfFile -R $tempBedFile | bgzip > $geneVcfFile");
   System("$GZ/vcf-to-gcf -c -v $geneVcfFile $geneGcfFile");
-  #BED6: chr begin end name score strand
   writeBed6($chr,$begin,$end,$name,$strand,$tempBedFile);
   System("$GZ/gcf-to-fasta -r $geneGcfFile $twoBitFile $tempBedFile $altGeneFasta");
+  my $fastaReader=new FastaReader($altGeneFasta);
+  while(1) {
+    my ($def,$seqref)=$reader->nextSequenceRef();
+    last unless $def;
+    $def=~/>\S+\s+\/individual=(\S+)\s+\/allele=(\d+)\s+\/region=(\S+)/
+      || die "Can't parse defline: $def\n";
+    my ($indivID,$alleleNum,$geneID)=($1);
+    my $fh=$fastaFiles{$indivID}->[$allele];
+    $def=">$geneID";
+    $fastaWriter->addToFasta($def,$$seqref,$fh);
+  }
+  $fastaReader->close();
 
-exit;
-
-#  Now we have two haplotypes for many individuals in gene-alt.fasta.
-#  Need to append to the two fasta files for each individual (in @fastaFiles)
+die; ###
 
 }
 

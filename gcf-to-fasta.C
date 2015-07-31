@@ -20,6 +20,7 @@ using namespace BOOM;
 
 const int PLOIDY=2;
 
+// A Gentype represents the alleles of an individual at a single locus
 struct Genotype {
   Array1D<int> alleles;
   Genotype(int ploidy) : alleles(ploidy) {}
@@ -27,11 +28,12 @@ struct Genotype {
 
 
 struct Variant {
-  String id, chr, ref, alt;
+  String id, chr;
+  Vector<String> alleles; // there can be several alternate alleles
   int pos;
-  Variant(const String &id,const String &chr,int pos,
-	  const String &ref,const String &alt)
-    : id(id), chr(chr), pos(pos), ref(ref), alt(alt) {}
+  Variant(const String &id,const String &chr,int pos)
+    : id(id), chr(chr), pos(pos) {}
+  void addAllele(const String &a) { alleles.push_back(a); }
 };
 
 
@@ -44,7 +46,7 @@ struct Region {
 	 const String &seq) : id(id), chr(chr), begin(begin), end(end), 
 			      strand(strand), seq(seq) {}
   bool contains(const Variant &v) const 
-  { return v.chr==chr && v.pos>=begin && v.pos+v.ref.length()<=end; }
+    { return v.chr==chr && v.pos>=begin && v.pos+v.alleles[0].length()<=end; }
 };
 
 
@@ -54,6 +56,7 @@ public:
   int main(int argc,char *argv[]);
 protected:
   Regex gzRegex;
+  Regex copyNumberRegex;
   String twoBitToFa;
   Vector<Variant> variants;
   FastaWriter writer;
@@ -84,7 +87,8 @@ int main(int argc,char *argv[])
 
 
 Application::Application()
-  : twoBitToFa("twoBitToFa"), gzRegex("gz$")
+  : twoBitToFa("twoBitToFa"), gzRegex("gz$"),
+    copyNumberRegex("<CN(\d+)>")
 {
   // ctor
 }
@@ -100,7 +104,7 @@ int Application::main(int argc,char *argv[])
      -t path : path to twoBitToFa\n\
      -r : emit reference sequence also\n\
 \n\
-     NOTE: You must first run 'which twoBitToFa' to make sure it's in your path\n\
+     NOTE: Run 'which twoBitToFa' to ensure it's in your path\n\
      NOTE: regions.bed is a BED6 file: chr begin end name score strand\n\
 ");
   const String &gcfFilename=cmd.arg(0);
@@ -161,10 +165,28 @@ void Application::convert(File &gcf,ostream &os,const String genomeFile)
     for(Vector<String>::const_iterator cur=fields.begin(), end=fields.end() ;
 	cur!=end ; ++cur) {
       const String &field=*cur;
-      if(field.length()!=3) throw String("Cannot parse genotype: ")+field;
-      Genotype gt(2);
-      gt.alleles[0]=field[0]-'0'; gt.alleles[1]=field[2]-'0';
-      loci.push_back(gt);
+      if(field.length()==1) {
+	Genotype gt(1);
+	gt.alleles[0]=field[0]-'0'; gt.alleles[1]=-1;
+	if(gt.alleles[0]<0 || gt.alleles[0]>9) 
+	  throw fields[0]+" : unknown allele indicator";
+	loci.push_back(gt);
+      }
+      else if(field.length()==3) {
+	if(field[1]!='|') throw "VCF file is not phased";
+	Genotype gt(2);
+	if(field[0]=='.') gt.alleles[0]=0;
+	else { 
+	  gt.alleles[0]=field[0]-'0'; 
+	  if(gt.alleles[0]<0 || gt.alleles[0]>9) 
+	    throw fields[0]+" : unknown allele indicator";
+	}
+	gt.alleles[1]=field[2]-'0';
+	  if(gt.alleles[1]<0 || gt.alleles[1]>9) 
+	    throw fields[2]+" : unknown allele indicator";
+	loci.push_back(gt);
+      }
+      else throw String("Cannot parse genotype: ")+field;
     }
     delete &fields;
     emit(id,loci,os);
@@ -190,7 +212,21 @@ void Application::parseHeader(const String &line)
     prevPos[chr]=pos;
     const String &ref=fields[3];
     const String &alt=fields[4];
-    variants.push_back(Variant(id,chr,pos,ref,alt));
+    Variant variant(id,chr,pos);
+    variant.addAllele(ref);
+    Vector<String> altAlleles;
+    alt.getFields(altAlleles,",");
+    for(Vector<String>::iterator cur=altAlleles.begin(), end=altAlleles.end() ;
+	cur!=end ; ++cur) {
+      String allele=*cur;
+      if(copyNumberRegex.match(allele)) {
+	const int count=copyNumberRegex[1];
+	allele="";
+	for(int i=0 ; i<count ; ++i) allele+=ref;
+      }
+      variant.addAllele(allele);
+    }
+    variants.push_back(variant);
     delete &fields;
   }
   delete &fields;
@@ -246,25 +282,29 @@ void Application::emit(const String &individualID,const Vector<Genotype> &loci,o
       if(region.contains(variant)) {
 	Genotype gt=loci[i];
 	for(int j=0 ; j<PLOIDY ; ++j) {
-	  if(gt.alleles[j]) {
-	    int refLen=variant.ref.length(), altLen=variant.alt.length();
+	  const int allele=gt.alleles[j];
+	  if(allele) { // differs from reference
+	    const String &refAllele=variant.alleles[0];
+	    const String &altAllele=variant.alleles[allele];
+	    const int refLen=refAllele.length();
+	    const int altLen=altAllele.length();
 	    deltas[j]+=refLen-altLen;
-	    if(region.seq.substring(localPos,refLen)!=variant.ref)
-	      throw String("reference mismatch: ")+variant.ref+" vs. "+
+	    if(region.seq.substring(localPos,refLen)!=refAllele)
+	      throw String("reference mismatch: ")+refAllele+" vs. "+
 		region.seq.substring(variant.pos,refLen);
-	    seq[j].replaceSubstring(localPos-deltas[j],refLen,
-				    gt.alleles[j] ? variant.alt : variant.ref);
+	    seq[j].replaceSubstring(localPos-deltas[j],refLen,altAllele);
+	    //  gt.alleles[j] ? variant.alt : variant.ref);
 	  }
 	}
       }
-    } // foreach variant
+    } // end foreach variant
     for(int j=0 ; j<PLOIDY ; ++j) {
       String def=String(">")+individualID+"_"+j+" /individual="+individualID+
 	" /allele="+j+" /region="+region.id;
       if(region.strand=='-') seq[j]=ProteinTrans::reverseComplement(seq[j]);
       writer.addToFasta(def,seq[j],os);
     }
-  } // foreach region
+  } // end foreach region
 }
 
 
