@@ -83,19 +83,16 @@ for(my $i=0 ; $i<$numGenes ; ++$i) {
   System("$GZ/gcf-to-fasta -r $geneGcfFile $twoBitFile $tempBedFile $altGeneFasta");
   my $fastaReader=new FastaReader($altGeneFasta);
   while(1) {
-    my ($def,$seqref)=$reader->nextSequenceRef();
+    my ($def,$seqref)=$fastaReader->nextSequenceRef();
     last unless $def;
     $def=~/>\S+\s+\/individual=(\S+)\s+\/allele=(\d+)\s+\/region=(\S+)/
       || die "Can't parse defline: $def\n";
-    my ($indivID,$alleleNum,$geneID)=($1);
-    my $fh=$fastaFiles{$indivID}->[$allele];
+    my ($indivID,$alleleNum,$geneID)=($1,$2,$3);
+    my $fh=$fastaFiles{$indivID}->[$alleleNum];
     $def=">$geneID";
     $fastaWriter->addToFasta($def,$$seqref,$fh);
   }
   $fastaReader->close();
-
-die; ###
-
 }
 
 #==============================================================
