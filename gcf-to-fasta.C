@@ -56,7 +56,6 @@ public:
   int main(int argc,char *argv[]);
 protected:
   Regex gzRegex;
-  Regex copyNumberRegex;
   String twoBitToFa;
   Vector<Variant> variants;
   FastaWriter writer;
@@ -87,8 +86,7 @@ int main(int argc,char *argv[])
 
 
 Application::Application()
-  : twoBitToFa("twoBitToFa"), gzRegex("gz$"),
-    copyNumberRegex("<CN(\\d+)>")
+  : twoBitToFa("twoBitToFa"), gzRegex("gz$")
 {
   // ctor
 }
@@ -219,11 +217,6 @@ void Application::parseHeader(const String &line)
     for(Vector<String>::iterator cur=altAlleles.begin(), end=altAlleles.end() ;
 	cur!=end ; ++cur) {
       String allele=*cur;
-      if(copyNumberRegex.match(allele)) {
-	const int count=copyNumberRegex[1];
-	allele="";
-	for(int i=0 ; i<count ; ++i) allele+=ref;
-      }
       variant.addAllele(allele);
     }
     variants.push_back(variant);

@@ -26,6 +26,7 @@ my ($vcfDir,$twoBitFile,$gffFile,$outDir)=@ARGV;
 
 my %chrToVCF;
 initChrToVCF($vcfDir);
+system("mkdir -p $outDir") unless -e $outDir;
 my $refGeneFasta="$outDir/refgene.fasta";
 my $altGeneFasta="$outDir/altgene.fasta";
 my $tempBedFile="$outDir/temp.bed";
@@ -47,24 +48,16 @@ my $genes=$gffReader->loadGenes($gffFile);
 
 my $individuals=getIndividualList($vcfDir);
 my $numIndiv=@$individuals;
-my (@fastaFiles,%fastaFiles);
+my %fastaFiles;
 for(my $i=0 ; $i<$numIndiv ; ++$i) {
   my $indiv=$individuals->[$i];
-  #my $fh1=new FileHandle(">$outDir/$indiv-1.fasta");
-  #my $fh2=new FileHandle(">$outDir/$indiv-2.fasta");
-  #$fastaFiles{$indiv}=[$fh1,$fh2];
-  #push @fastaFiles,$fh1;
-  #push @fastaFiles,$fh2;
   my $file1="$outDir/$indiv-1.fasta";
   my $file2="$outDir/$indiv-2.fasta";
   $fastaFiles{$indiv}=[$file1,$file2];
-  push @fastaFiles,$file1;
-  push @fastaFiles,@file2;
 }
-my $fh1=new FileHandle(">$outDir/ref-1.fasta");
-my $fh2=new FileHandle(">$outDir/ref-2.fasta");
-$fastaFiles{"reference"}=[$fh1,$fh2];
-push @fastaFiles,$fh1; push @fastaFiles,$fh2;
+my $file1="$outDir/ref-1.fasta";
+my $file2="$outDir/ref-2.fasta";
+$fastaFiles{"reference"}=[$file1,$file2];
 
 #==============================================================
 # Process each gene
@@ -83,6 +76,7 @@ for(my $i=0 ; $i<$numGenes ; ++$i) {
   my $chrVcfFile=$chrToVCF{$chr};
   writeBed3($chr,$begin,$end,$tempBedFile);
   System("tabix -h $chrVcfFile -R $tempBedFile | bgzip > $geneVcfFile");
+  next if(containsNonstandardVariants($geneVcfFile));
   System("$GZ/vcf-to-gcf -c -v $geneVcfFile $geneGcfFile");
   writeBed6($chr,$begin,$end,$name,$strand,$tempBedFile);
   System("$GZ/gcf-to-fasta -r $geneGcfFile $twoBitFile $tempBedFile $altGeneFasta");
@@ -93,10 +87,11 @@ for(my $i=0 ; $i<$numGenes ; ++$i) {
     $def=~/>\S+\s+\/individual=(\S+)\s+\/allele=(\d+)\s+\/region=(\S+)/
       || die "Can't parse defline: $def\n";
     my ($indivID,$alleleNum,$geneID)=($1,$2,$3);
-    my $fh=$fastaFiles{$indivID}->[$alleleNum];
-    die "$indivID $alleleNum $geneID" unless defined($fh);
+    my $file=$fastaFiles{$indivID}->[$alleleNum];
+    open(FASTA,">>$file") || die $file;
     $def=">$geneID";
-    $fastaWriter->addToFasta($def,$$seqref,$fh);
+    $fastaWriter->addToFasta($def,$$seqref,\*FASTA);
+    close(FASTA)
   }
   $fastaReader->close();
 }
@@ -105,7 +100,6 @@ for(my $i=0 ; $i<$numGenes ; ++$i) {
 # Clean up
 #==============================================================
 
-foreach my $file (@fastaFiles) { $file->close() }
 unlink($refGeneFasta);
 unlink($altGeneFasta);
 unlink($tempBedFile);
@@ -180,6 +174,22 @@ sub initChrToVCF {
   }
 }
 #==============================================================
+sub containsNonstandardVariants {
+  my ($filename)=@_;
+  open(IN,"cat $filename | gunzip |") || die $filename;
+  my $header=1;
+  while(<IN>) {
+    if(/^#CHROM/) { $header=0 }
+    elsif(!$header) {
+      chomp;
+      my @fields=split;
+      my $alt=$fieles[4];
+      if($alt=~/<.*>/) { return 1}
+    }
+  }
+  close(IN);
+  return 0;
+}
 #==============================================================
 #==============================================================
 #==============================================================

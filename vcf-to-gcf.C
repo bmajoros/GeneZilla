@@ -48,6 +48,7 @@ protected:
   Vector<Individual> individuals;
   Vector<Variant> variants;
   Regex gzipRegex; // *.gz
+  Regex dnaRegex;
   bool wantFilter;
   bool prependChr;
   bool SNPsOnly;
@@ -89,7 +90,7 @@ int main(int argc,char *argv[])
 
 
 Application::Application()
-  : gzipRegex(".*\\.gz")
+  : gzipRegex(".*\\.gz"), dnaRegex("^[ACGTacgt]+$")
 {
   // ctor
 }
@@ -308,6 +309,8 @@ bool Application::parseVariant(const Vector<String> &fields,
   ref=fields[3];
   alt=fields[4];
   if(SNPsOnly && (ref.size()!=1 || alt.size()!=1)) return false;
+  if(!dnaRegex.match(alt) || !dnaRegex.match(ref)) 
+    return false; // nonstandard or structural variant
   return true;
 }
 
