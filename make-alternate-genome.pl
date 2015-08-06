@@ -183,8 +183,8 @@ sub containsNonstandardVariants {
     elsif(!$header) {
       chomp;
       my @fields=split;
-      my $alt=$fieles[4];
-      if($alt=~/<.*>/) { return 1}
+      my $alt=$fields[4];
+      if($alt=~/[<>]/) { return 1}
     }
   }
   close(IN);
