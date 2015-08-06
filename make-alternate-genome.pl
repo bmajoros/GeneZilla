@@ -35,6 +35,13 @@ my $GZ=$ENV{"GENEZILLA"};
 my $fastaWriter=new FastaWriter;
 
 #==============================================================
+# Load gene coordinates from GFF file
+#==============================================================
+
+my $gffReader=new GffTranscriptReader();
+my $genes=$gffReader->loadGenes($gffFile);
+
+#==============================================================
 # Make FASTA files for each individual
 #==============================================================
 
@@ -43,23 +50,21 @@ my $numIndiv=@$individuals;
 my (@fastaFiles,%fastaFiles);
 for(my $i=0 ; $i<$numIndiv ; ++$i) {
   my $indiv=$individuals->[$i];
-  my $fh1=new FileHandle(">$outDir/$indiv-1.fasta");
-  my $fh2=new FileHandle(">$outDir/$indiv-2.fasta");
-  $fastaFiles{$indiv}=[$fh1,$fh2];
-  push @fastaFiles,$fh1;
-  push @fastaFiles,$fh2;
+  #my $fh1=new FileHandle(">$outDir/$indiv-1.fasta");
+  #my $fh2=new FileHandle(">$outDir/$indiv-2.fasta");
+  #$fastaFiles{$indiv}=[$fh1,$fh2];
+  #push @fastaFiles,$fh1;
+  #push @fastaFiles,$fh2;
+  my $file1="$outDir/$indiv-1.fasta";
+  my $file2="$outDir/$indiv-2.fasta";
+  $fastaFiles{$indiv}=[$file1,$file2];
+  push @fastaFiles,$file1;
+  push @fastaFiles,@file2;
 }
 my $fh1=new FileHandle(">$outDir/ref-1.fasta");
 my $fh2=new FileHandle(">$outDir/ref-2.fasta");
 $fastaFiles{"reference"}=[$fh1,$fh2];
 push @fastaFiles,$fh1; push @fastaFiles,$fh2;
-
-#==============================================================
-# Load gene coordinates from GFF file
-#==============================================================
-
-my $gffReader=new GffTranscriptReader();
-my $genes=$gffReader->loadGenes($gffFile);
 
 #==============================================================
 # Process each gene
@@ -89,6 +94,7 @@ for(my $i=0 ; $i<$numGenes ; ++$i) {
       || die "Can't parse defline: $def\n";
     my ($indivID,$alleleNum,$geneID)=($1,$2,$3);
     my $fh=$fastaFiles{$indivID}->[$alleleNum];
+    die "$indivID $alleleNum $geneID" unless defined($fh);
     $def=">$geneID";
     $fastaWriter->addToFasta($def,$$seqref,$fh);
   }
@@ -113,8 +119,9 @@ sub getIndividualList {
   my @files=`ls $vcfDir/*.vcf.gz`;
   die "no VCF files found\n" unless @files>0;
   my $file=$files[0];
+  chomp $file;
   my $individuals=[];
-  open(IN,$file) || die "can't open file $file\n";
+  open(IN,"cat $file|gunzip|") || die "can't open file $file\n";
   while(<IN>) {
     chomp;
     if(/^\s*#CHROM/) {
