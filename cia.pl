@@ -9,7 +9,7 @@ my $GAP_EXTEND=1;
 my $BANDWIDTH=100;
 
 die "cia.pl <dir> <ID> <ref.fasta> <ref.gff> <alt.fasta>" unless @ARGV==5;
-my ($dir,$ID,$refFasta,$refGff,$altFasta)=@ARGV;
+my ($dir,$ID,$refFastaOrig,$refGff,$altFastaOrig)=@ARGV;
 
 #================================================================
 # Do some initialization
@@ -26,12 +26,14 @@ my $variantsFile="$dir/$ID.variants";
 my $signalsFile="$dir/$ID.signals";
 my $graphFile="$dir/$ID.graph";
 my $projectorReport="$dir/$ID-report.txt";
+my $refFasta="$dir/$ID-ref.fasta";
+my $altFasta="$dir/$ID-alt.fasta";
 
 #================================================================
 # First, check whether sequences have changed
 #================================================================
 
-my $changed=`$GZ/fastas-are-identical $refFasta $altFasta`;
+my $changed=`$GZ/fastas-are-identical $refFastaOrig $altFastaOrig`;
 if($changed eq "no") {
   print "No sequence changes -- terminating with no further analysis\n";
   exit(0);
@@ -47,12 +49,16 @@ System("grep CDS $refGff > $cdsGff");
 # Reverse-complement files if necessary
 #================================================================
 
-my $refLen=0+`fasta-seq-length.pl $refFasta`;
+my $refLen=0+`fasta-seq-length.pl $refFastaOrig`;
 my $strand=getStrand($cdsGff);
 if($strand eq "-") {
   System("revcomp-gff.pl $cdsGff $refLen > $ID.tmp ; mv $ID.tmp $cdsGff");
-  System("revcomp-fasta.pl $refFasta > $ID.tmp ; mv $ID.tmp $refFasta");
-  System("revcomp-fasta.pl $altFasta > $ID.tmp ; mv $ID.tmp $altFasta");
+  System("revcomp-fasta.pl $refFastaOrig > $refFasta");
+  System("revcomp-fasta.pl $altFastaOrig > $altFasta");
+}
+else {
+  System("cp $refFastaOrig $refFasta");
+  System("cp $altFastaOrig $altFasta");
 }
 
 #================================================================
@@ -91,9 +97,7 @@ System("$GZ/cia -O -g $graphFile $MODEL $altFasta $labelFile $projectedGff $sign
 # Extract N best paths from graph
 #================================================================
 
-die;
-
-System("$GZ/n-best");
+#System("$GZ/n-best");
 
 
 
