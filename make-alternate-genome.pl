@@ -30,8 +30,8 @@ system("mkdir -p $outDir") unless -e $outDir;
 my $refGeneFasta="$outDir/refgene.fasta";
 my $altGeneFasta="$outDir/altgene.fasta";
 my $tempBedFile="$outDir/temp.bed";
-my $geneVcfFile="$outDir/gene.vcf.gz";
-my $geneGcfFile="$outDir/gene.gcf.gz";
+my $geneVcfFile="$outDir/gene.vcf";#"$outDir/gene.vcf.gz";
+my $geneGcfFile="$outDir/gene.gcf";#"$outDir/gene.gcf.gz";
 my $GZ=$ENV{"GENEZILLA"};
 my $fastaWriter=new FastaWriter;
 
@@ -75,7 +75,8 @@ for(my $i=0 ; $i<$numGenes ; ++$i) {
   System("twoBitToFa -bed=$tempBedFile -noMask $twoBitFile $refGeneFasta");
   my $chrVcfFile=$chrToVCF{$chr};
   writeBed3($chr,$begin,$end,$tempBedFile);
-  System("tabix -h $chrVcfFile -R $tempBedFile | bgzip > $geneVcfFile");
+  #System("tabix -h $chrVcfFile -R $tempBedFile | bgzip > $geneVcfFile");
+  System("tabix -h $chrVcfFile -R $tempBedFile > $geneVcfFile");
   next if(containsNonstandardVariants($geneVcfFile));
   System("$GZ/vcf-to-gcf -c -v $geneVcfFile $geneGcfFile");
   writeBed6($chr,$begin,$end,$name,$strand,$tempBedFile);
@@ -176,7 +177,8 @@ sub initChrToVCF {
 #==============================================================
 sub containsNonstandardVariants {
   my ($filename)=@_;
-  open(IN,"cat $filename | gunzip |") || die $filename;
+  #open(IN,"cat $filename | gunzip |") || die $filename;
+  open(IN,$filename) || die $filename;
   my $header=1;
   while(<IN>) {
     if(/^#CHROM/) { $header=0 }

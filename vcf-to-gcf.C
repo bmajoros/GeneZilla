@@ -36,6 +36,7 @@ struct Variant {
 struct Individual {
   String id;
   Vector<String> genotypes;
+  //String genotypes;
 };
 
 class Application {
@@ -213,6 +214,8 @@ void Application::parseVariantAndGenotypes(const Vector<String> &fields)
     const String &genotype=fields[i+9];
     Individual &indiv=individuals[i];
     indiv.genotypes.push_back(genotype);
+    //if(indiv.genotypes.length()==0) indiv.genotypes=genotype;
+    //else indiv.genotypes+=String("\t")+genotype;
   }
 }
 
@@ -244,15 +247,17 @@ void Application::output(File &out)
 
   // Output individual genotypes
   for(Vector<Individual>::const_iterator cur=individuals.begin(), 
-	end=individuals.end() ; cur!=end ; ++cur) {
+	end=individuals.end() ; scur!=end ; ++cur) {
     const Individual &indiv=*cur;
     if(numVariants==0) { out.print(indiv.id+"\n"); continue; }
     out.print(indiv.id+"\t");
+    
     const int numVariants=indiv.genotypes.size();
     for(int i=0 ; i<numVariants ; ++i) {
       out.print(indiv.genotypes[i]);
       out.print(i+1<numVariants ? "\t" : "\n");
     }
+    //out.print(indiv.genotypes);  out.print("\n");
   }
 }
 
