@@ -2856,6 +2856,17 @@ gcf-to-fasta: \
 		$(OBJ)/gcf-to-fasta.o \
 		$(LIBS)
 #--------------------------------------------------------
+$(OBJ)/gcf-list-samples.o:\
+		gcf-list-samples.C
+	$(CC) $(CFLAGS) -o $(OBJ)/gcf-list-samples.o -c \
+		gcf-list-samples.C
+#---------------------------------------------------------
+gcf-list-samples: \
+		$(OBJ)/gcf-list-samples.o
+	$(CC) $(LDFLAGS) -o gcf-list-samples \
+		$(OBJ)/gcf-list-samples.o \
+		$(LIBS)
+#--------------------------------------------------------
 $(OBJ)/split-fasta-by-tag.o:\
 		split-fasta-by-tag.C
 	$(CC) $(CFLAGS) -o $(OBJ)/split-fasta-by-tag.o -c \

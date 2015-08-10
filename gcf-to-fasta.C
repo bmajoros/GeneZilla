@@ -61,6 +61,7 @@ protected:
   FastaWriter writer;
   Vector<Region> regions;
   bool wantRef;
+  String wantIndiv;
   void convert(File &gcf,ostream &,const String genomeFile);
   void parseHeader(const String &line);
   void loadRegions(const String &regionsFilename,const String &genomeFilename,
@@ -96,11 +97,12 @@ Application::Application()
 int Application::main(int argc,char *argv[])
 {
   // Process command line
-  CommandLine cmd(argc,argv,"rt:");
+  CommandLine cmd(argc,argv,"rt:i:");
   if(cmd.numArgs()!=4)
     throw String("\ngcf-to-fasta [options] <in.gcf> <genome.2bit> <regions.bed> <out.fasta>\n\
      -t path : path to twoBitToFa\n\
      -r : emit reference sequence also\n\
+     -i ID : only this sample (individual)\n\
 \n\
      NOTE: Run 'which twoBitToFa' to ensure it's in your path\n\
      NOTE: regions.bed is a BED6 file: chr begin end name score strand\n\
@@ -111,6 +113,7 @@ int Application::main(int argc,char *argv[])
   const String &fastaFilename=cmd.arg(3);
   if(cmd.option('t')) twoBitToFa=cmd.optParm('t');
   wantRef=cmd.option('r');
+  if(cmd.option('i')) wantIndiv=cmd.optParm('i');
 
   // Load regions
   loadRegions(regionsFilename,genomeFilename,fastaFilename);
@@ -158,6 +161,7 @@ void Application::convert(File &gcf,ostream &os,const String genomeFile)
     Vector<String> &fields=*line.getFields();
     if(fields.size()!=numVariants+1) throw "Wrong number of fields in GCF line";
     String id=fields.front();
+    if(wantIndiv.length()>0 && id!=wantIndiv) continue;
     fields.erase(fields.begin());
     Vector<Genotype> loci;
     for(Vector<String>::const_iterator cur=fields.begin(), end=fields.end() ;
