@@ -11,10 +11,11 @@
 #include "BOOM/FastaReader.H"
 #include "BOOM/FastaWriter.H"
 #include "BOOM/Pipe.H"
-#include "BOOM/Vector.H"
+#include "BOOM/VectorSorter.H"
 #include "BOOM/Array1D.H"
 #include "BOOM/ProteinTrans.H"
 #include "BOOM/Regex.H"
+#include "BOOM/Map.H"
 using namespace std;
 using namespace BOOM;
 
@@ -37,17 +38,48 @@ struct Variant {
 };
 
 
+
+struct VariantComp : Comparator<Variant> {
+  bool equal(Variant &a,Variant &b)
+  { return a.chr==b.chr && a.pos==b.pos; }
+  bool greater(Variant &a,Variant &b) 
+  { return a.chr>b.chr || a.chr==b.chr && a.pos>b.pos; }
+  bool less(Variant &a,Variant &b)    
+  { return a.chr<b.chr || a.chr==b.chr && a.pos<b.pos; }
+};
+
+
+
 struct Region {
   String chr, id;
   int begin, end;
   String seq;
   char strand;
+  Vector<Variant> variants;
   Region(const String &id,const String &chr,char strand,int begin,int end,
 	 const String &seq) : id(id), chr(chr), begin(begin), end(end), 
 			      strand(strand), seq(seq) {}
   bool contains(const Variant &v) const 
     { return v.chr==chr && v.pos>=begin && v.pos+v.alleles[0].length()<=end; }
 };
+
+
+bool operator<(const Variant &v,const Region &r)
+{ return v.pos<r.begin; }
+bool operator>(const Variant &v,const Region &r)
+{ return v.pos>r.end; }
+
+
+// This assumes no overlaps, so we need not compare ends
+struct RegionComp : Comparator<Region> {
+  bool equal(Region &a,Region &b)
+  { return a.chr==b.chr && a.begin==b.begin; }
+  bool greater(Region &a,Region &b) 
+  { return a.chr>b.chr || a.chr==b.chr && a.begin>b.begin; }
+  bool less(Region &a,Region &b)    
+  { return a.chr<b.chr || a.chr==b.chr && a.begin<b.begin; }
+};
+
 
 
 class Application {
@@ -57,11 +89,12 @@ public:
 protected:
   Regex gzRegex;
   String twoBitToFa;
+  Map<String,Vector<Region> > regionsByChr;
+  Vector<Region> regions;
   Vector<Variant> variants;
   FastaWriter writer;
-  Vector<Region> regions;
   bool wantRef;
-  String wantIndiv;
+  String wantIndiv, wantChr;
   void convert(File &gcf,ostream &,const String genomeFile);
   void parseHeader(const String &line);
   void loadRegions(const String &regionsFilename,const String &genomeFilename,
@@ -97,12 +130,13 @@ Application::Application()
 int Application::main(int argc,char *argv[])
 {
   // Process command line
-  CommandLine cmd(argc,argv,"rt:i:");
+  CommandLine cmd(argc,argv,"rt:i:c:");
   if(cmd.numArgs()!=4)
     throw String("\ngcf-to-fasta [options] <in.gcf> <genome.2bit> <regions.bed> <out.fasta>\n\
      -t path : path to twoBitToFa\n\
      -r : emit reference sequence also\n\
      -i ID : only this sample (individual)\n\
+     -c CHR : only this chromosome\n\
 \n\
      NOTE: Run 'which twoBitToFa' to ensure it's in your path\n\
      NOTE: regions.bed is a BED6 file: chr begin end name score strand\n\
@@ -114,6 +148,7 @@ int Application::main(int argc,char *argv[])
   if(cmd.option('t')) twoBitToFa=cmd.optParm('t');
   wantRef=cmd.option('r');
   if(cmd.option('i')) wantIndiv=cmd.optParm('i');
+  if(cmd.option('c')) wantChr=cmd.optParm('c');
 
   // Load regions
   loadRegions(regionsFilename,genomeFilename,fastaFilename);
@@ -199,15 +234,16 @@ void Application::convert(File &gcf,ostream &os,const String genomeFile)
 
 void Application::parseHeader(const String &line)
 {
-  Vector<String> &fields=*line.getFields();
+  Vector<String> fields; line.getFields(fields);
   Map<String,int> prevPos;
   for(Vector<String>::const_iterator cur=fields.begin(), end=fields.end()
 	; cur!=end ; ++cur) {
     const String &field=*cur;
-    Vector<String> &fields=*field.getFields(":");
+    Vector<String> fields; field.getFields(fields,":");
     if(fields.size()!=5) throw String("cannot parse GCF header: ")+field;
     const String &id=fields[0];
     const String &chr=fields[1];
+    if(!wantChr.isEmpty() && chr!=wantChr) continue;
     const int pos=fields[2];
     if(!prevPos.isDefined(chr)) prevPos[chr]=0;
     if(pos<=prevPos[chr]) throw "input file is not sorted: use vcf-sort and re-convert to gcf";
@@ -224,9 +260,24 @@ void Application::parseHeader(const String &line)
       variant.addAllele(allele);
     }
     variants.push_back(variant);
-    delete &fields;
   }
-  delete &fields;
+
+  // Now add to regions
+  for(Vector<Variant>::iterator vcur=variants.begin(), 
+	vend=variants.end() ; vcur!=vend ; ++vcur) {
+    const Variant &v=*vcur;
+    const int pos=v.pos;
+    if(!regionsByChr.isDefined(v.chr)) continue;
+    Vector<Region> &rs=regionsByChr[v.chr];
+    const int N=rs.size();
+    for(int b=0, e=N ; b<e ; ) {
+      const int mid=(b+e)/2;
+      const Region &midRegion=rs[mid];
+      if(pos<midRegion.begin) e=mid;
+      else if(pos>midRegion.end) b=mid+1;
+      else { midRegion.variants.push_back(v); break; }
+    }
+  }
 }
 
 
@@ -239,13 +290,13 @@ void Application::loadRegions(const String &regionsFilename,const String &
     String line=reg.getline();
     line.trimWhitespace();
     if(line.isEmpty()) continue;
-    Vector<String> &fields=*line.getFields();
+    Vector<String> fields; line.getFields(fields);
     if(fields.size()<6) throw "regions file requires 6 fields: chr begin end name score strand";
     const String chr=fields[0];
+    if(!wantChr.isEmpty() && chr!=wantChr) continue;
     const int begin=fields[1].asInt(), end=fields[2].asInt();
     const String id=fields[3];
     char strand=fields[5][0];
-    delete &fields;
     
     // Invoke twoBitToFa to extract sequence from chrom file
     String cmd=twoBitToFa+" -seq="+chr+" -start="+begin+" -end="+end+
@@ -253,14 +304,21 @@ void Application::loadRegions(const String &regionsFilename,const String &
     system(cmd.c_str());
     String def, seq;
     FastaReader::load(tempFile,def,seq);
-
-    //###
-    if(seq.contains(",")) throw tempFile+"contains a comma: "+cmd;
-    //###
-    
-    regions.push_back(Region(id,chr,strand,begin,end,seq));
+    //if(seq.contains(",")) throw tempFile+"contains a comma: "+cmd;
+    Region r(id,chr,strand,begin,end,seq);
+    regions.push_back(r);
+    regionsByChr[chr].push_back(r);
   }
   unlink(tempFile.c_str());
+
+  // Sort regions so we can do fast searches later
+  RegionComp cmp;
+  Set<String> keys; regionsByChr.getKeys(keys);
+  for(Set<String>::const_iterator cur=keys.begin(),
+	end=keys.end() ; cur!=end ; ++cur) {
+    VectorSorter<Region> sorter(regionsByChr[*cur],cmp);
+    sorter.sortAscendInPlace();
+  }
 }
 
 
