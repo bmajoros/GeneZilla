@@ -196,7 +196,7 @@ void Application::convert(File &gcf,ostream &os,const String genomeFile)
     Vector<String> &fields=*line.getFields();
     if(fields.size()!=numVariants+1) throw "Wrong number of fields in GCF line";
     String id=fields.front();
-    if(wantIndiv.length()>0 && id!=wantIndiv) continue;
+    if(!wantIndiv.isEmpty() && id!=wantIndiv) continue;
     fields.erase(fields.begin());
     Vector<Genotype> loci;
     for(Vector<String>::const_iterator cur=fields.begin(), end=fields.end() ;
@@ -227,6 +227,7 @@ void Application::convert(File &gcf,ostream &os,const String genomeFile)
     }
     delete &fields;
     emit(id,loci,os);
+    if(!wantIndiv.isEmpty()) break;
   }
 }
 
