@@ -2743,9 +2743,11 @@ $(OBJ)/project-annotation.o:\
 #---------------------------------------------------------
 project-annotation: \
 		$(OBJ)/Labeling.o \
+		$(OBJ)/ProjectionChecker.o \
 		$(OBJ)/project-annotation.o
 	$(CC) $(LDFLAGS) -o project-annotation \
 		$(OBJ)/Labeling.o \
+		$(OBJ)/ProjectionChecker.o \
 		$(OBJ)/project-annotation.o \
 		$(LIBS)
 #--------------------------------------------------------
@@ -2828,9 +2830,11 @@ $(OBJ)/check-projection.o:\
 #---------------------------------------------------------
 check-projection: \
 		$(OBJ)/Labeling.o \
+		$(OBJ)/ProjectionChecker.o \
 		$(OBJ)/check-projection.o
 	$(CC) $(LDFLAGS) -o check-projection \
 		$(OBJ)/Labeling.o \
+		$(OBJ)/ProjectionChecker.o \
 		$(OBJ)/check-projection.o \
 		$(LIBS)
 #--------------------------------------------------------
@@ -3568,6 +3572,12 @@ $(OBJ)/NMD.o:\
 		NMD.H
 	$(CC) $(CFLAGS) -o $(OBJ)/NMD.o -c \
 		NMD.C
+#---------------------------------------------------------
+$(OBJ)/ProjectionChecker.o:\
+		ProjectionChecker.C\
+		ProjectionChecker.H
+	$(CC) $(CFLAGS) -o $(OBJ)/ProjectionChecker.o -c \
+		ProjectionChecker.C
 #---------------------------------------------------------
 $(OBJ)/find-non-splice-sites.o:\
 		find-non-splice-sites.C

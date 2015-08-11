@@ -6,7 +6,9 @@ my $MODEL="/home/bmajoros/splicing/model/no-UTR.iso";
 my $NUC_MATRIX="/home/bmajoros/alignment/matrices/NUC.4.4";
 my $GAP_OPEN=10;
 my $GAP_EXTEND=1;
-my $BANDWIDTH=100;
+my $BANDWIDTH=50;
+my $NONCANONICAL_GT="GC,AT";
+my $NONCANONICAL_AG="AC";
 
 die "cia.pl <dir> <ID> <ref.fasta> <ref.gff> <alt.fasta>" unless @ARGV==5;
 my ($dir,$ID,$refFastaOrig,$refGff,$altFastaOrig)=@ARGV;
@@ -71,13 +73,17 @@ System("$GZ/BOOM/banded-smith-waterman -q -c $cigarFile $NUC_MATRIX $GAP_OPEN $G
 # Project annotation from ref to anno ("Blind Projector")
 #================================================================
 
-System("$GZ/project-annotation $cdsGff $refFasta $altFasta $cigarFile $labelFile $projectedGff");
+my $DASH_D="-d $NONCANONICAL_GT";
+my $DASH_A="-a $NONCANONICAL_AG";
+my $projMsg=`$GZ/project-annotation $DASH_D $DASH_A $cdsGff $refFasta $altFasta $cigarFile $labelFile $projectedGff`;
+print "$projMsg\n";
+exit unless $projMsg=~/annotation successfully projected/;
 
 #================================================================
 # Check whether the projected gene model is broken
 #================================================================
 
-System("$GZ/check-projection $refFasta $cdsGff $altFasta $projectedGff $labelFile> $projectorReport");
+System("$GZ/check-projection $DASH_D $DASH_A $refFasta $cdsGff $altFasta $projectedGff $labelFile> $projectorReport");
 
 #================================================================
 # Find sequence variants and variant signals

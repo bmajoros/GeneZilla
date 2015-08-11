@@ -12,31 +12,21 @@
 #include "BOOM/ProteinTrans.H"
 #include "BOOM/CodonIterator.H"
 #include "Labeling.H"
+#include "ProjectionChecker.H"
 using namespace std;
 using namespace BOOM;
 
 
+
 class Application {
 public:
-  Application();
   int main(int argc,char *argv[]);
-private:
-  Set<String> nonCanonicalGTs, nonCanonicalAGs;
+protected:
   GffTranscript *loadGff(const String &filename);
-  bool splicingIsOK;
   void parseNoncanonicals(const String &,Set<String> &);
-  bool detectNMD(GffTranscript &altTrans,const String &altSubstrate);
-  void checkSpliceSites(GffTranscript &refTrans,const String &refSubstrate,
-			GffTranscript &altTrans,const String &altSubstrate);
-  void checkDonor(GffExon &refExon,const String &refSubstrate,
-		  GffExon &altExon,const String &altSubstrate);
-  void checkAcceptor(GffExon &refExon,const String &refSubstrate,
-		     GffExon &altExon,const String &altSubstrate);
-  String getDonor(GffExon &,const String &substrate,int &pos);
-  String getAcceptor(GffExon &,const String &substrate,int &pos);
-  void checkFrameshifts(const Labeling &,const GffTranscript &,
-			const String &substrate);
 };
+
+
 
 
 int main(int argc,char *argv[]) {
@@ -50,14 +40,6 @@ int main(int argc,char *argv[]) {
   catch(...)
     {cerr << "Unknown exception caught in main" << endl;}
   return -1;
-}
-
-
-
-Application::Application()
-  : splicingIsOK(true)
-{
-  // ctor
 }
 
 
@@ -77,6 +59,7 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff> <labels.txt>\
   const String altFasta=cmd.arg(2);
   const String altGff=cmd.arg(3);
   const String labelFile=cmd.arg(4);
+  Set<String> nonCanonicalGTs, nonCanonicalAGs;
   if(cmd.option('d')) parseNoncanonicals(cmd.optParm('d'),nonCanonicalGTs);
   if(cmd.option('a')) parseNoncanonicals(cmd.optParm('a'),nonCanonicalAGs);
 
@@ -87,135 +70,39 @@ check-projection <ref.fasta> <ref.gff> <alt.fasta> <projected.gff> <labels.txt>\
   GffTranscript *refTrans=loadGff(refGff), *altTrans=loadGff(altGff);
   Labeling labeling(labelFile);
 
+  // Create the checker object
+  ProjectionChecker checker(*refTrans,*altTrans,refSubstrate,
+			    altSubstrate,labeling,
+			    nonCanonicalGTs,nonCanonicalAGs);
+
   // Check splice sites
-  checkSpliceSites(*refTrans,refSubstrate,*altTrans,altSubstrate);
+  bool splicingIsOK=checker.checkSpliceSites(false);
 
   // Translate to proteins
-  refTrans->loadSequence(refSubstrate); 
-  String refDNA=refTrans->getSequence();
-  String refProtein=ProteinTrans::translate(refDNA);
-  if(refProtein.lastChar()!='*') {
-    //    cout<<"extending"<<endl;
-    refTrans->extendFinalExonBy3(); altTrans->extendFinalExonBy3();
-    refTrans->loadSequence(refSubstrate); 
-    refDNA=refTrans->getSequence();
-    refProtein=ProteinTrans::translate(refDNA);
-  }
-  altTrans->loadSequence(altSubstrate);
-  const String altDNA=altTrans->getSequence();
-  const String altProtein=ProteinTrans::translate(altDNA);
+  String refProtein, altProtein;
+  checker.translate(*refTrans,*altTrans,refProtein,altProtein);
   
   // Check for start codon
-  if(altProtein.length()<1 || altProtein[0]!='M') cout<<"No start codon"<<endl;
+  if(!checker.hasStartCodon(altProtein)) cout<<"No start codon"<<endl;
 
   // Everything else depends on splice sites being intact
   if(!splicingIsOK) return 0;
 
   // Check for frameshifts
   if(refProtein!=altProtein) cout<<"proteins differ"<<endl;
-  checkFrameshifts(labeling,*altTrans,altSubstrate);
+  checker.checkFrameshifts(labeling,*altTrans,altSubstrate,false);
 
   // Check for stop codons
-  const bool stopPresent=altProtein.lastChar()=='*';
-  refProtein.chop(); altProtein.chop();
-  const int firstStop=altProtein.findFirst('*');
-  if(firstStop>=0) {
-    cout<<"premature stop at AA position "<<firstStop<<" in alt protein"<<endl;
-    if(!detectNMD(*altTrans,altSubstrate))
+  int PTCpos;
+  if(checker.hasPTC(altProtein,PTCpos)) {
+    cout<<"premature stop at AA position "<<PTCpos<<" in alt protein"<<endl;
+    if(!checker.detectNMD(*altTrans,altSubstrate,false))
       cout<<"truncation predicted"<<endl;
   }
-  else if(!stopPresent) cout<<"missing stop codon"<<endl; 
+  else if(!checker.hasStopCodon(altProtein))
+    cout<<"missing stop codon"<<endl; 
   
-  // Check length is divisible by 3
-  //if(altDNA.length()%3) cout<<"non-integral number of codons"<<endl;
-
   return 0;
-}
-
-
-
-void Application::checkSpliceSites(GffTranscript &refTranscript,
-				   const String &refSubstrate,
-				   GffTranscript &altTranscript,
-				   const String &altSubstrate)
-{
-  int numExons=refTranscript.getNumExons();
-  if(altTranscript.getNumExons()!=numExons)
-    throw "Internal errror: projected transcript has different number of exons";
-  for(int i=0 ; i<numExons ; ++i) {
-    GffExon &refExon=refTranscript.getIthExon(i);
-    GffExon &altExon=altTranscript.getIthExon(i);
-    if(refExon.hasDonor()) 
-      checkDonor(refExon,refSubstrate,altExon,altSubstrate);
-    if(refExon.hasAcceptor()) 
-      checkAcceptor(refExon,refSubstrate,altExon,altSubstrate);
-  }
-}
-
-
-
-void Application::checkDonor(GffExon &refExon,const String &refSubstrate,
-			     GffExon &altExon,const String &altSubstrate)
-{
-  int pos;
-  const String refDonor=getDonor(refExon,refSubstrate,pos);
-  const String altDonor=getDonor(altExon,altSubstrate,pos);
-  if(altDonor==refDonor) return;
-  if(altDonor=="GT") return;
-  for(Set<String>::const_iterator cur=nonCanonicalGTs.begin(),
-	end=nonCanonicalGTs.end() ; cur!=end ; ++cur)
-    if(altDonor==*cur) return;
-  splicingIsOK=false;
-  cout<<"broken donor site: "<<altDonor<<" at "<<pos<<" in alt sequence"<<endl;
-}
-
-
-
-void Application::checkAcceptor(GffExon &refExon,const String &refSubstrate,
-				GffExon &altExon,const String &altSubstrate)
-{
-  int pos;
-  const String refAcceptor=getAcceptor(refExon,refSubstrate,pos);
-  const String altAcceptor=getAcceptor(altExon,altSubstrate,pos);
-  if(altAcceptor==refAcceptor) return;
-  if(altAcceptor=="AG") return;
-  for(Set<String>::const_iterator cur=nonCanonicalAGs.begin(),
-	end=nonCanonicalAGs.end() ; cur!=end ; ++cur)
-    if(altAcceptor==*cur) return;
-  splicingIsOK=false;
-  cout<<"broken acceptor site: "<<altAcceptor<<" at "<<pos<<" in alt sequence"<<endl;
-}
-
-
-
-String Application::getDonor(GffExon &exon,const String &substrate,int &pos)
-{
-  if(exon.getStrand()=='+') {
-    const int end=exon.getEnd();
-    if(end>substrate.length()-2) return "";
-    return substrate.substring(pos=end,2);
-  }
-  else {
-    const int begin=exon.getBegin();
-    if(begin<2) return "";
-    return ProteinTrans::reverseComplement(substrate.substring(pos=begin-2,2));
-  }
-}
-
-
-
-String Application::getAcceptor(GffExon &exon,const String &substrate,int &pos)
-{
-  if(exon.getStrand()=='+') {
-    const int begin=exon.getBegin();
-    if(begin<2) return "";
-    return substrate.substring(pos=begin-2,2);
-  }
-  else {
-    const int end=exon.getEnd();
-    if(end>substrate.length()-2) return "";
-    return ProteinTrans::reverseComplement(substrate.substring(pos=end,2));
-  }
 }
 
 
@@ -241,57 +128,6 @@ void Application::parseNoncanonicals(const String &str,Set<String> &into)
       cur!=end ; ++cur)
     into.insert(*cur);
   delete &fields;
-}
-
-
-
-bool Application::detectNMD(GffTranscript &transcript,
-				  const String &substrate)
-{
-  const int numExons=transcript.getNumExons();
-  if(numExons<2) return false;
-  const int lastExonLen=transcript.getIthExon(numExons-1).length();
-  const int lastEJC=transcript.getSplicedLength()-lastExonLen;
-  CodonIterator iter(transcript,substrate);
-  Codon codon;
-  while(iter.nextCodon(codon))
-    if(codon.isStop()) {
-      const int distance=lastEJC-codon.splicedCoord;
-      if(distance>=50) {
-	cout<<"NMD predicted: PTC found "<<distance<<"bp from last EJC"<<endl;
-	return true;
-      }
-    }
-  return false;
-}
-
-
-
-void Application::checkFrameshifts(const Labeling &labeling,
-				   const GffTranscript &transcript,
-				   const String &substrate)
-{
-  if(labeling.length()!=substrate.length()) 
-    throw "labeling and alt substrate have different lengths";
-  const int numExons=transcript.numExons();
-  int phase=0, phaseMatches=0, phaseMismatches=0;
-  for(int i=0 ; i<numExons ; ++i) {
-    const GffExon &exon=transcript.getIthExon(i);
-    const int begin=exon.getBegin(), end=exon.getEnd();
-    for(int pos=begin ; pos<end ; ++pos) {
-      const GeneModelLabel label=labeling[pos];
-      if(isExon(label))
-	if(phase==getExonPhase(label)) ++phaseMatches;
-	else ++phaseMismatches;
-      phase=(phase+1)%3;
-    }
-  }
-  if(phaseMismatches>0) {
-    const int total=phaseMismatches+phaseMatches;
-    float percentMismatch=int(1000*phaseMismatches/float(total)+5/9.0)/10.0;
-    cout<<"frameshift detected: "<<phaseMismatches<<"/"<<total<<" = "
-	<<percentMismatch<<"% labeled exon bases change frame"<<endl;
-  }
 }
 
 
