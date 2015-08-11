@@ -247,7 +247,10 @@ void Application::parseHeader(const String &line)
     if(!wantChr.isEmpty() && chr!=wantChr) continue;
     const int pos=fields[2];
     if(!prevPos.isDefined(chr)) prevPos[chr]=0;
-    if(pos<=prevPos[chr]) throw "input file is not sorted: use vcf-sort and re-convert to gcf";
+    if(pos==prevPos[chr]) continue;
+    if(pos<=prevPos[chr]) 
+      throw String(pos)+"<="+prevPos[chr]+
+	": input file is not sorted: use vcf-sort and re-convert to gcf";
     prevPos[chr]=pos;
     const String &ref=fields[3];
     const String &alt=fields[4];
