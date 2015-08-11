@@ -77,13 +77,17 @@ my $DASH_D="-d $NONCANONICAL_GT";
 my $DASH_A="-a $NONCANONICAL_AG";
 my $projMsg=`$GZ/project-annotation $DASH_D $DASH_A $cdsGff $refFasta $altFasta $cigarFile $labelFile $projectedGff`;
 print "$projMsg\n";
-exit unless $projMsg=~/annotation successfully projected/;
+open(OUT,">$projectorReport") || die "Can't write to file: $projectorReport\n";
+print OUT "$projMsg\n";
+close(OUT);
+exit if $projMsg=~/annotation successfully projected/ ||
+  $projMsg=~/reference gene is not well-formed/;
 
 #================================================================
 # Check whether the projected gene model is broken
 #================================================================
 
-System("$GZ/check-projection $DASH_D $DASH_A $refFasta $cdsGff $altFasta $projectedGff $labelFile> $projectorReport");
+#System("$GZ/check-projection $DASH_D $DASH_A $refFasta $cdsGff $altFasta $projectedGff $labelFile> $projectorReport");
 
 #================================================================
 # Find sequence variants and variant signals

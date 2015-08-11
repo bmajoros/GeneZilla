@@ -170,7 +170,7 @@ bool ProjectionChecker::checkFrameshifts(const Labeling &labeling,
     const int total=phaseMismatches+phaseMatches;
     float percentMismatch=int(1000*phaseMismatches/float(total)+5/9.0)/10.0;
     if(!quiet)
-      cout<<"frameshift detected: "<<phaseMismatches<<"/"<<total<<" = "
+      cout<<"Frameshift detected: "<<phaseMismatches<<"/"<<total<<" = "
 	  <<percentMismatch<<"% labeled exon bases change frame"<<endl;
     return false;
   }
@@ -215,9 +215,8 @@ bool ProjectionChecker::hasStopCodon(const String &protein)
 
 bool ProjectionChecker::hasPTC(const String &protein,int &PTCpos)
 {
-  protein.chop();
   PTCpos=protein.findFirst('*');
-  return PTCpos>=0;
+  return PTCpos>=0 && PTCpos<protein.length()-1;
 }
 
 
@@ -240,13 +239,13 @@ bool ProjectionChecker::geneIsWellFormed(const GffTranscript &trans,
     return false;
   }
   if(protein[0]!='M') {
-    msg+=String("Expected methionine, found ")+protein[0]+": "+protein+"\n";
+    msg+=String("\tExpected methionine, found ")+protein[0]+": "+protein+"\n";
     noStart=true;
   }
   const int firstStop=protein.findFirst('*');
   const int proteinLen=protein.length();
   if(firstStop<proteinLen-1) {
-    msg+=String("Stop codon found at AA position ")+firstStop+", length="
+    msg+=String("\tStop codon found at AA position ")+firstStop+", length="
       +proteinLen+"\n";
     PTC=true;
   }
@@ -256,7 +255,7 @@ bool ProjectionChecker::geneIsWellFormed(const GffTranscript &trans,
     String rna=transcript.getSequence();
     String protein=ProteinTrans::translate(rna);
     if(protein.lastChar()!='*') {
-      msg+=String("Expected * at end of protein, found ")+protein.lastChar()
+      msg+=String("\tExpected * at end of protein, found ")+protein.lastChar()
 	+": "+protein+"\n";
       noStop=true;
     }
@@ -284,7 +283,7 @@ bool ProjectionChecker::checkDonor(GffExon &refExon,const String &refSubstrate,
   for(Set<String>::const_iterator cur=nonCanonicalGTs.begin(),
 	end=nonCanonicalGTs.end() ; cur!=end ; ++cur)
     if(refDonor==*cur) return true;
-  msg+=String("broken donor site: ")+refDonor+" at position "+pos+"\n";
+  msg+=String("\tBroken donor site: ")+refDonor+" at position "+pos+"\n";
   return false;
 }
 
@@ -300,7 +299,7 @@ bool ProjectionChecker::checkAcceptor(GffExon &refExon,const String &refSubstrat
   for(Set<String>::const_iterator cur=nonCanonicalAGs.begin(),
 	end=nonCanonicalAGs.end() ; cur!=end ; ++cur)
     if(refAcceptor==*cur) return true;
-  msg+=String("broken acceptor site: ")+refAcceptor+" at position "+pos+"\n";
+  msg+=String("\tBroken acceptor site: ")+refAcceptor+" at position "+pos+"\n";
   return false;
 }
 

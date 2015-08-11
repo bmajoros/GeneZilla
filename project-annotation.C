@@ -103,11 +103,11 @@ project-annotation <ref.gff> <ref.fasta> <alt.fasta> <ref-alt.cigar> <out.vector
 					  msg)) {
     cout<<"Error: reference gene is not well-formed -- aborting projection"<<endl;
     cout<<"Details:"<<endl;
-    if(noStart) cout<<"\tReference gene's CDS does not begin with a valid start codon"<<endl;
-    if(noStop) cout<<"\tLast codon in reference gene's CDS is not a stop codon"<<endl;
+    //if(noStart) cout<<"\tReference gene's CDS does not begin with a valid start codon"<<endl;
+    //if(noStop) cout<<"\tLast codon in reference gene's CDS is not a stop codon"<<endl;
     if(PTC) cout<<"\tReference gene has a pre-termination stop codon (PTC)"<<endl;
-    if(badSpliceSite) cout<<"\tReference gene has a nonconsensus splice site"<<endl;
-    cout<<"\t"<<msg<<endl;
+    //if(badSpliceSite) cout<<"\tReference gene has a nonconsensus splice site"<<endl;
+    cout<<msg<<endl;
     return -1;
   }
 
@@ -153,18 +153,25 @@ project-annotation <ref.gff> <ref.fasta> <alt.fasta> <ref-alt.cigar> <out.vector
   if(!checker.hasStartCodon(altProtein)) cout<<"No start codon"<<endl;
 
   // Check for frameshifts
-  if(refProtein!=altProtein) cout<<"proteins differ"<<endl;
+  if(refProtein!=altProtein) cout<<"Proteins differ"<<endl;
   checker.checkFrameshifts(altLab,*altTrans,altSeq,false);
 
   // Check for stop codons
   int PTCpos;
   if(checker.hasPTC(altProtein,PTCpos)) {
-    cout<<"premature stop at AA position "<<PTCpos<<" in alt protein"<<endl;
+    cout<<"Premature stop at AA position "<<PTCpos
+	<<" in alt protein, length="<<altProtein.length()
+	<<"\nalt="<<altProtein<<"\nref="<<refProtein<<endl;
     if(!checker.detectNMD(*altTrans,altSeq,false))
-      cout<<"truncation predicted"<<endl;
+      cout<<"Truncation predicted"<<endl;
   }
-  else if(!checker.hasStopCodon(altProtein))
-    cout<<"missing stop codon"<<endl; 
+  else if(!checker.hasStopCodon(altProtein)) {
+    refTrans->extendFinalExonBy3(); altTrans->extendFinalExonBy3();
+    checker.translate(*refTrans,*altTrans,refProtein,altProtein);
+    if(!checker.hasStopCodon(altProtein))
+      cout<<"Missing stop codon:\nalt="<<altProtein
+	  <<"\nref="<<refProtein<<endl; 
+  }
 
   return 0;
 }
