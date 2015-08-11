@@ -148,6 +148,7 @@ project-annotation <ref.gff> <ref.fasta> <alt.fasta> <ref-alt.cigar> <out.vector
   // Translate to proteins
   String refProtein, altProtein;
   checker.translate(*refTrans,*altTrans,refProtein,altProtein);
+  //cout<<"TRANSLATIONS:\nALT="<<altProtein<<"\nREF="<<refProtein<<endl;
   
   // Check for start codon
   if(!checker.hasStartCodon(altProtein)) cout<<"No start codon"<<endl;
@@ -178,9 +179,10 @@ project-annotation <ref.gff> <ref.fasta> <alt.fasta> <ref-alt.cigar> <out.vector
 
 
 
-void Application::mapTranscript(GffTranscript &transcript,const String &cig,
+void Application::mapTranscript(GffTranscript &refTrans,const String &cig,
 				 const String &outfile)
 {
+  GffTranscript transcript=refTrans;
   CigarString cigar(cig);
   CigarAlignment &align=*cigar.getAlignment();
   char strand=transcript.getStrand();
@@ -208,7 +210,6 @@ void Application::mapLabeling(Labeling &from,Labeling &to,const String &cig)
   int L=align.length();
   for(int i=0 ; i<L ; ++i) {
     int j=align[i];
-    //cout<<"j="<<j<<" toLen="<<to.length()<<endl;
     if(j!=CIGAR_UNDEFINED) to[j]=from[i];
   }
   delete &align;

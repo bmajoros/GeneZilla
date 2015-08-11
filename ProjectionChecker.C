@@ -244,7 +244,7 @@ bool ProjectionChecker::geneIsWellFormed(const GffTranscript &trans,
   }
   const int firstStop=protein.findFirst('*');
   const int proteinLen=protein.length();
-  if(firstStop<proteinLen-1) {
+  if(firstStop>=0 && firstStop<proteinLen-1) {
     msg+=String("\tStop codon found at AA position ")+firstStop+", length="
       +proteinLen+"\n";
     PTC=true;
@@ -268,6 +268,7 @@ bool ProjectionChecker::geneIsWellFormed(const GffTranscript &trans,
     if(exon.hasAcceptor()) 
       if(!checkAcceptor(exon,substrate,noncanonicalAGs,msg)) badSpliceSite=true;
   }
+  //cout<<"XXX\n"<<protein<<"\nPTC="<<PTC<<"\n"<<!(noStart || noStop || PTC || badSpliceSite)<<endl;//###
   return !(noStart || noStop || PTC || badSpliceSite);
 }
 

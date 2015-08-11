@@ -75,7 +75,9 @@ System("$GZ/BOOM/banded-smith-waterman -q -c $cigarFile $NUC_MATRIX $GAP_OPEN $G
 
 my $DASH_D="-d $NONCANONICAL_GT";
 my $DASH_A="-a $NONCANONICAL_AG";
-my $projMsg=`$GZ/project-annotation $DASH_D $DASH_A $cdsGff $refFasta $altFasta $cigarFile $labelFile $projectedGff`;
+my $cmd="$GZ/project-annotation $DASH_D $DASH_A $cdsGff $refFasta $altFasta $cigarFile $labelFile $projectedGff";
+print "$cmd\n";
+my $projMsg=`$cmd`;
 print "$projMsg\n";
 open(OUT,">$projectorReport") || die "Can't write to file: $projectorReport\n";
 print OUT "$projMsg\n";
