@@ -40,9 +40,9 @@ bool ProjectionChecker::checkSpliceSites(bool quiet)
     GffExon &refExon=refTrans.getIthExon(i);
     GffExon &altExon=altTrans.getIthExon(i);
     if(refExon.hasDonor()) 
-      ok=ok && checkDonor(refExon,refSubstrate,altExon,altSubstrate,quiet);
+      ok=checkDonor(refExon,refSubstrate,altExon,altSubstrate,quiet) && ok;
     if(refExon.hasAcceptor()) 
-      ok=ok && checkAcceptor(refExon,refSubstrate,altExon,altSubstrate,quiet);
+      ok=checkAcceptor(refExon,refSubstrate,altExon,altSubstrate,quiet) && ok;
   }
   return ok;
 }
