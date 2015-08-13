@@ -32,6 +32,7 @@ String labelToString(GeneModelLabel lab)
     case LABEL_EXON_1:     return "E1";
     case LABEL_EXON_2:     return "E2";
     case LABEL_EXON:       return "E";
+    case LABEL_UTR:        return "U";
     }
   throw String("Invalid GeneModelLabel: ")+int(lab);
 }
@@ -43,13 +44,13 @@ struct GeneModelLabelMap {
   static GeneModelLabelMap global;
   GeneModelLabelMap() {
     m["?"]=LABEL_NONE;
-    m["U"]=LABEL_NONE;
     m["N"]=LABEL_INTERGENIC;
     m["I"]=LABEL_INTRON;
     m["E0"]=LABEL_EXON_0;
     m["E1"]=LABEL_EXON_1;
     m["E2"]=LABEL_EXON_2;
     m["E"]=LABEL_EXON;
+    m["U"]=LABEL_UTR;
   }
 };
 GeneModelLabelMap GeneModelLabelMap::global;
