@@ -13,7 +13,7 @@
 #include "BOOM/Vector.H"
 #include "BOOM/Set.H"
 #include "ContentType.H"
-#include "Strand.H"
+#include "BOOM/Strand.H"
 class SignalQueue;
 
 class ContentSensor

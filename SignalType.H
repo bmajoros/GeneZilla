@@ -9,7 +9,7 @@
 
 #include <iostream>
 #include "BOOM/String.H"
-#include "Strand.H"
+#include "BOOM/Strand.H"
 
 enum SignalType
   {

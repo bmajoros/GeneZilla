@@ -10,7 +10,7 @@
 #include <iostream>
 #include "BOOM/File.H"
 #include "BOOM/Comparator.H"
-#include "Strand.H"
+#include "BOOM/Strand.H"
 using namespace std;
 using namespace BOOM;
 

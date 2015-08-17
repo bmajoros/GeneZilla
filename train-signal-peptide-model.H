@@ -15,7 +15,7 @@
 #include "BOOM/GffReader.H"
 #include "BOOM/VectorSorter.H"
 #include "BOOM/Array1D.H"
-#include "Strand.H"
+#include "BOOM/Strand.H"
 
 
 class PeptideExon

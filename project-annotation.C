@@ -26,10 +26,10 @@ private:
   GffTranscript *loadGff(const String &filename);
   void parseNoncanonicals(const String &,Set<String> &);
   String loadSeq(const String &filename);
-  GeneModelLabel getExonLabel(int phase);
   void computeLabeling(GffTranscript &,Labeling &);
   void mapLabeling(Labeling &from,Labeling &to,const String &cigar);
   void mapTranscript(GffTranscript &,const String &cig,const String &outfile);
+  void mapExon(GffExon &,CigarAlignment &);
 };
 
 
@@ -179,25 +179,30 @@ project-annotation <ref.gff> <ref.fasta> <alt.fasta> <ref-alt.cigar> <out.vector
 
 
 
-void Application::mapTranscript(GffTranscript &refTrans,const String &cig,
-				 const String &outfile)
+void Application::computeLabeling(GffTranscript &transcript,
+				  Labeling &refLab)
 {
-  GffTranscript transcript=refTrans;
-  CigarString cigar(cig);
-  CigarAlignment &align=*cigar.getAlignment();
+  int begin, end;
+  transcript.getCDSbeginEnd(begin,end);
   char strand=transcript.getStrand();
-  String source=transcript.getSource();
-  String substrate=transcript.getSubstrate();
+  if(strand!='+') throw "only forward-strand features are currently supported";
   int numExons=transcript.getNumExons();
+  refLab.asArray().setAllTo(LABEL_INTERGENIC);
+  for(int i=begin ; i<end ; ++i) refLab[i]=LABEL_INTRON;
+  int phase=0;
   for(int i=0 ; i<numExons ; ++i) {
     GffExon &exon=transcript.getIthExon(i);
-    int begin=exon.getBegin(), end=exon.getEnd();
-    begin=align[begin]; end=align[end-1]+1;//###
-    exon.setBegin(begin); exon.setEnd(end);
+    begin=exon.getBegin(); end=exon.getEnd();
+    for(int j=begin ; j<end ; ++j) {
+      refLab[j]=getExonLabel(phase);
+      phase=(phase+1)%3;
+    }
   }
-  delete &align;
-  ofstream os(outfile.c_str());
-  transcript.toGff(os);
+  for(Vector<GffExon*>::iterator cur=transcript.getUTR(), end=
+	transcript.getUTRend() ; cur!=end ; ++cur) {
+    GffExon *UTR=*cur;
+    refLab.setIntervalTo(Interval(UTR->getBegin(),UTR->getEnd()),LABEL_UTR);
+  }
 }
 
 
@@ -217,37 +222,31 @@ void Application::mapLabeling(Labeling &from,Labeling &to,const String &cig)
 
 
 
-void Application::computeLabeling(GffTranscript &transcript,
-				  Labeling &refLab)
+void Application::mapExon(GffExon &exon,CigarAlignment &align)
 {
-  int begin=transcript.getBegin(), end=transcript.getEnd();
-  char strand=transcript.getStrand();
-  if(strand!='+') throw "only forward-strand features are currently supported";
-  int numExons=transcript.getNumExons();
-  refLab.asArray().setAllTo(LABEL_INTERGENIC);
-  for(int i=begin ; i<end ; ++i) refLab[i]=LABEL_INTRON;
-  int phase=0;
-  for(int i=0 ; i<numExons ; ++i) {
-    GffExon &exon=transcript.getIthExon(i);
-    begin=exon.getBegin(); end=exon.getEnd();
-    for(int j=begin ; j<end ; ++j) {
-      refLab[j]=getExonLabel(phase);
-      phase=(phase+1)%3;
-    }
-  }
+  int begin=exon.getBegin(), end=exon.getEnd();
+  begin=align.mapApproximate(begin,DIR_RIGHT);
+  end=align.mapApproximate(end-1,DIR_LEFT)+1;
+  exon.setBegin(begin); exon.setEnd(end);
 }
 
 
 
-GeneModelLabel Application::getExonLabel(int phase)
+void Application::mapTranscript(GffTranscript &refTrans,const String &cig,
+				 const String &outfile)
 {
-  switch(phase)
-    {
-    case 0: return LABEL_EXON_0;
-    case 1: return LABEL_EXON_1;
-    case 2: return LABEL_EXON_2;
-    default: throw String("bad phase in getExonLabel(): ")+phase;
-    }
+  GffTranscript transcript=refTrans;
+  CigarString cigar(cig);
+  CigarAlignment &align=*cigar.getAlignment();
+  for(Vector<GffExon*>::iterator cur=transcript.getExons(), end=
+	transcript.getExonsEnd() ; cur!=end ; ++cur)
+    mapExon(**cur,align);
+  for(Vector<GffExon*>::iterator cur=transcript.getUTR(), end=
+	transcript.getUTRend() ; cur!=end ; ++cur)
+    mapExon(**cur,align);
+  delete &align;
+  ofstream os(outfile.c_str());
+  transcript.toGff(os);
 }
 
 

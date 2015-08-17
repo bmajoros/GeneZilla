@@ -176,3 +176,25 @@ void Labeling::setAllTo(GeneModelLabel lab)
   A.setAllTo(lab);
 }
 
+
+
+void Labeling::setIntervalTo(const Interval &I,GeneModelLabel lab)
+{
+  for(int i=I.getBegin(), e=I.getEnd() ; i<e ; ++i)
+    A[i]=lab;
+}
+
+
+
+void Labeling::forgetPhase()
+{
+  int L=A.size();
+  for(int i=0 ; i<L ; ++i) 
+    if(isExon(A[i])) A[i]=LABEL_EXON;
+  
+}
+
+
+
+
+

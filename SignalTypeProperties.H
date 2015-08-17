@@ -10,7 +10,7 @@
 #include "BOOM/Set.H"
 #include "BOOM/Map.H"
 #include "genezilla.H"
-#include "Strand.H"
+#include "BOOM/Strand.H"
 #include "SignalType.H"
 #include "ContentType.H"
 

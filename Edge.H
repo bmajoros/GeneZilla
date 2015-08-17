@@ -11,7 +11,7 @@
 #include "Signal.H"
 #include "genezilla.H"
 #include "ContentType.H"
-#include "Strand.H"
+#include "BOOM/Strand.H"
 
 #define SignalPtr BOOM::SmartPointer<Signal>
 

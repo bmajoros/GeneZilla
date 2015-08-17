@@ -13,7 +13,7 @@
 #include "BOOM/Histogram.H"
 #include "SignalType.H"
 #include "Signal.H"
-#include "Strand.H"
+#include "BOOM/Strand.H"
 class ContentSensor;
 
 class SignalSensor

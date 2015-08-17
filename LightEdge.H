@@ -9,7 +9,7 @@
 #include <iostream>
 #include "BOOM/Vector.H"
 #include "BOOM/Array1D.H"
-#include "Strand.H"
+#include "BOOM/Strand.H"
 #include "ContentType.H"
 using namespace std;
 using namespace BOOM;

@@ -10,7 +10,7 @@
 #include <iostream>
 #include "BOOM/String.H"
 #include "BOOM/GffExon.H"
-#include "Strand.H"
+#include "BOOM/Strand.H"
 #include "SignalType.H"
 using namespace BOOM;
 

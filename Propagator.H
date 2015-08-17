@@ -9,7 +9,7 @@
 #define INCL_Propagator_H
 
 #include <iostream>
-#include "Strand.H"
+#include "BOOM/Strand.H"
 #include "Signal.H"
 #include "BOOM/Constants.H"
 class SignalQueue;
