@@ -30,7 +30,7 @@ public:
   bool checkFrameshifts(const Labeling &,const GffTranscript &,
 			const String &substrate,bool quiet);
   bool detectNMD(GffTranscript &altTrans,const String &altSubstrate,
-		 bool quiet);
+		 bool quiet,int &largestEJCdistance);
   void translate(GffTranscript &refTrans,GffTranscript &altTrans,
 		 String &refProtein,String &altProtein);
   bool hasStartCodon(const String &protein);

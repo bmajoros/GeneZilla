@@ -352,7 +352,7 @@ void SignalStreamBuilder::scan(int begin,int end,SignalSensor &sensor)
   const String &seqStr=refAnno.getAltSeqStr();
   end-=sensor.getContextWindowLength();
   for(int pos=begin ; pos<end ; ++pos) {
-    Signal *signal=sensor.detect(seq,seqStr,pos);
+    SignalPtr signal=sensor.detect(seq,seqStr,pos);
     if(signal) stream.add(signal);
   }
 }

@@ -167,14 +167,16 @@ project-annotation <ref.gff> <ref.fasta> <alt.fasta> <ref-alt.cigar> <out.vector
     cout<<"Premature stop at AA position "<<PTCpos
 	<<" in alt protein, length="<<altProtein.length()
 	<<"\nalt="<<altProtein<<"\nref="<<refProtein<<endl;
-    if(!checker.detectNMD(*altTrans,altSeq,false))
-      cout<<"Truncation predicted"<<endl;
+    int EJCdistance;
+    if(!checker.detectNMD(*altTrans,altSeq,false,EJCdistance))
+      cout<<"Truncation predicted : PTC is "<<EJCdistance
+	  <<"nt from last EJC"<<endl;
   }
   else if(!checker.hasStopCodon(altProtein)) {
     refTrans->extendFinalExonBy3(); altTrans->extendFinalExonBy3();
     checker.translate(*refTrans,*altTrans,refProtein,altProtein);
     if(!checker.hasStopCodon(altProtein))
-      cout<<"Missing stop codon:\nalt="<<altProtein
+      cout<<"Missing stop codon, probable loss of function:\nalt="<<altProtein
 	  <<"\nref="<<refProtein<<endl; 
   }
 
@@ -268,9 +270,7 @@ String Application::loadSeq(const String &filename)
 GffTranscript *Application::loadGff(const String &filename)
 {
   GffReader reader(filename);
-TRACE
   Vector<GffTranscript*> *transcripts=reader.loadTranscripts();
-TRACE
   const int n=transcripts->size();
   if(n<1) throw filename+" contains no transcripts";
   GffTranscript *transcript=(*transcripts)[0];

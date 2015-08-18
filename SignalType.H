@@ -10,6 +10,7 @@
 #include <iostream>
 #include "BOOM/String.H"
 #include "BOOM/Strand.H"
+using namespace BOOM;
 
 enum SignalType
   {

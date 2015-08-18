@@ -121,17 +121,21 @@ String ProjectionChecker::getAcceptor(GffExon &exon,const String &substrate,int 
 
 bool ProjectionChecker::detectNMD(GffTranscript &transcript,
 				  const String &substrate,
-				  bool quiet)
+				  bool quiet,int &largestEJCdistance)
 {
+  largestEJCdistance=-1;
   const int numExons=transcript.getNumExons();
   if(numExons<2) return false;
   const int lastExonLen=transcript.getIthExon(numExons-1).length();
   const int lastEJC=transcript.getSplicedLength()-lastExonLen;
+  cout<<"transcript spliced length="<<transcript.getSplicedLength()<<" last exon len="<<lastExonLen<<endl;
   CodonIterator iter(transcript,substrate);
   Codon codon;
   while(iter.nextCodon(codon))
     if(codon.isStop()) {
       const int distance=lastEJC-codon.splicedCoord;
+      if(largestEJCdistance<0 || distance>largestEJCdistance)
+	largestEJCdistance=distance;
       if(distance>=50) {
 	if(!quiet)
 	  cout<<"NMD predicted: PTC found "<<distance<<"bp from last EJC"<<endl;
