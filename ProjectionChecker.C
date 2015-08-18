@@ -128,7 +128,6 @@ bool ProjectionChecker::detectNMD(GffTranscript &transcript,
   if(numExons<2) return false;
   const int lastExonLen=transcript.getIthExon(numExons-1).length();
   const int lastEJC=transcript.getSplicedLength()-lastExonLen;
-  cout<<"transcript spliced length="<<transcript.getSplicedLength()<<" last exon len="<<lastExonLen<<endl;
   CodonIterator iter(transcript,substrate);
   Codon codon;
   while(iter.nextCodon(codon))
@@ -272,7 +271,6 @@ bool ProjectionChecker::geneIsWellFormed(const GffTranscript &trans,
     if(exon.hasAcceptor()) 
       if(!checkAcceptor(exon,substrate,noncanonicalAGs,msg)) badSpliceSite=true;
   }
-  //cout<<"XXX\n"<<protein<<"\nPTC="<<PTC<<"\n"<<!(noStart || noStop || PTC || badSpliceSite)<<endl;//###
   return !(noStart || noStop || PTC || badSpliceSite);
 }
 
