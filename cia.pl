@@ -10,7 +10,7 @@ my $BANDWIDTH=50;
 my $NONCANONICAL_GT="GC,AT";
 my $NONCANONICAL_AG="AC";
 
-die "cia.pl <dir> <ID> <ref.fasta> <ref.gff> <alt.fasta>" unless @ARGV==5;
+die "cia.pl <dir> <ID> <ref.fasta> <ref.gff> <alt.fasta>\n" unless @ARGV==5;
 my ($dir,$ID,$refFastaOrig,$refGff,$altFastaOrig)=@ARGV;
 
 #================================================================

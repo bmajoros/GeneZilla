@@ -72,12 +72,13 @@ Application::Application()
 int Application::main(int argc,char *argv[])
 {
   // Process command line
-  CommandLine cmd(argc,argv,"d:a:");
+  CommandLine cmd(argc,argv,"d:a:f");
   if(cmd.numArgs()!=6)
     throw String("\n\
 project-annotation <ref.gff> <ref.fasta> <alt.fasta> <ref-alt.cigar> <out.vector> <out.gff>\n\
-     -d donors = allow noncanonical donors; comma-separated list (capital letters)\n\
-     -a acceptors = allow noncanonical acceptors; comma-separated list (capital letters)\n\
+     -d donors = also allow these donors; comma-separated (capital letters)\n\
+     -a acceptors = also allow these acceptors; comma-separated (capital)\n\
+     -f = force reporting of problems when mapping fails\n\
 \n");
   const String refGffFile=cmd.arg(0);
   const String refFasta=cmd.arg(1);
@@ -85,6 +86,7 @@ project-annotation <ref.gff> <ref.fasta> <alt.fasta> <ref-alt.cigar> <out.vector
   const String cigarFile=cmd.arg(3);
   const String outfile=cmd.arg(4);
   const String outGff=cmd.arg(5);
+  const bool forceFailureInfo=cmd.option('f');
   Set<String> nonCanonicalGTs, nonCanonicalAGs;
   if(cmd.option('d')) parseNoncanonicals(cmd.optParm('d'),nonCanonicalGTs);
   if(cmd.option('a')) parseNoncanonicals(cmd.optParm('a'),nonCanonicalAGs);
@@ -103,13 +105,14 @@ project-annotation <ref.gff> <ref.fasta> <alt.fasta> <ref-alt.cigar> <out.vector
 					  msg)) {
     cout<<"Error: reference gene is not well-formed -- aborting projection"<<endl;
     cout<<"Details:"<<endl;
+    if(PTC) cout<<"\tReference gene has a pre-termination stop codon (PTC)"<<endl;
+    cout<<msg<<endl;
     //if(noStart) cout<<"\tReference gene's CDS does not begin with a valid start codon"<<endl;
     //if(noStop) cout<<"\tLast codon in reference gene's CDS is not a stop codon"<<endl;
-    if(PTC) cout<<"\tReference gene has a pre-termination stop codon (PTC)"<<endl;
     //if(badSpliceSite) cout<<"\tReference gene has a nonconsensus splice site"<<endl;
-    cout<<msg<<endl;
     return -1;
   }
+  else cout<<"reference gene is well-formed"<<endl; // ### DEBUGGING
 
   // Compute the reference labeling
   Labeling refLab(refSeqLen);
@@ -131,12 +134,13 @@ project-annotation <ref.gff> <ref.fasta> <alt.fasta> <ref-alt.cigar> <out.vector
   // Generate labeling file
   ofstream os(outfile.c_str());
   os<<altLab;
+  os.close();
   
   // Check the projection to see if the gene might be broken
   GffTranscript *altTrans=loadGff(outGff);
   ProjectionChecker checker(*refTrans,*altTrans,refSeq,altSeq,
 			    altLab,nonCanonicalGTs,nonCanonicalAGs);
-  bool spliceSitesOK=checker.checkSpliceSites(true);
+  bool spliceSitesOK=checker.checkSpliceSites(!forceFailureInfo);
   if(!spliceSitesOK) {
     cout<<"splice sites do not map perfectly -- please run CIA"<<endl;
     return -1;
@@ -264,7 +268,9 @@ String Application::loadSeq(const String &filename)
 GffTranscript *Application::loadGff(const String &filename)
 {
   GffReader reader(filename);
+TRACE
   Vector<GffTranscript*> *transcripts=reader.loadTranscripts();
+TRACE
   const int n=transcripts->size();
   if(n<1) throw filename+" contains no transcripts";
   GffTranscript *transcript=(*transcripts)[0];

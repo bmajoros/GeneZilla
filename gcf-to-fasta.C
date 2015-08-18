@@ -130,13 +130,12 @@ Application::Application()
 int Application::main(int argc,char *argv[])
 {
   // Process command line
-  CommandLine cmd(argc,argv,"rt:i:c:");
+  CommandLine cmd(argc,argv,"rt:i:");
   if(cmd.numArgs()!=4)
     throw String("\ngcf-to-fasta [options] <in.gcf> <genome.2bit> <regions.bed> <out.fasta>\n\
      -t path : path to twoBitToFa\n\
      -r : emit reference sequence also\n\
      -i ID : only this sample (individual)\n\
-     -c CHR : only this chromosome\n\
 \n\
      NOTE: Run 'which twoBitToFa' to ensure it's in your path\n\
      NOTE: regions.bed is a BED6 file: chr begin end name score strand\n\
@@ -194,7 +193,11 @@ void Application::convert(File &gcf,ostream &os,const String genomeFile)
     line.trimWhitespace();
     if(line.isEmpty()) continue;
     Vector<String> &fields=*line.getFields();
-    if(fields.size()!=numVariants+1) throw "Wrong number of fields in GCF line";
+    if(fields.size()!=numVariants+1) {
+      cout<<fields.size()<<"\t"<<numVariants<<"\t"<<endl;
+      if(fields.size()>0) cout<<fields[0]<<endl;
+      throw "Wrong number of fields in GCF line";
+    }
     String id=fields.front();
     if(!wantIndiv.isEmpty() && id!=wantIndiv) continue;
     fields.erase(fields.begin());
@@ -244,10 +247,10 @@ void Application::parseHeader(const String &line)
     if(fields.size()!=5) throw String("cannot parse GCF header: ")+field;
     const String &id=fields[0];
     const String &chr=fields[1];
-    if(!wantChr.isEmpty() && chr!=wantChr) continue;
+    //if(!wantChr.isEmpty() && chr!=wantChr) continue;
     const int pos=fields[2];
     if(!prevPos.isDefined(chr)) prevPos[chr]=0;
-    if(pos==prevPos[chr]) continue;
+    //if(pos==prevPos[chr]) continue;
     if(pos<=prevPos[chr]) 
       throw String(pos)+"<="+prevPos[chr]+
 	": input file is not sorted: use vcf-sort and re-convert to gcf";
@@ -327,7 +330,49 @@ void Application::loadRegions(const String &regionsFilename,const String &
 
 
 
-void Application::emit(const String &individualID,const Vector<Genotype> &loci,ostream &os)
+void Application::emit(const String &individualID,const Vector<Genotype> &loci,
+		       ostream &os)
+{
+  const int numVariants=variants.size();
+  for(Vector<Region>::const_iterator cur=regions.begin(), end=regions.end() ;
+      cur!=end ; ++cur) {
+    Array1D<int> deltas(PLOIDY); deltas.setAllTo(0); // for indels
+    const Region &region=*cur;
+    String seq[PLOIDY]; for(int i=0 ; i<PLOIDY ; ++i) seq[i]=region.seq;
+    for(Vector<Variant>::const_iterator cur=region.variants.begin(), end=
+	  region.variants.end() ; cur!=end ; ++cur) {
+      const Variant &variant=*cur;
+      const int localPos=variant.pos-region.begin;
+      Genotype gt=loci[i];
+      for(int j=0 ; j<PLOIDY ; ++j) {
+	const int allele=gt.alleles[j];
+	if(allele) { // differs from reference
+	  const String &refAllele=variant.alleles[0];
+	  const String &altAllele=variant.alleles[allele];
+	  const int refLen=refAllele.length();
+	  const int altLen=altAllele.length();
+	  deltas[j]+=refLen-altLen;
+	  if(region.seq.substring(localPos,refLen)!=refAllele)
+	    throw String("reference mismatch: ")+refAllele+" vs. "+
+	      region.seq.substring(variant.pos,refLen);
+	  seq[j].replaceSubstring(localPos-deltas[j],refLen,altAllele);
+	}
+      }
+    } // end foreach variant
+    for(int j=0 ; j<PLOIDY ; ++j) {
+      String def=String(">")+individualID+"_"+j+" /individual="+individualID+
+	" /allele="+j+" /region="+region.id;
+      if(region.strand=='-') seq[j]=ProteinTrans::reverseComplement(seq[j]);
+      writer.addToFasta(def,seq[j],os);
+    }
+  } // end foreach region
+}
+
+
+
+/*
+void Application::emit(const String &individualID,const Vector<Genotype> &loci,
+		       ostream &os)
 {
   const int numVariants=variants.size();
   for(Vector<Region>::const_iterator cur=regions.begin(), end=regions.end() ;
@@ -352,7 +397,6 @@ void Application::emit(const String &individualID,const Vector<Genotype> &loci,o
 	      throw String("reference mismatch: ")+refAllele+" vs. "+
 		region.seq.substring(variant.pos,refLen);
 	    seq[j].replaceSubstring(localPos-deltas[j],refLen,altAllele);
-	    //  gt.alleles[j] ? variant.alt : variant.ref);
 	  }
 	}
       }
@@ -365,6 +409,7 @@ void Application::emit(const String &individualID,const Vector<Genotype> &loci,o
     }
   } // end foreach region
 }
+ */
 
 
 
