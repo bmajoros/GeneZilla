@@ -218,12 +218,8 @@ void Signal::initializePropagators(double signalScore)
       propagators[i]=&p;
       for(int i=0 ; i<3 ; ++i)
 	p[i]=(phases.isMember(i) ? signalScore : NEGATIVE_INFINITY);
-      //if(!isFinite(p[0]) && !isFinite(p[1]) && !isFinite(p[2])) throw "Z";
     }
   if(n<2) propagators[1]=NULL;
-  //cout<<"Z "<<*this<<" "<<*propagators[0];
-  //if(propagators[1]) cout<<" "<<*propagators[1]<<endl;
-  //else cout<<endl;
 }
 
 
@@ -317,7 +313,6 @@ BOOM::Set<Edge*> &Signal::getEdgesOut()
 
 bool Signal::isLeftTerminus()
 {
-  //return edgesIn.size()==0;
   return getConsensusPosition()<0;
 }
 

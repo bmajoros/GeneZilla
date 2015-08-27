@@ -16,22 +16,28 @@ TypeNamesInitializer TypeNamesInitializer::initializer;
 
 TypeNamesInitializer::TypeNamesInitializer()
 {
+  typeNames["LT"]=LEFT_TERMINUS;
+  typeNames["RT"]=RIGHT_TERMINUS;
   typeNames["ATG"]=ATG;
   typeNames["TAG"]=TAG;
   typeNames["GT"]=GT;
   typeNames["AG"]=AG;
-  typeNames["GT_U12"]=GT_U12;
-  typeNames["AG_U12"]=AG_U12;
-  typeNames["PROMOTER"]=PROM;
-  typeNames["POLYA"]=POLYA;
+  typeNames["UTR5GT"]=UTR5GT;
+  typeNames["UTR5AG"]=UTR5AG;
+  typeNames["UTR3GT"]=UTR3GT;
+  typeNames["UTR3AG"]=UTR3AG;
+  typeNames["-UTR5GT"]=NEG_UTR5GT;
+  typeNames["-UTR5AG"]=NEG_UTR5AG;
+  typeNames["-UTR3GT"]=NEG_UTR3GT;
+  typeNames["-UTR3AG"]=NEG_UTR3AG;
+  typeNames["TSS"]=TSS;
+  typeNames["TES"]=TES;
   typeNames["-ATG"]=NEG_ATG;
   typeNames["-TAG"]=NEG_TAG;
   typeNames["-GT"]=NEG_GT;
   typeNames["-AG"]=NEG_AG;
-  typeNames["-GT_U12"]=NEG_GT_U12;
-  typeNames["-AG_U12"]=NEG_AG_U12;
-  typeNames["-PROMOTER"]=NEG_PROM;
-  typeNames["-POLYA"]=NEG_POLYA;
+  typeNames["-TSS"]=NEG_TSS;
+  typeNames["-TES"]=NEG_TES;
   typeNames["GT0"]=GT0;
   typeNames["GT1"]=GT1;
   typeNames["GT2"]=GT2;
@@ -49,8 +55,10 @@ TypeNamesInitializer::TypeNamesInitializer()
   longTypeNames["stop-codon"]=TAG;
   longTypeNames["donor"]=GT;
   longTypeNames["acceptor"]=AG;
-  longTypeNames["promoter"]=PROM;
-  longTypeNames["poly-A"]=POLYA;
+  longTypeNames["transcription-start-site"]=TSS;
+  longTypeNames["transcription-end-site"]=TES;
+  longTypeNames["left-terminus"]=LEFT_TERMINUS;
+  longTypeNames["right-terminus"]=RIGHT_TERMINUS;
 }
 
 
@@ -68,22 +76,28 @@ BOOM::String signalTypeToString(SignalType t)
 {
   switch(t)
     {
-    case ATG:         return "ATG";
-    case TAG:         return "TAG";
-    case GT:          return "GT"; 
-    case AG:          return "AG"; 
-    case GT_U12:          return "GT_U12"; 
-    case AG_U12:          return "AG_U12"; 
-    case PROM:        return "PROMOTER";
-    case POLYA:       return "POLYA";   
-    case NEG_ATG:     return "-ATG";    
-    case NEG_TAG:     return "-TAG";    
-    case NEG_GT:      return "-GT";     
-    case NEG_AG:      return "-AG";     
-    case NEG_GT_U12:      return "-GT_U12";
-    case NEG_AG_U12:      return "-AG_U12";
-    case NEG_PROM:    return "-PROMOTER";
-    case NEG_POLYA:   return "-POLYA";  
+    case LEFT_TERMINUS:  return "LT";
+    case RIGHT_TERMINUS: return "RT";
+    case ATG:            return "ATG";
+    case TAG:            return "TAG";
+    case GT:             return "GT"; 
+    case AG:             return "AG";
+    case UTR5GT:         return "UTR5GT";
+    case UTR5AG:         return "UTR5AG";
+    case UTR3GT:         return "UTR3GT";
+    case UTR3AG:         return "UTR3AG";
+    case TSS:            return "TSS";
+    case TES:            return "TES";
+    case NEG_ATG:        return "-ATG";    
+    case NEG_TAG:        return "-TAG";    
+    case NEG_GT:         return "-GT";     
+    case NEG_AG:         return "-AG";     
+    case NEG_TSS:        return "-TSS";
+    case NEG_TES:        return "-TES";  
+    case NEG_UTR5GT:     return "-UTR5GT";
+    case NEG_UTR5AG:     return "-UTR5AG";
+    case NEG_UTR3GT:     return "-UTR3GT";
+    case NEG_UTR3AG:     return "-UTR3AG";
     }
   throw "signalTypeToString()";
 }
@@ -94,22 +108,28 @@ BOOM::String signalTypeToName(SignalType t)
 {
   switch(t)
     {
-    case ATG:         return "start-codon";
-    case TAG:         return "stop-codon";
-    case GT:          return "donor"; 
-    case AG:          return "acceptor"; 
-    case GT_U12:          return "donor-U12"; 
-    case AG_U12:          return "acceptor-U12"; 
-    case PROM:        return "promoter";
-    case POLYA:       return "poly-A";   
-    case NEG_ATG:     return "start-codon";    
-    case NEG_TAG:     return "stop-codon";    
-    case NEG_GT:      return "donor";     
-    case NEG_AG:      return "acceptor";     
-    case NEG_GT_U12:      return "donor-U12";
-    case NEG_AG_U12:      return "acceptor-U12";
-    case NEG_PROM:    return "promoter";
-    case NEG_POLYA:   return "poly-A";  
+    case LEFT_TERMINUS:  return "left-terminus";
+    case RIGHT_TERMINUS: return "right-terminus";
+    case ATG:            return "start-codon";
+    case TAG:            return "stop-codon";
+    case GT:             return "donor"; 
+    case AG:             return "acceptor"; 
+    case UTR5GT:         return "UTR5-donor";
+    case UTR5AG:         return "UTR5-acceptor";
+    case UTR3GT:         return "UTR3-donor";
+    case UTR3AG:         return "UTR3-acceptor";
+    case TSS:            return "transcription-start-site";
+    case TES:            return "transcription-end-site";   
+    case NEG_ATG:        return "start-codon";    
+    case NEG_TAG:        return "stop-codon";    
+    case NEG_GT:         return "donor";     
+    case NEG_AG:         return "acceptor";     
+    case NEG_TSS:        return "transcription-start-site";
+    case NEG_TES:        return "transcription-end-site";
+    case NEG_UTR5GT:     return "UTR5-donor";
+    case NEG_UTR5AG:     return "UTR5-acceptor";
+    case NEG_UTR3GT:     return "UTR3-donor";
+    case NEG_UTR3AG:     return "UTR3-acceptor";
     }
   throw "signalTypeToName()";
 }
@@ -120,22 +140,28 @@ ostream &operator<<(ostream &os,SignalType t)
 {
   switch(t)
     {
+    case LEFT_TERMINUS:os<< "LT";           break;
+    case RIGHT_TERMINUS:os<<"RT";           break;
     case ATG:         os << "ATG";          break;
     case TAG:         os << "TAG";          break;
     case GT:          os << "GT";           break;
     case AG:          os << "AG";           break;
-    case GT_U12:          os << "GT_U12";           break;
-    case AG_U12:          os << "AG_U12";           break;
-    case PROM:        os << "PROMOTER";     break;
-    case POLYA:       os << "POLYA";        break;
+    case UTR5GT:      os << "UTR5GT";       break;
+    case UTR5AG:      os << "UTR5AG";       break;
+    case UTR3GT:      os << "UTR3GT";       break;
+    case UTR3AG:      os << "UTR3AG";       break;
+    case TSS:         os << "TSS";          break;
+    case TES:         os << "TES";          break;
     case NEG_ATG:     os << "-ATG";         break;
     case NEG_TAG:     os << "-TAG";         break;
     case NEG_GT:      os << "-GT";          break;
     case NEG_AG:      os << "-AG";          break;
-    case NEG_GT_U12:      os << "-GT_U12";          break;
-    case NEG_AG_U12:      os << "-AG_U12";          break;
-    case NEG_PROM:    os << "-PROMOTER";    break;
-    case NEG_POLYA:   os << "-POLYA";       break;
+    case NEG_TSS:     os << "-TSS";         break;
+    case NEG_TES:     os << "-TES";         break;
+    case NEG_UTR5GT:  os << "-UTR5GT";      break;
+    case NEG_UTR5AG:  os << "-UTR5AG";      break;
+    case NEG_UTR3GT:  os << "-UTR3GT";      break;
+    case NEG_UTR3AG:  os << "-UTR3AG";      break;
     default: throw BOOM::String("INVALID SIGNAL TYPE: ")+int(t);
     }
   return os;
@@ -159,22 +185,28 @@ SignalType reverseComplement(SignalType t)
 {
   switch(t)
     {
-    case ATG:         return NEG_ATG;
-    case TAG:         return NEG_TAG;
-    case GT:          return NEG_GT;
-    case AG:          return NEG_AG;
-    case GT_U12:          return NEG_GT_U12;
-    case AG_U12:          return NEG_AG_U12;
-    case PROM:        return NEG_PROM;
-    case POLYA:       return NEG_POLYA;
-    case NEG_ATG:     return ATG;
-    case NEG_TAG:     return TAG;
-    case NEG_GT:      return GT;
-    case NEG_AG:      return AG;
-    case NEG_GT_U12:      return GT_U12;
-    case NEG_AG_U12:      return AG_U12;
-    case NEG_PROM:    return PROM;
-    case NEG_POLYA:   return POLYA;
+    case LEFT_TERMINUS:   return LEFT_TERMINUS;  
+    case RIGHT_TERMINUS:  return RIGHT_TERMINUS;
+    case ATG:             return NEG_ATG;
+    case TAG:             return NEG_TAG;
+    case GT:              return NEG_GT;
+    case AG:              return NEG_AG;
+    case UTR5GT:          return NEG_UTR5GT;
+    case UTR5AG:          return NEG_UTR5AG;
+    case UTR3GT:          return NEG_UTR3GT;
+    case UTR3AG:          return NEG_UTR3AG;
+    case TSS:             return NEG_TSS;
+    case TES:             return NEG_TES;
+    case NEG_ATG:         return ATG;
+    case NEG_TAG:         return TAG;
+    case NEG_GT:          return GT;
+    case NEG_AG:          return AG;
+    case NEG_TSS:         return TSS;
+    case NEG_TES:         return TES;
+    case NEG_UTR5GT:      return UTR5GT;
+    case NEG_UTR5AG:      return UTR5AG;
+    case NEG_UTR3GT:      return UTR3GT;
+    case NEG_UTR3AG:      return UTR3AG;
     }
 }
 
@@ -184,22 +216,33 @@ Strand getStrand(SignalType t)
 {
   switch(t)
     {
-    case ATG:         return FORWARD_STRAND;
-    case TAG:         return FORWARD_STRAND;
-    case GT:          return FORWARD_STRAND;
-    case AG:          return FORWARD_STRAND;
-    case GT_U12:          return FORWARD_STRAND;
-    case AG_U12:          return FORWARD_STRAND;
-    case PROM:        return FORWARD_STRAND;
-    case POLYA:       return FORWARD_STRAND;
-    case NEG_ATG:     return REVERSE_STRAND;
-    case NEG_TAG:     return REVERSE_STRAND;
-    case NEG_GT:      return REVERSE_STRAND;
-    case NEG_AG:      return REVERSE_STRAND;
-    case NEG_GT_U12:      return REVERSE_STRAND;
-    case NEG_AG_U12:      return REVERSE_STRAND;
-    case NEG_PROM:    return REVERSE_STRAND;
-    case NEG_POLYA:   return REVERSE_STRAND;
+    case LEFT_TERMINUS:
+    case RIGHT_TERMINUS:
+      return NO_STRAND;
+
+    case ATG:
+    case TAG:
+    case GT:
+    case AG:
+    case UTR5GT:
+    case UTR5AG:
+    case UTR3GT:
+    case UTR3AG:
+    case TSS:
+    case TES:
+      return FORWARD_STRAND;
+
+    case NEG_ATG:
+    case NEG_TAG:
+    case NEG_GT:
+    case NEG_AG:
+    case NEG_UTR5GT:
+    case NEG_UTR5AG:
+    case NEG_UTR3GT:
+    case NEG_UTR3AG:
+    case NEG_TSS:
+    case NEG_TES:
+      return REVERSE_STRAND;
     }
 }
 
@@ -211,10 +254,12 @@ bool endsCoding(SignalType t)
     {
     case TAG:
     case GT:
-    case GT_U12:
+    case UTR5GT:
+    case UTR3GT:
     case NEG_ATG:
-    case NEG_AG: 
-    case NEG_AG_U12:
+    case NEG_AG:
+    case NEG_UTR5AG:
+    case NEG_UTR3AG:
       return true;
     }
   return false;
@@ -227,10 +272,12 @@ bool beginsCoding(SignalType t)
     {
     case ATG: 
     case AG:
-    case AG_U12:
-    case NEG_GT_U12:
+    case UTR5AG:
+    case UTR3AG:
     case NEG_TAG:
     case NEG_GT:
+    case NEG_UTR5GT:
+    case NEG_UTR3GT:
       return true;
     }
   return false;
@@ -242,9 +289,11 @@ bool beginsIntron(SignalType t)
   switch(t)
     {
     case GT:
+    case UTR5GT:
+    case UTR3GT:
     case NEG_AG: 
-    case GT_U12:
-    case NEG_AG_U12:
+    case NEG_UTR5AG:
+    case NEG_UTR3AG:
       return true;
     }
   return false;
@@ -256,9 +305,11 @@ bool endsIntron(SignalType t)
   switch(t)
     {
     case NEG_GT:
+    case NEG_UTR5GT:
+    case NEG_UTR3GT:
     case AG: 
-    case AG_U12:
-    case NEG_GT_U12:
+    case UTR5AG:
+    case UTR3AG:
       return true;
     }
   return false;
@@ -270,23 +321,29 @@ SignalType dropStrand(SignalType t)
 {
   switch(t)
     {
+    case LEFT_TERMINUS:
+    case RIGHT_TERMINUS:
     case ATG:
     case TAG:
     case GT:
     case AG:
-    case GT_U12:
-    case AG_U12:
-    case PROM:
-    case POLYA:
-      return ;
+    case UTR5GT:
+    case UTR5AG:
+    case UTR3GT:
+    case UTR3AG:
+    case TSS:
+    case TES:
+      return t;
     case NEG_ATG:
     case NEG_TAG:
     case NEG_GT:
     case NEG_AG:
-    case NEG_GT_U12:
-    case NEG_AG_U12:
-    case NEG_PROM:
-    case NEG_POLYA:
+    case NEG_UTR5GT:
+    case NEG_UTR5AG:
+    case NEG_UTR3GT:
+    case NEG_UTR3AG:
+    case NEG_TSS:
+    case NEG_TES:
       return reverseComplement(t);
     }
   INTERNAL_ERROR;

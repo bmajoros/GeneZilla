@@ -18,18 +18,24 @@ enum SignalType
     TAG,
     GT,
     AG,
-    GT_U12,
-    AG_U12,
-    PROM,
-    POLYA,
+    UTR5GT,
+    UTR5AG,
+    UTR3GT,
+    UTR3AG,
+    TSS, // transcription start site
+    TES, // transcription end site
     NEG_ATG,
     NEG_TAG,
     NEG_GT,
     NEG_AG,
-    NEG_GT_U12,
-    NEG_AG_U12,
-    NEG_PROM,
-    NEG_POLYA,
+    NEG_UTR5GT,
+    NEG_UTR5AG,
+    NEG_UTR3GT,
+    NEG_UTR3AG,
+    NEG_TSS,
+    NEG_TES,
+    LEFT_TERMINUS,
+    RIGHT_TERMINUS,
 
     // Extended types (used only for transition probabilities):
     GT0,
@@ -48,7 +54,7 @@ enum SignalType
     NO_SIGNAL_TYPE
   };
 
-inline int numSignalTypes() {return 12;} // doesn't include extended types!
+inline int numSignalTypes() {return 22;} // doesn't include extended types!
 inline SignalType &operator++(SignalType &s) {s=SignalType(int(s)+1);return s;}
 
 SignalType dropStrand(SignalType);

@@ -439,7 +439,7 @@ void CIA::maskLeftATG(PriorMask &pmask,Signal *signal,const Edge &edge)
   ContentType regionType; Interval regionInterval;
   regionOverlapping(consensusPos,regionType,regionInterval);
   const Interval edgeInterval=edge.getFeatureInterval().intersect(Interval(0,seqLen));
-  if(regionType==FIVE_PRIME_UTR) {
+  if(isUTR5(regionType)) {
     Interval maskInterval=regionInterval.intersect(edgeInterval);
     mask(maskInterval,pmask);
   }
@@ -590,16 +590,34 @@ void CIA::initLabeling(const Edge &edge,Labeling &labeling)
     initExonLabeling(0,labeling); 
     break;
   case INTRON: 
+  case UTR5_INTRON:
+  case NEG_UTR5_INTRON:
+  case UTR3_INTRON:
+  case NEG_UTR3_INTRON:
     labeling.setAllTo(LABEL_INTRON); 
     break;
   case INTERGENIC: 
     labeling.setAllTo(LABEL_INTERGENIC); 
     break;
-  case FIVE_PRIME_UTR: 
-    labeling.setAllTo(LABEL_INTERGENIC); // ###
+  case UTR5_INITIAL:
+  case UTR5_INTERNAL:
+  case UTR5_FINAL:
+  case UTR5_SINGLE:
+  case NEG_UTR5_INITIAL:
+  case NEG_UTR5_INTERNAL:
+  case NEG_UTR5_FINAL:
+  case NEG_UTR5_SINGLE:
+    labeling.setAllTo(LABEL_UTR);
     break;
-  case THREE_PRIME_UTR: 
-    labeling.setAllTo(LABEL_INTERGENIC);  // ###
+  case UTR3_INITIAL:
+  case UTR3_INTERNAL:
+  case UTR3_FINAL:
+  case UTR3_SINGLE:
+  case NEG_UTR3_INITIAL:
+  case NEG_UTR3_INTERNAL:
+  case NEG_UTR3_FINAL:
+  case NEG_UTR3_SINGLE:
+    labeling.setAllTo(LABEL_UTR);
     break;
   default: INTERNAL_ERROR; break;
   }

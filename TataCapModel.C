@@ -84,7 +84,7 @@ TataCapModel::~TataCapModel()
 void TataCapModel::load(istream &is)
 {
   is >> minSeparation >> maxSeparation;
-  SignalType signalType=PROM;
+  SignalType signalType=TSS;
   setSignalType(signalType);
   setStrand(::getStrand(signalType));
   tataModel=(WMM*) SignalSensor::load(is,getGC());

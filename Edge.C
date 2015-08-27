@@ -63,14 +63,14 @@ int Edge::getFeatureBegin()
     case TAG:       return consensusPos+3;   // UTR or intergenic
     case GT:        return consensusPos;     // intron
     case AG:        return consensusPos+2;   // exon
-    case PROM:      return consensusPos;     // UTR
-    case POLYA:     return consensusPos+left->getConsensusLength(); // intergenic
+    case TSS:       return consensusPos;     // UTR
+    case TES:       return consensusPos+left->getConsensusLength(); // intergenic
     case NEG_ATG:   return consensusPos+3;   // UTR or intergenic
     case NEG_TAG:   return consensusPos;     // exon
     case NEG_GT:    return consensusPos+2;   // exon
     case NEG_AG:    return consensusPos;     // intron
-    case NEG_PROM:  return consensusPos+left->getConsensusLength(); // intergenic
-    case NEG_POLYA: return consensusPos;     // UTR
+    case NEG_TSS:   return consensusPos+left->getConsensusLength(); // intergenic
+    case NEG_TES:   return consensusPos;     // UTR
     }
 }
 
@@ -85,14 +85,14 @@ int Edge::getFeatureEnd()
     case TAG:       return consensusPos+3;   // exon
     case GT:        return consensusPos;     // exon
     case AG:        return consensusPos+2;   // intron
-    case PROM:      return consensusPos;     // intergenic
-    case POLYA:     return consensusPos+right->getConsensusLength(); // UTR
+    case TSS:       return consensusPos;     // intergenic
+    case TES:       return consensusPos+right->getConsensusLength(); // UTR
     case NEG_ATG:   return consensusPos+3;   // exon
     case NEG_TAG:   return consensusPos;     // UTR or intergenic
     case NEG_GT:    return consensusPos+2;   // intron
     case NEG_AG:    return consensusPos;     // exon
-    case NEG_PROM:  return consensusPos+right->getConsensusLength(); // UTR
-    case NEG_POLYA: return consensusPos;     // intergenic
+    case NEG_TSS:   return consensusPos+right->getConsensusLength(); // UTR
+    case NEG_TES:   return consensusPos;     // intergenic
     }
 }
 

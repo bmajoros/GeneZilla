@@ -15,32 +15,56 @@ ContentTypeInitializer ContentTypeInitializer::initializer;
 
 ContentTypeInitializer::ContentTypeInitializer()
 {
-  contentTypeMap["INITIAL-EXON"]=INITIAL_EXON;
-  contentTypeMap["INTERNAL-EXON"]=INTERNAL_EXON;
-  contentTypeMap["FINAL-EXON"]=FINAL_EXON;
-  contentTypeMap["SINGLE-EXON"]=SINGLE_EXON;
-  contentTypeMap["INTRON"]=INTRON;
-  contentTypeMap["INTERGENIC"]=INTERGENIC;
-  contentTypeMap["FIVE-PRIME-UTR"]=FIVE_PRIME_UTR;
-  contentTypeMap["THREE-PRIME-UTR"]=THREE_PRIME_UTR;
-  contentTypeMap["NEG-INITIAL-EXON"]=NEG_INITIAL_EXON;
-  contentTypeMap["NEG-INTERNAL-EXON"]=NEG_INTERNAL_EXON;
-  contentTypeMap["NEG-FINAL-EXON"]=NEG_FINAL_EXON;
-  contentTypeMap["NEG-SINGLE-EXON"]=NEG_SINGLE_EXON;
-  contentTypeMap["NEG-INTRON"]=NEG_INTRON;
-  contentTypeMap["NEG-FIVE-PRIME-UTR"]=NEG_FIVE_PRIME_UTR;
-  contentTypeMap["NEG-THREE-PRIME-UTR"]=NEG_THREE_PRIME_UTR;
+  contentTypeMap["INTERGENIC"]=      INTERGENIC;
+  contentTypeMap["INITIAL-EXON"]=    INITIAL_EXON;
+  contentTypeMap["INTERNAL-EXON"]=   INTERNAL_EXON;
+  contentTypeMap["FINAL-EXON"]=      FINAL_EXON;
+  contentTypeMap["SINGLE-EXON"]=     SINGLE_EXON;
+  contentTypeMap["INTRON"]=          INTRON;
+  contentTypeMap["UTR5-INTRON"]=     UTR5_INTRON;
+  contentTypeMap["UTR3-INTRON"]=     UTR3_INTRON;
+  contentTypeMap["INITIAL-UTR5"]=    UTR5_INITIAL;
+  contentTypeMap["INTERNAL-UTR5"]=   UTR5_INTERNAL;
+  contentTypeMap["FINAL-UTR5"]=      UTR5_FINAL;
+  contentTypeMap["SINGLE-UTR5"]=     UTR5_SINGLE;
+  contentTypeMap["INITIAL-UTR3"]=    UTR3_INITIAL;
+  contentTypeMap["INTERNAL-UTR3"]=   UTR3_INTERNAL;
+  contentTypeMap["FINAL-UTR3"]=      UTR3_FINAL;
+  contentTypeMap["SINGLE-UTR3"]=     UTR3_SINGLE;
+  contentTypeMap["NEG-INITIAL-UTR5"]=    NEG_UTR5_INITIAL;
+  contentTypeMap["NEG-INTERNAL-UTR5"]=   NEG_UTR5_INTERNAL;
+  contentTypeMap["NEG-FINAL-UTR5"]=      NEG_UTR5_FINAL;
+  contentTypeMap["NEG-SINGLE-UTR5"]=     NEG_UTR5_SINGLE;
+  contentTypeMap["NEG-INITIAL-UTR3"]=    NEG_UTR3_INITIAL;
+  contentTypeMap["NEG-INTERNAL-UTR3"]=   NEG_UTR3_INTERNAL;
+  contentTypeMap["NEG-FINAL-UTR3"]=      NEG_UTR3_FINAL;
+  contentTypeMap["NEG-SINGLE-UTR3"]=     NEG_UTR3_SINGLE;
+  contentTypeMap["NEG-INITIAL-EXON"]=    NEG_INITIAL_EXON;
+  contentTypeMap["NEG-INTERNAL-EXON"]=   NEG_INTERNAL_EXON;
+  contentTypeMap["NEG-FINAL-EXON"]=      NEG_FINAL_EXON;
+  contentTypeMap["NEG-SINGLE-EXON"]=     NEG_SINGLE_EXON;
+  contentTypeMap["NEG-INTRON"]=          NEG_INTRON;
+  contentTypeMap["NEG-UTR5-INTRON"]=     NEG_UTR5_INTRON;
+  contentTypeMap["NEG-UTR3-INTRON"]=     NEG_UTR3_INTRON;
   contentTypeMap["UNKNOWN-CONTENT-FORWARD"]=UNKNOWN_CONTENT_FORWARD;
   contentTypeMap["UNKNOWN-CONTENT-REVERSE"]=UNKNOWN_CONTENT_REVERSE;
 
-  longContentTypeMap["initial-exon"]=INITIAL_EXON;
-  longContentTypeMap["internal-exon"]=INTERNAL_EXON;
-  longContentTypeMap["final-exon"]=FINAL_EXON;
-  longContentTypeMap["single-exon"]=SINGLE_EXON;
-  longContentTypeMap["intron"]=INTRON;
-  longContentTypeMap["intergenic"]=INTERGENIC;
-  longContentTypeMap["5'-UTR"]=FIVE_PRIME_UTR;
-  longContentTypeMap["3'-UTR"]=THREE_PRIME_UTR;
+  longContentTypeMap["initial-exon"]=    INITIAL_EXON;
+  longContentTypeMap["internal-exon"]=   INTERNAL_EXON;
+  longContentTypeMap["final-exon"]=      FINAL_EXON;
+  longContentTypeMap["single-exon"]=     SINGLE_EXON;
+  longContentTypeMap["intron"]=          INTRON;
+  longContentTypeMap["UTR5-intron"]=     UTR5_INTRON;
+  longContentTypeMap["UTR3-intron"]=     UTR3_INTRON;
+  longContentTypeMap["intergenic"]=      INTERGENIC;
+  longContentTypeMap["initial-UTR5"]=    UTR5_INITIAL;
+  longContentTypeMap["internal-UTR5"]=   UTR5_INTERNAL;
+  longContentTypeMap["final-UTR5"]=      UTR5_FINAL;
+  longContentTypeMap["single-UTR5"]=     UTR5_SINGLE;
+  longContentTypeMap["initial-UTR3"]=    UTR3_INITIAL;
+  longContentTypeMap["internal-UTR3"]=   UTR3_INTERNAL;
+  longContentTypeMap["final-UTR3"]=      UTR3_FINAL;
+  longContentTypeMap["single-UTR3"]=     UTR3_SINGLE;
 }
 
 
@@ -55,9 +79,17 @@ Strand getStrand(ContentType t)
     case FINAL_EXON:
     case SINGLE_EXON:
     case INTRON:
+    case UTR5_INTRON:
+    case UTR3_INTRON:
     case INTERGENIC://###
-    case FIVE_PRIME_UTR:
-    case THREE_PRIME_UTR:
+    case UTR5_INITIAL:
+    case UTR5_INTERNAL:
+    case UTR5_FINAL:
+    case UTR5_SINGLE:
+    case UTR3_INITIAL:
+    case UTR3_INTERNAL:
+    case UTR3_FINAL:
+    case UTR3_SINGLE:
       return FORWARD_STRAND;
 
     case UNKNOWN_CONTENT_REVERSE:
@@ -66,8 +98,16 @@ Strand getStrand(ContentType t)
     case NEG_FINAL_EXON:
     case NEG_SINGLE_EXON:
     case NEG_INTRON:
-    case NEG_FIVE_PRIME_UTR:
-    case NEG_THREE_PRIME_UTR:
+    case NEG_UTR5_INTRON:
+    case NEG_UTR3_INTRON:
+    case NEG_UTR5_INITIAL:
+    case NEG_UTR5_INTERNAL:
+    case NEG_UTR5_FINAL:
+    case NEG_UTR5_SINGLE:
+    case NEG_UTR3_INITIAL:
+    case NEG_UTR3_INTERNAL:
+    case NEG_UTR3_FINAL:
+    case NEG_UTR3_SINGLE:
       return REVERSE_STRAND;
 
     default: throw BOOM::String(__FILE__)+__LINE__;
@@ -87,16 +127,35 @@ BOOM::String contentTypeToString(ContentType t)
     case FINAL_EXON:           return "FINAL-EXON";
     case SINGLE_EXON:          return "SINGLE-EXON";
     case INTRON:               return "INTRON";
+    case UTR5_INTRON:          return "UTR5-INTRON";
+    case UTR3_INTRON:          return "UTR3-INTRON";
     case INTERGENIC:           return "INTERGENIC";
-    case FIVE_PRIME_UTR:       return "FIVE-PRIME-UTR";
-    case THREE_PRIME_UTR:      return "THREE-PRIME-UTR";
+
+    case UTR5_INITIAL:         return "UTR5-INITIAL";
+    case UTR5_INTERNAL:        return "UTR5-INTERNAL";
+    case UTR5_FINAL:           return "UTR5-FINAL";
+    case UTR5_SINGLE:          return "UTR5-SINGLE";
+    case UTR3_INITIAL:         return "UTR3-INITIAL";
+    case UTR3_INTERNAL:        return "UTR3-INTERNAL";
+    case UTR3_FINAL:           return "UTR3-FINAL";
+    case UTR3_SINGLE:          return "UTR3-SINGLE";
+
     case NEG_INITIAL_EXON:     return "NEG-INITIAL-EXON";
     case NEG_INTERNAL_EXON:    return "NEG-INTERNAL-EXON";
     case NEG_FINAL_EXON:       return "NEG-FINAL-EXON";
     case NEG_SINGLE_EXON:      return "NEG-SINGLE-EXON";
     case NEG_INTRON:           return "NEG-INTRON";
-    case NEG_FIVE_PRIME_UTR:   return "NEG-FIVE-PRIME-UTR";
-    case NEG_THREE_PRIME_UTR:  return "NEG-THREE-PRIME-UTR";
+    case NEG_UTR5_INTRON:      return "NEG-UTR5-INTRON";
+    case NEG_UTR3_INTRON:      return "NEG-UTR3-INTRON";
+
+    case NEG_UTR5_INITIAL:         return "NEG-UTR5-INITIAL";
+    case NEG_UTR5_INTERNAL:        return "NEG-UTR5-INTERNAL";
+    case NEG_UTR5_FINAL:           return "NEG-UTR5-FINAL";
+    case NEG_UTR5_SINGLE:          return "NEG-UTR5-SINGLE";
+    case NEG_UTR3_INITIAL:         return "NEG-UTR3-INITIAL";
+    case NEG_UTR3_INTERNAL:        return "NEG-UTR3-INTERNAL";
+    case NEG_UTR3_FINAL:           return "NEG-UTR3-FINAL";
+    case NEG_UTR3_SINGLE:          return "NEG-UTR3-SINGLE";
 
     default: throw BOOM::String("INVALID CONTENT TYPE: ")+int(t);
     }
@@ -115,16 +174,32 @@ BOOM::String contentTypeNiceString(ContentType t)
     case FINAL_EXON:           return "final-exon";
     case SINGLE_EXON:          return "single-exon";
     case INTRON:               return "intron";
+    case UTR5_INTRON:          return "UTR5-intron";
+    case UTR3_INTRON:          return "UTR3-intron";
     case INTERGENIC:           return "intergenic";
-    case FIVE_PRIME_UTR:       return "5'-UTR";
-    case THREE_PRIME_UTR:      return "3'-UTR";
+    case UTR5_INITIAL:         return "initial-UTR5";
+    case UTR5_INTERNAL:        return "internal-UTR5";
+    case UTR5_FINAL:           return "final-UTR5";
+    case UTR5_SINGLE:          return "single-UTR5";
+    case UTR3_INITIAL:         return "initial-UTR3";
+    case UTR3_INTERNAL:        return "internal-UTR3";
+    case UTR3_FINAL:           return "final-UTR3";
+    case UTR3_SINGLE:          return "single-UTR3";
     case NEG_INITIAL_EXON:     return "initial-exon";
     case NEG_INTERNAL_EXON:    return "internal-exon";
     case NEG_FINAL_EXON:       return "final-exon";
     case NEG_SINGLE_EXON:      return "single-exon";
     case NEG_INTRON:           return "intron";
-    case NEG_FIVE_PRIME_UTR:   return "5'-UTR";
-    case NEG_THREE_PRIME_UTR:  return "3'-UTR";
+    case NEG_UTR5_INTRON:      return "UTR5-intron";
+    case NEG_UTR3_INTRON:      return "UTR3-intron";
+    case NEG_UTR5_INITIAL:         return "initial-UTR5";
+    case NEG_UTR5_INTERNAL:        return "internal-UTR5";
+    case NEG_UTR5_FINAL:           return "final-UTR5";
+    case NEG_UTR5_SINGLE:          return "single-UTR5";
+    case NEG_UTR3_INITIAL:         return "initial-UTR3";
+    case NEG_UTR3_INTERNAL:        return "internal-UTR3";
+    case NEG_UTR3_FINAL:           return "final-UTR3";
+    case NEG_UTR3_SINGLE:          return "single-UTR3";
 
     default: throw BOOM::String("INVALID CONTENT TYPE: ")+int(t);
     }
@@ -168,8 +243,16 @@ ContentType reverseComplement(ContentType t)
     case FINAL_EXON:           return NEG_FINAL_EXON;
     case SINGLE_EXON:          return NEG_SINGLE_EXON;
     case INTRON:               return NEG_INTRON;
-    case FIVE_PRIME_UTR:       return NEG_FIVE_PRIME_UTR;
-    case THREE_PRIME_UTR:      return NEG_THREE_PRIME_UTR;
+    case UTR5_INTRON:          return NEG_UTR5_INTRON;
+    case UTR3_INTRON:          return NEG_UTR3_INTRON;
+    case UTR5_INITIAL:         return NEG_UTR5_INITIAL;
+    case UTR5_INTERNAL:        return NEG_UTR5_INTERNAL;
+    case UTR5_FINAL:           return NEG_UTR5_FINAL;
+    case UTR5_SINGLE:          return NEG_UTR5_SINGLE;
+    case UTR3_INITIAL:         return NEG_UTR3_INITIAL;
+    case UTR3_INTERNAL:        return NEG_UTR3_INTERNAL;
+    case UTR3_FINAL:           return NEG_UTR3_FINAL;
+    case UTR3_SINGLE:          return NEG_UTR3_SINGLE;
     case UNKNOWN_CONTENT_FORWARD: return UNKNOWN_CONTENT_REVERSE;
 
     case NEG_INITIAL_EXON:     return INITIAL_EXON;
@@ -177,13 +260,20 @@ ContentType reverseComplement(ContentType t)
     case NEG_FINAL_EXON:       return FINAL_EXON;
     case NEG_SINGLE_EXON:      return SINGLE_EXON;
     case NEG_INTRON:           return INTRON;
-    case NEG_FIVE_PRIME_UTR:   return FIVE_PRIME_UTR;
-    case NEG_THREE_PRIME_UTR:  return THREE_PRIME_UTR;
-    case UNKNOWN_CONTENT_REVERSE: return UNKNOWN_CONTENT_FORWARD;
-
+    case NEG_UTR5_INTRON:      return UTR5_INTRON;
+    case NEG_UTR3_INTRON:      return UTR3_INTRON;
+    case NEG_UTR5_INITIAL:         return UTR5_INITIAL;
+    case NEG_UTR5_INTERNAL:        return UTR5_INTERNAL;
+    case NEG_UTR5_FINAL:           return UTR5_FINAL;
+    case NEG_UTR5_SINGLE:          return UTR5_SINGLE;
+    case NEG_UTR3_INITIAL:         return UTR3_INITIAL;
+    case NEG_UTR3_INTERNAL:        return UTR3_INTERNAL;
+    case NEG_UTR3_FINAL:           return UTR3_FINAL;
+    case NEG_UTR3_SINGLE:          return UTR3_SINGLE;
+    case UNKNOWN_CONTENT_REVERSE:  return UNKNOWN_CONTENT_FORWARD;
     case INTERGENIC:           return INTERGENIC;
 
-    default: throw BOOM::String(__FILE__)+__LINE__;
+    default: INTERNAL_ERROR;
     }
 }
 
@@ -203,20 +293,36 @@ bool isCoding(ContentType t)
     case NEG_SINGLE_EXON:      
       return true;
 
-    case INTRON:               
+    case INTRON:  
+    case UTR5_INTRON:
+    case UTR3_INTRON:
     case INTERGENIC:           
-    case FIVE_PRIME_UTR:       
-    case THREE_PRIME_UTR:      
-    case NEG_INTRON:           
-    case NEG_FIVE_PRIME_UTR:   
-    case NEG_THREE_PRIME_UTR:  
+    case NEG_INTRON:  
+    case NEG_UTR5_INTRON:
+    case NEG_UTR3_INTRON:
+    case UTR5_INITIAL:
+    case UTR5_INTERNAL:
+    case UTR5_FINAL:
+    case UTR5_SINGLE:
+    case UTR3_INITIAL:
+    case UTR3_INTERNAL:
+    case UTR3_FINAL:
+    case UTR3_SINGLE:
+    case NEG_UTR5_INITIAL:
+    case NEG_UTR5_INTERNAL:
+    case NEG_UTR5_FINAL:
+    case NEG_UTR5_SINGLE:
+    case NEG_UTR3_INITIAL:
+    case NEG_UTR3_INTERNAL:
+    case NEG_UTR3_FINAL:
+    case NEG_UTR3_SINGLE:
       return false;
 
     case UNKNOWN_CONTENT_FORWARD:
     case UNKNOWN_CONTENT_REVERSE:
       throw "isCoding(UNKNOWN_CONTENT_FORWARD/REVERSE)";
 
-    default: throw BOOM::String(int(t))+" "+__FILE__+" "+__LINE__;
+    default: INTERNAL_ERROR;
     }
 }
 
@@ -226,8 +332,12 @@ bool isIntron(ContentType t)
 {
   switch(t)
     {
-    case INTRON:               
-    case NEG_INTRON:           
+    case INTRON:
+    case UTR5_INTRON:
+    case UTR3_INTRON:
+    case NEG_INTRON: 
+    case NEG_UTR5_INTRON:
+    case NEG_UTR3_INTRON:
       return true;
     default:
       return false;
@@ -247,10 +357,22 @@ bool isUTR(ContentType t)
 {
   switch(t)
     {
-    case FIVE_PRIME_UTR:       
-    case THREE_PRIME_UTR:      
-    case NEG_FIVE_PRIME_UTR:   
-    case NEG_THREE_PRIME_UTR:  
+    case UTR5_INITIAL:
+    case UTR5_INTERNAL:
+    case UTR5_FINAL:
+    case UTR5_SINGLE:
+    case UTR3_INITIAL:
+    case UTR3_INTERNAL:
+    case UTR3_FINAL:
+    case UTR3_SINGLE:
+    case NEG_UTR5_INITIAL:
+    case NEG_UTR5_INTERNAL:
+    case NEG_UTR5_FINAL:
+    case NEG_UTR5_SINGLE:
+    case NEG_UTR3_INITIAL:
+    case NEG_UTR3_INTERNAL:
+    case NEG_UTR3_FINAL:
+    case NEG_UTR3_SINGLE:
       return true;
 
     default: 
@@ -260,50 +382,170 @@ bool isUTR(ContentType t)
 
 
 
-SignalType leftSignal(ContentType contentType)
+bool isUTR5(ContentType t)
+{
+  switch(t)
+    {
+    case UTR5_INITIAL:
+    case UTR5_INTERNAL:
+    case UTR5_FINAL:
+    case UTR5_SINGLE:
+    case NEG_UTR5_INITIAL:
+    case NEG_UTR5_INTERNAL:
+    case NEG_UTR5_FINAL:
+    case NEG_UTR5_SINGLE:
+      return true;
+    }
+  return false;
+}
+
+
+
+bool isUTR3(ContentType t)
+{
+  switch(t)
+    {
+    case UTR3_INITIAL:
+    case UTR3_INTERNAL:
+    case UTR3_FINAL:
+    case UTR3_SINGLE:
+    case NEG_UTR3_INITIAL:
+    case NEG_UTR3_INTERNAL:
+    case NEG_UTR3_FINAL:
+    case NEG_UTR3_SINGLE:
+      return true;
+    }
+}
+
+
+
+bool isUTR5intron(ContentType t)
+{
+  switch(t)
+    {
+    case UTR5_INTRON:
+    case NEG_UTR5_INTRON:
+      return true;
+    }
+}
+
+
+
+bool isUTR3intron(ContentType t)
+{
+  switch(t)
+    {
+    case UTR3_INTRON:
+    case NEG_UTR3_INTRON:
+      return true;
+    }
+}
+
+
+
+static Set<SignalType> sigset(SignalType t)
+{
+  Set<SignalType> s;
+  s+=t;
+  return s;
+}
+
+
+static Set<SignalType> sigset(SignalType t1,SignalType t2)
+{
+  Set<SignalType> s;
+  s+=t1;
+  s+=t2;
+  return s;
+}
+
+
+static Set<SignalType> sigset(SignalType t1,SignalType t2,SignalType t3)
+{
+  Set<SignalType> s;
+  s+=t1;
+  s+=t2;
+  s+=t3;
+  return s;
+}
+
+
+Set<SignalType> leftSignals(ContentType contentType)
 {
   switch(contentType)
     {
-    case INTERGENIC:               return TAG;
-    case INITIAL_EXON:             return ATG;
-    case INTERNAL_EXON:            return AG;
-    case FINAL_EXON:               return AG;
-    case SINGLE_EXON:              return ATG;
-    case INTRON:                   return GT;
-    case FIVE_PRIME_UTR:           return PROM;
-    case THREE_PRIME_UTR:          return TAG;
-    case NEG_INITIAL_EXON:         return NEG_GT;
-    case NEG_INTERNAL_EXON:        return NEG_GT;
-    case NEG_FINAL_EXON:           return NEG_TAG;
-    case NEG_SINGLE_EXON:          return NEG_TAG;
-    case NEG_INTRON:               return NEG_AG;
-    case NEG_FIVE_PRIME_UTR:       return NEG_ATG;
-    case NEG_THREE_PRIME_UTR:      return NEG_POLYA;
+    case INTERGENIC:               return sigset(LEFT_TERMINUS,TAG,TES);
+    case INITIAL_EXON:             return sigset(ATG);
+    case INTERNAL_EXON:            return sigset(AG);
+    case FINAL_EXON:               return sigset(AG);
+    case SINGLE_EXON:              return sigset(ATG);
+    case INTRON:                   return sigset(GT);
+    case UTR5_INTRON:              return sigset(UTR5GT);
+    case UTR3_INTRON:              return sigset(UTR3GT);
+    case UTR5_INITIAL:             return sigset(TSS);
+    case UTR5_INTERNAL:            return sigset(UTR5AG);
+    case UTR5_FINAL:               return sigset(UTR5AG);
+    case UTR5_SINGLE:              return sigset(TSS);
+    case UTR3_INITIAL:             return sigset(TAG);
+    case UTR3_INTERNAL:            return sigset(UTR3AG);
+    case UTR3_FINAL:               return sigset(UTR3AG);
+    case UTR3_SINGLE:              return sigset(TAG);
+    case NEG_INITIAL_EXON:         return sigset(NEG_GT);
+    case NEG_INTERNAL_EXON:        return sigset(NEG_GT);
+    case NEG_FINAL_EXON:           return sigset(NEG_TAG);
+    case NEG_SINGLE_EXON:          return sigset(NEG_TAG);
+    case NEG_INTRON:               return sigset(NEG_AG);
+    case NEG_UTR5_INTRON:          return sigset(NEG_UTR5AG);
+    case NEG_UTR3_INTRON:          return sigset(NEG_UTR3AG);
+    case NEG_UTR5_INITIAL:         return sigset(NEG_GT);
+    case NEG_UTR5_INTERNAL:        return sigset(NEG_GT);
+    case NEG_UTR5_FINAL:           return sigset(NEG_ATG,NEG_TES);
+    case NEG_UTR5_SINGLE:          return sigset(NEG_ATG,NEG_TES);
+    case NEG_UTR3_INITIAL:         return sigset(NEG_GT);
+    case NEG_UTR3_INTERNAL:        return sigset(NEG_GT);
+    case NEG_UTR3_FINAL:           return sigset(NEG_TES);
+    case NEG_UTR3_SINGLE:          return sigset(NEG_TES);
     default: INTERNAL_ERROR;
     }
 }
 
 
 
-SignalType rightSignal(ContentType contentType)
+Set<SignalType> rightSignals(ContentType contentType)
 {
   switch(contentType)
     {
-    case INTERGENIC:               return ATG;
-    case INITIAL_EXON:             return GT;
-    case INTERNAL_EXON:            return GT;
-    case FINAL_EXON:               return TAG;
-    case SINGLE_EXON:              return TAG;
-    case INTRON:                   return AG;
-    case FIVE_PRIME_UTR:           return ATG;
-    case THREE_PRIME_UTR:          return POLYA;
-    case NEG_INITIAL_EXON:         return NEG_ATG;
-    case NEG_INTERNAL_EXON:        return NEG_AG;
-    case NEG_FINAL_EXON:           return NEG_AG;
-    case NEG_SINGLE_EXON:          return NEG_ATG;
-    case NEG_INTRON:               return NEG_GT;
-    case NEG_FIVE_PRIME_UTR:       return NEG_PROM;
-    case NEG_THREE_PRIME_UTR:      return NEG_TAG;
+    case INTERGENIC:               return sigset(TSS,ATG,RIGHT_TERMINUS);
+    case INITIAL_EXON:             return sigset(GT);
+    case INTERNAL_EXON:            return sigset(GT);
+    case FINAL_EXON:               return sigset(TAG);
+    case SINGLE_EXON:              return sigset(TAG);
+    case INTRON:                   return sigset(AG);
+    case UTR5_INTRON:              return sigset(UTR5AG);
+    case UTR3_INTRON:              return sigset(UTR3AG);
+    case UTR5_INITIAL:             return sigset(UTR5GT);
+    case UTR5_INTERNAL:            return sigset(UTR5GT);
+    case UTR5_FINAL:               return sigset(ATG,TES);
+    case UTR5_SINGLE:              return sigset(ATG,TES);
+    case UTR3_INITIAL:             return sigset(UTR3GT);
+    case UTR3_INTERNAL:            return sigset(UTR3GT);
+    case UTR3_FINAL:               return sigset(TES);
+    case UTR3_SINGLE:              return sigset(TES);
+    case NEG_INITIAL_EXON:         return sigset(NEG_ATG);
+    case NEG_INTERNAL_EXON:        return sigset(NEG_AG);
+    case NEG_FINAL_EXON:           return sigset(NEG_AG);
+    case NEG_SINGLE_EXON:          return sigset(NEG_ATG);
+    case NEG_INTRON:               return sigset(NEG_GT);
+    case NEG_UTR5_INTRON:          return sigset(NEG_UTR5GT);
+    case NEG_UTR3_INTRON:          return sigset(NEG_UTR3GT);
+    case NEG_UTR5_INITIAL:         return sigset(NEG_TSS);
+    case NEG_UTR5_INTERNAL:        return sigset(NEG_UTR5AG);
+    case NEG_UTR5_FINAL:           return sigset(NEG_UTR5AG);
+    case NEG_UTR5_SINGLE:          return sigset(NEG_TSS);
+    case NEG_UTR3_INITIAL:         return sigset(NEG_TAG);
+    case NEG_UTR3_INTERNAL:        return sigset(NEG_UTR3AG);
+    case NEG_UTR3_FINAL:           return sigset(NEG_UTR3AG);
+    case NEG_UTR3_SINGLE:          return sigset(NEG_TAG);
     default: throw BOOM::String(__FILE__)+__LINE__;
     }
 }
@@ -321,6 +563,22 @@ ExonType contentTypeToExonType(ContentType ct)
     case NEG_INTERNAL_EXON:        return ET_INTERNAL_EXON;
     case NEG_FINAL_EXON:           return ET_FINAL_EXON;
     case NEG_SINGLE_EXON:          return ET_SINGLE_EXON;
+    case UTR5_INITIAL:             return ET_INITIAL_UTR5;
+    case UTR5_INTERNAL:            return ET_INTERNAL_UTR5;
+    case UTR5_FINAL:               return ET_FINAL_UTR5;
+    case UTR5_SINGLE:              return ET_SINGLE_UTR5;
+    case UTR3_INITIAL:             return ET_INITIAL_UTR3;
+    case UTR3_INTERNAL:            return ET_INTERNAL_UTR3;
+    case UTR3_FINAL:               return ET_FINAL_UTR3;
+    case UTR3_SINGLE:              return ET_SINGLE_UTR3;
+    case NEG_UTR5_INITIAL:         return ET_INITIAL_UTR5;
+    case NEG_UTR5_INTERNAL:        return ET_INTERNAL_UTR5;
+    case NEG_UTR5_FINAL:           return ET_FINAL_UTR5;
+    case NEG_UTR5_SINGLE:          return ET_SINGLE_UTR5;
+    case NEG_UTR3_INITIAL:         return ET_INITIAL_UTR3;
+    case NEG_UTR3_INTERNAL:        return ET_INTERNAL_UTR3;
+    case NEG_UTR3_FINAL:           return ET_FINAL_UTR3;
+    case NEG_UTR3_SINGLE:          return ET_SINGLE_UTR3;
   default: INTERNAL_ERROR;
   }
 }
@@ -340,7 +598,27 @@ ContentType exonTypeToContentType(ExonType exonType,
       return strand==FORWARD_STRAND ? FINAL_EXON : NEG_FINAL_EXON;
     case ET_SINGLE_EXON:
       return strand==FORWARD_STRAND ? SINGLE_EXON : NEG_SINGLE_EXON;
-    case ET_EXON:       
+    case ET_INITIAL_UTR5:
+      return strand==FORWARD_STRAND ? UTR5_INITIAL : NEG_UTR5_INITIAL;
+    case ET_INTERNAL_UTR5:
+      return strand==FORWARD_STRAND ? UTR5_INTERNAL : NEG_UTR5_INTERNAL;
+    case ET_FINAL_UTR5:
+      return strand==FORWARD_STRAND ? UTR5_FINAL : NEG_UTR5_FINAL;
+    case ET_SINGLE_UTR5:
+      return strand==FORWARD_STRAND ? UTR5_SINGLE : NEG_UTR5_SINGLE;
+    case ET_INITIAL_UTR3:
+      return strand==FORWARD_STRAND ? UTR3_INITIAL : NEG_UTR3_INITIAL;
+    case ET_INTERNAL_UTR3:
+      return strand==FORWARD_STRAND ? UTR3_INTERNAL : NEG_UTR3_INTERNAL;
+    case ET_FINAL_UTR3:
+      return strand==FORWARD_STRAND ? UTR3_FINAL : NEG_UTR3_FINAL;
+    case ET_SINGLE_UTR3:
+      return strand==FORWARD_STRAND ? UTR3_SINGLE : NEG_UTR3_SINGLE;
+
+    case ET_UTR: // nonspecific
+    case ET_UTR5:// nonspecific
+    case ET_UTR3:// nonspecific
+    case ET_EXON:// nonspecific
     default:
       throw "::exonTypeToContentType()";
     }
@@ -357,21 +635,36 @@ ContentType dropStrand(ContentType t)
     case FINAL_EXON:
     case SINGLE_EXON:
     case INTRON:
-    case FIVE_PRIME_UTR:
-    case THREE_PRIME_UTR:
-    case UNKNOWN_CONTENT_FORWARD:
+    case UTR5_INTRON:
+    case UTR3_INTRON:
+    case UTR5_INITIAL:
+    case UTR5_INTERNAL:
+    case UTR5_FINAL:
+    case UTR5_SINGLE:
+    case UTR3_INITIAL:
+    case UTR3_INTERNAL:
+    case UTR3_FINAL:
+    case UTR3_SINGLE:
+    case INTERGENIC:           
       return t;
+    case UNKNOWN_CONTENT_FORWARD:
     case NEG_INITIAL_EXON:
     case NEG_INTERNAL_EXON:
     case NEG_FINAL_EXON:
     case NEG_SINGLE_EXON:
     case NEG_INTRON:
-    case NEG_FIVE_PRIME_UTR:
-    case NEG_THREE_PRIME_UTR:
+    case NEG_UTR5_INTRON:
+    case NEG_UTR3_INTRON:
+    case NEG_UTR5_INITIAL:
+    case NEG_UTR5_INTERNAL:
+    case NEG_UTR5_FINAL:
+    case NEG_UTR5_SINGLE:
+    case NEG_UTR3_INITIAL:
+    case NEG_UTR3_INTERNAL:
+    case NEG_UTR3_FINAL:
+    case NEG_UTR3_SINGLE:
     case UNKNOWN_CONTENT_REVERSE:
       return reverseComplement(t);
-    case INTERGENIC:           
-      return INTERGENIC;
     }
   INTERNAL_ERROR;
 }

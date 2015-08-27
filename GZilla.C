@@ -433,12 +433,24 @@ void GeneZilla::instantiateLeftTermini()
 	    case INTERGENIC: 
 	      initialTransitionScore=isochore->pN;
 	      break;
-	    case NEG_FIVE_PRIME_UTR:
-	    case FIVE_PRIME_UTR: 
+	    case UTR5_INITIAL:
+	    case UTR5_INTERNAL:
+	    case UTR5_FINAL:
+	    case UTR5_SINGLE:
+	    case NEG_UTR5_INITIAL:
+	    case NEG_UTR5_INTERNAL:
+	    case NEG_UTR5_FINAL:
+	    case NEG_UTR5_SINGLE:
 	      initialTransitionScore=isochore->pF;
 	      break;
-	    case NEG_THREE_PRIME_UTR:
-	    case THREE_PRIME_UTR: 
+	    case UTR3_INITIAL:
+	    case UTR3_INTERNAL:
+	    case UTR3_FINAL:
+	    case UTR3_SINGLE:
+	    case NEG_UTR3_INITIAL:
+	    case NEG_UTR3_INTERNAL:
+	    case NEG_UTR3_FINAL:
+	    case NEG_UTR3_SINGLE:
 	      initialTransitionScore=isochore->pT;
 	      break;
 	    }
@@ -513,12 +525,24 @@ BOOM::Stack<SignalPtr> *GeneZilla::instantiateRightTermini(
 	case INTERGENIC: 
 	  finalTransitionScore=isochore->pN;
 	  break;
-	case NEG_FIVE_PRIME_UTR:
-	case FIVE_PRIME_UTR: 
+	case UTR5_INITIAL:
+	case UTR5_INTERNAL:
+	case UTR5_FINAL:
+	case UTR5_SINGLE:
+	case NEG_UTR5_INITIAL:
+	case NEG_UTR5_INTERNAL:
+	case NEG_UTR5_FINAL:
+	case NEG_UTR5_SINGLE:
 	  finalTransitionScore=isochore->pF;
 	  break;
-	case NEG_THREE_PRIME_UTR:
-	case THREE_PRIME_UTR: 
+	case UTR3_INITIAL:
+	case UTR3_INTERNAL:
+	case UTR3_FINAL:
+	case UTR3_SINGLE:
+	case NEG_UTR3_INITIAL:
+	case NEG_UTR3_INTERNAL:
+	case NEG_UTR3_FINAL:
+	case NEG_UTR3_SINGLE:
 	  finalTransitionScore=isochore->pT;
 	  break;
 	}
@@ -765,10 +789,22 @@ inline void GeneZilla::selectPredecessors(int newConsPos,
 {
   switch(contentType)
     {
-    case FIVE_PRIME_UTR:
-    case THREE_PRIME_UTR:
-    case NEG_FIVE_PRIME_UTR:
-    case NEG_THREE_PRIME_UTR:
+    case UTR5_INITIAL:
+    case UTR5_INTERNAL:
+    case UTR5_FINAL:
+    case UTR5_SINGLE:
+    case NEG_UTR5_INITIAL:
+    case NEG_UTR5_INTERNAL:
+    case NEG_UTR5_FINAL:
+    case NEG_UTR5_SINGLE:
+    case UTR3_INITIAL:
+    case UTR3_INTERNAL:
+    case UTR3_FINAL:
+    case UTR3_SINGLE:
+    case NEG_UTR3_INITIAL:
+    case NEG_UTR3_INTERNAL:
+    case NEG_UTR3_FINAL:
+    case NEG_UTR3_SINGLE:
     case INTERGENIC:
       selectIntergenicPred(newConsPos,queue,strand,bestScore,bestPred,
 			   contentType,toType,signal);
@@ -1042,9 +1078,9 @@ inline void GeneZilla::selectIntergenicPred(int newConsPos,
 	  //###
 
 
-      if(contentType==THREE_PRIME_UTR) 
+      if(isUTR3(contentType)) 
 	predScore+=isochore->threePrimeOptimism;
-      else if(contentType==FIVE_PRIME_UTR)
+      else if(isUTR5(contentType))
 	predScore+=isochore->fivePrimeOptimism; 
       double &bestPredScore=bestScore[newPhase];
       if(finite(predScore))
@@ -1248,15 +1284,15 @@ BOOM::Stack<SignalPtr> *GeneZilla::traceBack(SignalPtr rightTerminus,
       switch(pred->getSignalType())
 	{
 	case NEG_TAG:
-	case NEG_POLYA:
+	case NEG_TES:
 	case NEG_ATG:     
-	case NEG_PROM:    
+	case NEG_TSS:    
 	  phase=2;
 	  break;
-	case PROM:        
+	case TSS:
 	case ATG:
 	case TAG:         
-	case POLYA:       
+	case TES:       
 	  phase=0;
 	  break;
 	case GT:
@@ -1348,8 +1384,8 @@ void GeneZilla::generateGff(BOOM::Stack<SignalPtr> *path,int seqLen,
 
       switch(thisType)
 	{
-	case POLYA:
-	case NEG_POLYA:
+	case TES:
+	case NEG_TES:
 	  if(thisSignal!=firstSignal)
 	    if(0)
 	    cout << substrateId<<'\t'<<PROGRAM_NAME<<"\tpoly-A-signal\t"
@@ -1357,11 +1393,11 @@ void GeneZilla::generateGff(BOOM::Stack<SignalPtr> *path,int seqLen,
 		 << min(thisPos+1+thisSignal->getConsensusLength(),seqLen)
 		 << "\t.\t"<<strand<<"\t.\t"
 		 << "transcript_id=" 
-		 << (thisType==POLYA ? transcriptId : transcriptId+1)
+		 << (thisType==TES ? transcriptId : transcriptId+1)
 		 << ";" << endl;
 	  break;
-	case PROM:
-	case NEG_PROM:
+	case TSS:
+	case NEG_TSS:
 	  if(thisSignal!=firstSignal)
 	    if(0)
 	    cout << substrateId << '\t' << PROGRAM_NAME << "\tTATA\t"
@@ -1370,7 +1406,7 @@ void GeneZilla::generateGff(BOOM::Stack<SignalPtr> *path,int seqLen,
 			+thisSignal->getContextWindowLength(),seqLen)
 		 << "\t.\t"<<strand<<"\t.\t"
 		 << "transcript_id=" 
-		 << (thisType==PROM ? transcriptId+1 : transcriptId)
+		 << (thisType==TSS ? transcriptId+1 : transcriptId)
 		 << ";" << endl;
 	  break;
 	case ATG: // initial-exon or single-exon
@@ -1702,11 +1738,23 @@ int GeneZilla::mapPhaseBack(int phase,SignalPtr right,SignalPtr left)
       return phase;
     case INTERGENIC:
       return (left->getStrand()==FORWARD_STRAND ? 0 : 2);
-    case FIVE_PRIME_UTR:
-    case THREE_PRIME_UTR:
+    case UTR5_INITIAL:
+    case UTR5_INTERNAL:
+    case UTR5_FINAL:
+    case UTR5_SINGLE:
+    case UTR3_INITIAL:
+    case UTR3_INTERNAL:
+    case UTR3_FINAL:
+    case UTR3_SINGLE:
       return 0;
-    case NEG_FIVE_PRIME_UTR:
-    case NEG_THREE_PRIME_UTR:
+    case NEG_UTR5_INITIAL:
+    case NEG_UTR5_INTERNAL:
+    case NEG_UTR5_FINAL:
+    case NEG_UTR5_SINGLE:
+    case NEG_UTR3_INITIAL:
+    case NEG_UTR3_INTERNAL:
+    case NEG_UTR3_FINAL:
+    case NEG_UTR3_SINGLE:
       return 2;
     case NEG_INITIAL_EXON:
     case NEG_INTERNAL_EXON:
@@ -1843,8 +1891,8 @@ void GeneZilla::processIsochoreFile(const BOOM::String &filename,
   createQueue(SINGLE_EXON);
   createQueue(INTRON);
   createQueue(INTERGENIC);
-  createQueue(FIVE_PRIME_UTR);
-  createQueue(THREE_PRIME_UTR);
+  //createQueue(FIVE_PRIME_UTR);
+  //createQueue(THREE_PRIME_UTR);
   switchIsochore(gcContent,0);
 }
 
@@ -1866,6 +1914,7 @@ void GeneZilla::createQueue(ContentType contentType)
       signalQueues.push_back(queue);
       contentToQueue[contentType]=queue;
       break;
+      /*
     case FIVE_PRIME_UTR:
     case THREE_PRIME_UTR:
       queue=new NoncodingQueue(contentType,queueCapacity,noncodingComp);
@@ -1878,6 +1927,7 @@ void GeneZilla::createQueue(ContentType contentType)
       contentToQueue[revContentType]=negQueue;
 #endif
       break;
+      */
     case INTRON:
       queue=new IntronQueue(contentType,queueCapacity,*intronComp);
       signalQueues.push_back(queue);

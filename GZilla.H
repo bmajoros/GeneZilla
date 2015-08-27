@@ -165,7 +165,8 @@ protected:
 						 ostream &osGraph,
 						 bool dumpGraph,
 						 String psaFilename);
-  void processIsochoreFile(const BOOM::String &filename,float gcContent);
+  virtual void processIsochoreFile(const BOOM::String &filename,
+				   float gcContent);
   void computeIntergenicSums(const Sequence &,const BOOM::String &,
 			     const char *);
   void instantiateLeftTermini();

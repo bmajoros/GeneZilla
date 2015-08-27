@@ -6,6 +6,7 @@
  ****************************************************************/
 #include <iostream>
 #include <fstream>
+#include <stdio.h>
 #include "BOOM/String.H"
 #include "BOOM/CommandLine.H"
 #include "BOOM/FastaReader.H"
@@ -61,6 +62,9 @@ struct Region {
 			      strand(strand), seq(seq) {}
   bool contains(const Variant &v) const 
     { return v.chr==chr && v.pos>=begin && v.pos+v.alleles[0].length()<=end; }
+  void loadSeq(const String &twoBitToFa,const String &genomeFile,
+	       const String &tempFile);
+  void clearSeq() { seq=""; }
 };
 
 
@@ -71,13 +75,13 @@ bool operator>(const Variant &v,const Region &r)
 
 
 // This assumes no overlaps, so we need not compare ends
-struct RegionComp : Comparator<Region> {
-  bool equal(Region &a,Region &b)
-  { return a.chr==b.chr && a.begin==b.begin; }
-  bool greater(Region &a,Region &b) 
-  { return a.chr>b.chr || a.chr==b.chr && a.begin>b.begin; }
-  bool less(Region &a,Region &b)    
-  { return a.chr<b.chr || a.chr==b.chr && a.begin<b.begin; }
+struct RegionComp : Comparator<Region*> {
+  bool equal(Region *&a,Region *&b)
+  { return a->chr==b->chr && a->begin==b->begin; }
+  bool greater(Region *&a,Region *&b) 
+  { return a->chr>b->chr || a->chr==b->chr && a->begin>b->begin; }
+  bool less(Region *&a,Region *&b)    
+  { return a->chr<b->chr || a->chr==b->chr && a->begin<b->begin; }
 };
 
 
@@ -87,14 +91,14 @@ public:
   Application();
   int main(int argc,char *argv[]);
 protected:
-  Regex gzRegex;
   String twoBitToFa;
-  Map<String,Vector<Region> > regionsByChr;
-  Vector<Region> regions;
+  Regex gzRegex;
+  Map<String,Vector<Region*> > regionsByChr;
+  Vector<Region*> regions;
   Vector<Variant> variants;
   FastaWriter writer;
   bool wantRef;
-  String wantIndiv, wantChr;
+  String wantIndiv, wantChr, genomeFile;
   void convert(File &gcf,ostream &,const String genomeFile);
   void parseHeader(const String &line);
   void loadRegions(const String &regionsFilename,const String &genomeFilename,
@@ -130,18 +134,19 @@ Application::Application()
 int Application::main(int argc,char *argv[])
 {
   // Process command line
-  CommandLine cmd(argc,argv,"rt:i:");
+  CommandLine cmd(argc,argv,"rt:i:c:");
   if(cmd.numArgs()!=4)
     throw String("\ngcf-to-fasta [options] <in.gcf> <genome.2bit> <regions.bed> <out.fasta>\n\
      -t path : path to twoBitToFa\n\
      -r : emit reference sequence also\n\
      -i ID : only this sample (individual)\n\
+     -c chr : only regions on this chromosome\n\
 \n\
      NOTE: Run 'which twoBitToFa' to ensure it's in your path\n\
      NOTE: regions.bed is a BED6 file: chr begin end name score strand\n\
 ");
   const String &gcfFilename=cmd.arg(0);
-  const String &genomeFilename=cmd.arg(1);
+  genomeFile=cmd.arg(1);
   const String &regionsFilename=cmd.arg(2);
   const String &fastaFilename=cmd.arg(3);
   if(cmd.option('t')) twoBitToFa=cmd.optParm('t');
@@ -150,13 +155,13 @@ int Application::main(int argc,char *argv[])
   if(cmd.option('c')) wantChr=cmd.optParm('c');
 
   // Load regions
-  loadRegions(regionsFilename,genomeFilename,fastaFilename);
+  loadRegions(regionsFilename,genomeFile,fastaFilename);
 
   // Process GCF file
   File *gcf=gzRegex.search(gcfFilename) ? new GunzipPipe(gcfFilename)
     : new File(gcfFilename);
   ofstream os(fastaFilename.c_str());
-  convert(*gcf,os,genomeFilename);
+  convert(*gcf,os,genomeFile);
   delete gcf;
 
   return 0;
@@ -174,9 +179,9 @@ void Application::convert(File &gcf,ostream &os,const String genomeFile)
 
   // Emit reference
   if(wantRef) {
-    for(Vector<Region>::const_iterator cur=regions.begin(), end=regions.end() ;
+    for(Vector<Region*>::const_iterator cur=regions.begin(), end=regions.end() ;
 	cur!=end ; ++cur) {
-      const Region &region=*cur;
+      const Region &region=**cur;
       String seq=region.seq;
       if(region.strand=='-') seq=ProteinTrans::reverseComplement(seq);
       for(int j=0 ; j<PLOIDY ; ++j) {
@@ -207,9 +212,12 @@ void Application::convert(File &gcf,ostream &os,const String genomeFile)
       const String &field=*cur;
       if(field.length()==1) {
 	Genotype gt(1);
-	gt.alleles[0]=field[0]-'0'; gt.alleles[1]=-1;
-	if(gt.alleles[0]<0 || gt.alleles[0]>9) 
-	  throw fields[0]+" : unknown allele indicator";
+	if(field[0]=='.') gt.alleles[0]=0;
+	else {
+	  gt.alleles[0]=field[0]-'0'; gt.alleles[1]=-1;
+	  if(gt.alleles[0]<0 || gt.alleles[0]>9) 
+	    throw fields[0]+" : unknown allele indicator";
+	}
 	loci.push_back(gt);
       }
       else if(field.length()==3) {
@@ -221,9 +229,12 @@ void Application::convert(File &gcf,ostream &os,const String genomeFile)
 	  if(gt.alleles[0]<0 || gt.alleles[0]>9) 
 	    throw fields[0]+" : unknown allele indicator";
 	}
-	gt.alleles[1]=field[2]-'0';
+	if(field[2]=='.') gt.alleles[1]=0;
+	else {
+	  gt.alleles[1]=field[2]-'0';
 	  if(gt.alleles[1]<0 || gt.alleles[1]>9) 
 	    throw fields[2]+" : unknown allele indicator";
+	}
 	loci.push_back(gt);
       }
       else throw String("Cannot parse genotype: ")+field;
@@ -251,7 +262,7 @@ void Application::parseHeader(const String &line)
     const int pos=fields[2];
     if(!prevPos.isDefined(chr)) prevPos[chr]=0;
     //if(pos==prevPos[chr]) continue;
-    if(pos<=prevPos[chr]) 
+    if(pos<prevPos[chr]) 
       throw String(pos)+"<="+prevPos[chr]+
 	": input file is not sorted: use vcf-sort and re-convert to gcf";
     prevPos[chr]=pos;
@@ -275,16 +286,29 @@ void Application::parseHeader(const String &line)
     const Variant &v=*vcur;
     const int pos=v.pos;
     if(!regionsByChr.isDefined(v.chr)) continue;
-    Vector<Region> &rs=regionsByChr[v.chr];
+    Vector<Region*> &rs=regionsByChr[v.chr];
     const int N=rs.size();
     for(int b=0, e=N ; b<e ; ) {
       const int mid=(b+e)/2;
-      const Region &midRegion=rs[mid];
+      Region &midRegion=*rs[mid];
       if(pos<midRegion.begin) e=mid;
       else if(pos>midRegion.end) b=mid+1;
       else { midRegion.variants.push_back(v); break; }
     }
   }
+}
+
+
+
+void Region::loadSeq(const String &twoBitToFa,const String &genomeFile,
+		     const String &tempFile)
+{
+  // Invoke twoBitToFa to extract sequence from chrom file
+  String cmd=twoBitToFa+" -seq="+chr+" -start="+begin+" -end="+end+
+    +" "+genomeFile+" "+tempFile;
+  system(cmd.c_str());
+  String def;
+  FastaReader::load(tempFile,def,seq);
 }
 
 
@@ -306,13 +330,17 @@ void Application::loadRegions(const String &regionsFilename,const String &
     char strand=fields[5][0];
     
     // Invoke twoBitToFa to extract sequence from chrom file
-    String cmd=twoBitToFa+" -seq="+chr+" -start="+begin+" -end="+end+
-      +" "+genomeFilename+" "+tempFile;
-    system(cmd.c_str());
-    String def, seq;
-    FastaReader::load(tempFile,def,seq);
-    //if(seq.contains(",")) throw tempFile+"contains a comma: "+cmd;
-    Region r(id,chr,strand,begin,end,seq);
+    String seq;
+    if(wantIndiv.isEmpty()) {
+      String cmd=twoBitToFa+" -seq="+chr+" -start="+begin+" -end="+end+
+	+" "+genomeFilename+" "+tempFile;
+      system(cmd.c_str());
+      String def;
+      FastaReader::load(tempFile,def,seq);
+      //if(seq.contains(",")) throw tempFile+"contains a comma: "+cmd;
+    }
+
+    Region *r=new Region(id,chr,strand,begin,end,seq);
     regions.push_back(r);
     regionsByChr[chr].push_back(r);
   }
@@ -323,7 +351,7 @@ void Application::loadRegions(const String &regionsFilename,const String &
   Set<String> keys; regionsByChr.getKeys(keys);
   for(Set<String>::const_iterator cur=keys.begin(),
 	end=keys.end() ; cur!=end ; ++cur) {
-    VectorSorter<Region> sorter(regionsByChr[*cur],cmp);
+    VectorSorter<Region*> sorter(regionsByChr[*cur],cmp);
     sorter.sortAscendInPlace();
   }
 }
@@ -334,18 +362,27 @@ void Application::emit(const String &individualID,const Vector<Genotype> &loci,
 		       ostream &os)
 {
   const int numVariants=variants.size();
-  for(Vector<Region>::const_iterator cur=regions.begin(), end=regions.end() ;
+  for(Vector<Region*>::const_iterator cur=regions.begin(), end=regions.end() ;
       cur!=end ; ++cur) {
     Array1D<int> deltas(PLOIDY); deltas.setAllTo(0); // for indels
-    const Region &region=*cur;
+    const Region &region=**cur;
+    //cout<<"#variants in region = "<<region.variants.size()<<endl;
+    String tempFile=tmpnam(NULL);
+    if(!wantIndiv.isEmpty()) region.loadSeq(twoBitToFa,genomeFile,tempFile);
+    remove(tempFile.c_str());
     String seq[PLOIDY]; for(int i=0 ; i<PLOIDY ; ++i) seq[i]=region.seq;
+    int prevPos=-1;
     for(Vector<Variant>::const_iterator cur=region.variants.begin(), end=
 	  region.variants.end() ; cur!=end ; ++cur) {
+TRACE
       const Variant &variant=*cur;
+      if(variant.pos==prevPos) continue;
+      prevPos=variant.pos;
       const int localPos=variant.pos-region.begin;
       Genotype gt=loci[i];
       for(int j=0 ; j<PLOIDY ; ++j) {
 	const int allele=gt.alleles[j];
+	cout<<"alleles.size="<<gt.alleles.size()<<endl;
 	if(allele) { // differs from reference
 	  const String &refAllele=variant.alleles[0];
 	  const String &altAllele=variant.alleles[allele];
@@ -354,7 +391,8 @@ void Application::emit(const String &individualID,const Vector<Genotype> &loci,
 	  deltas[j]+=refLen-altLen;
 	  if(region.seq.substring(localPos,refLen)!=refAllele)
 	    throw String("reference mismatch: ")+refAllele+" vs. "+
-	      region.seq.substring(variant.pos,refLen);
+	      region.seq.substring(localPos,refLen);
+	  cout<<"j="<<j<<" allele="<<allele<<" changing "<<seq[j].substring(localPos-deltas[j],refLen)<< " to "<<altAllele<<endl;
 	  seq[j].replaceSubstring(localPos-deltas[j],refLen,altAllele);
 	}
       }
@@ -365,6 +403,7 @@ void Application::emit(const String &individualID,const Vector<Genotype> &loci,
       if(region.strand=='-') seq[j]=ProteinTrans::reverseComplement(seq[j]);
       writer.addToFasta(def,seq[j],os);
     }
+    if(!wantIndiv.isEmpty()) region.clearSeq(); // save memory
   } // end foreach region
 }
 

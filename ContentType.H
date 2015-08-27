@@ -11,6 +11,7 @@
 #include "BOOM/String.H"
 #include "BOOM/GffExon.H"
 #include "BOOM/Strand.H"
+#include "BOOM/Set.H"
 #include "SignalType.H"
 using namespace BOOM;
 
@@ -18,23 +19,44 @@ enum ContentType
 {
   UNKNOWN_CONTENT_FORWARD,
   UNKNOWN_CONTENT_REVERSE,
+  INTERGENIC,
   INITIAL_EXON,
   INTERNAL_EXON,
   FINAL_EXON,
   SINGLE_EXON,
   INTRON,
-  INTERGENIC,
-  FIVE_PRIME_UTR,
-  THREE_PRIME_UTR,
+  UTR5_INTRON,
+  UTR3_INTRON,
+  UTR5_INITIAL,
+  UTR5_INTERNAL,
+  UTR5_FINAL,
+  UTR5_SINGLE, // also serves as general 5' UTR marker
+  UTR3_INITIAL,
+  UTR3_INTERNAL,
+  UTR3_FINAL,
+  UTR3_SINGLE, // also serves as general 3' UTR marker
   NEG_INITIAL_EXON,
   NEG_INTERNAL_EXON,
   NEG_FINAL_EXON,
   NEG_SINGLE_EXON,
   NEG_INTRON,
-  NEG_FIVE_PRIME_UTR,
-  NEG_THREE_PRIME_UTR
+  NEG_UTR5_INTRON,
+  NEG_UTR3_INTRON,
+  NEG_UTR5_INITIAL,
+  NEG_UTR5_INTERNAL,
+  NEG_UTR5_FINAL,
+  NEG_UTR5_SINGLE,
+  NEG_UTR3_INITIAL,
+  NEG_UTR3_INTERNAL,
+  NEG_UTR3_FINAL,
+  NEG_UTR3_SINGLE
 };
-static const int NumContentTypes=17;
+static const int NumContentTypes=33;
+
+const int FIVE_PRIME_UTR=UTR5_SINGLE;
+const int THREE_PRIME_UTR=UTR3_SINGLE;
+const int NEG_FIVE_PRIME_UTR=NEG_UTR5_SINGLE;
+const int NEG_THREE_PRIME_UTR=NEG_UTR3_SINGLE;
 
 ContentType reverseComplement(ContentType);
 ContentType dropStrand(ContentType);
@@ -48,8 +70,12 @@ bool isCoding(ContentType);
 bool isIntron(ContentType);
 bool isIntergenic(ContentType);
 bool isUTR(ContentType);
-SignalType leftSignal(ContentType);
-SignalType rightSignal(ContentType);
+bool isUTR5(ContentType);
+bool isUTR3(ContentType);
+bool isUTR5intron(ContentType);
+bool isUTR3intron(ContentType);
+Set<SignalType> leftSignals(ContentType);
+Set<SignalType> rightSignals(ContentType);
 ContentType exonTypeToContentType(ExonType,Strand);
 ExonType contentTypeToExonType(ContentType);
 

@@ -216,10 +216,11 @@ void IsochoreTable::loadSubmodels(BOOM::ConfigFile &configFile,
 		    "mean-intron-length",INTRON,iso);
   loadContentSensor(configFile,"intergenic",GEOMETRIC_DISTRIBUTION,
 		    "mean-intergenic-length",INTERGENIC,iso);
+
   loadContentSensor(configFile,"3'-UTR",GEOMETRIC_DISTRIBUTION,
-		    "mean-3'-UTR-length",THREE_PRIME_UTR,iso);
+		    "mean-3'-UTR-length",UTR3_SINGLE,iso); // ###
   loadContentSensor(configFile,"5'-UTR",GEOMETRIC_DISTRIBUTION,
-		    "mean-5'-UTR-length",FIVE_PRIME_UTR,iso);
+		    "mean-5'-UTR-length",UTR5_SINGLE,iso); // ###
 }
 
 
