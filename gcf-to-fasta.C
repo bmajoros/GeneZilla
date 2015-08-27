@@ -37,8 +37,13 @@ struct Variant {
   Variant(const String &id,const String &chr,int pos,int i)
     : id(id), chr(chr), pos(pos), i(i) {}
   void addAllele(const String &a) { alleles.push_back(a); }
+  void printOn(ostream &os) const {
+    os<<id<<":"<<chr<<":"<<pos;
+    for(Vector<String>::const_iterator cur=alleles.begin(), end=alleles.end() ;
+	cur!=end ; ++cur) os<<":"<<*cur;
+  }
 };
-
+ostream &operator<<(ostream &os,const Variant &v) { v.printOn(os); return os; }
 
 
 struct VariantComp : Comparator<Variant> {
@@ -66,13 +71,18 @@ struct Region {
   void loadSeq(const String &twoBitToFa,const String &genomeFile,
 	       const String &tempFile);
   void clearSeq() { seq=""; }
+  void printOn(ostream &os) const 
+    { os<<chr<<":"<<begin<<"-"<<end<<":"<<strand; }
 };
+ostream &operator<<(ostream &os,const Region &r) { r.printOn(os); return os; }
+
 
 
 bool operator<(const Variant &v,const Region &r)
 { return v.pos<r.begin; }
 bool operator>(const Variant &v,const Region &r)
 { return v.pos>r.end; }
+
 
 
 // This assumes no overlaps, so we need not compare ends
@@ -296,7 +306,7 @@ void Application::parseHeader(const String &line)
       const int mid=(b+e)/2;
       Region &midRegion=*rs[mid];
       if(pos<midRegion.begin) e=mid;
-      else if(pos>midRegion.end) b=mid+1;
+      else if(pos>=midRegion.end) b=mid+1;
       else { midRegion.variants.push_back(v); break; }
     }
   }
@@ -370,6 +380,7 @@ void Application::emit(const String &individualID,const Vector<Genotype> &loci,
       cur!=end ; ++cur) {
     Array1D<int> deltas(PLOIDY); deltas.setAllTo(0); // for indels
     const Region &region=**cur;
+    //cout<<"region "<<region<<endl;
     if(!wantIndiv.isEmpty()) region.loadSeq(twoBitToFa,genomeFile,tempfile);
     unlink(tempfile.c_str());
     String seq[PLOIDY]; for(int i=0 ; i<PLOIDY ; ++i) seq[i]=region.seq;
@@ -377,6 +388,7 @@ void Application::emit(const String &individualID,const Vector<Genotype> &loci,
     for(Vector<Variant>::const_iterator cur=region.variants.begin(), end=
 	  region.variants.end() ; cur!=end ; ++cur) {
       const Variant &variant=*cur;
+      //cout<<variant<<endl;
       if(variant.pos==prevPos) continue;
       prevPos=variant.pos;
       const int localPos=variant.pos-region.begin;
@@ -386,16 +398,21 @@ void Application::emit(const String &individualID,const Vector<Genotype> &loci,
 	if(allele) { // differs from reference
 	  const String &refAllele=variant.alleles[0];
 	  const String &altAllele=variant.alleles[allele];
-	  const int refLen=refAllele.length();
+	  int refLen=refAllele.length();
 	  const int altLen=altAllele.length();
-	  deltas[j]+=refLen-altLen;
+	  if(localPos+refLen>seq[j].length()) refLen=seq[j].length()-localPos;
 	  const String refCheck=region.seq.substring(localPos,refLen);
 	  const int refCheckLen=refCheck.length();
 	  const String refAlleleSub=refAllele.substring(0,refCheckLen);
 	  if(refCheck!=refAlleleSub)
 	    throw String("reference mismatch: ")+refAlleleSub+" vs. "+
 	      refCheck;
+	  if(localPos-deltas[j]+refLen>seq[j].length())
+	    throw String("Internal error: localPos=")+localPos+" deltas[j]="+
+	      deltas[j]+" refLen="+refLen+" seq[j].length="+seq[j].length();
+	  //cout<<"localPos="<<localPos<<" deltas[j]="<<deltas[j]<<" refLen="<<refLen<<" altAllele="<<altAllele<<" seq[j].length="<<seq[j].length()<<endl;
 	  seq[j].replaceSubstring(localPos-deltas[j],refLen,altAllele);
+	  deltas[j]+=refLen-altLen;
 	}
       }
     } // end foreach variant
