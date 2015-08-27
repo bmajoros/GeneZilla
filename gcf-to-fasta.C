@@ -17,6 +17,7 @@
 #include "BOOM/ProteinTrans.H"
 #include "BOOM/Regex.H"
 #include "BOOM/Map.H"
+#include "BOOM/TempFilename.H"
 using namespace std;
 using namespace BOOM;
 
@@ -32,9 +33,9 @@ struct Genotype {
 struct Variant {
   String id, chr;
   Vector<String> alleles; // there can be several alternate alleles
-  int pos;
-  Variant(const String &id,const String &chr,int pos)
-    : id(id), chr(chr), pos(pos) {}
+  int pos, i;
+  Variant(const String &id,const String &chr,int pos,int i)
+    : id(id), chr(chr), pos(pos), i(i) {}
   void addAllele(const String &a) { alleles.push_back(a); }
 };
 
@@ -92,6 +93,7 @@ public:
   int main(int argc,char *argv[]);
 protected:
   String twoBitToFa;
+  String tempfile;
   Regex gzRegex;
   Map<String,Vector<Region*> > regionsByChr;
   Vector<Region*> regions;
@@ -124,9 +126,10 @@ int main(int argc,char *argv[])
 
 
 Application::Application()
-  : twoBitToFa("twoBitToFa"), gzRegex("gz$")
+  : twoBitToFa("twoBitToFa"), gzRegex("gz$"), tempfile(TempFilename::get())
 {
   // ctor
+  randomize();
 }
 
 
@@ -251,8 +254,9 @@ void Application::parseHeader(const String &line)
 {
   Vector<String> fields; line.getFields(fields);
   Map<String,int> prevPos;
+  int i=0;
   for(Vector<String>::const_iterator cur=fields.begin(), end=fields.end()
-	; cur!=end ; ++cur) {
+	; cur!=end ; ++cur, ++i) {
     const String &field=*cur;
     Vector<String> fields; field.getFields(fields,":");
     if(fields.size()!=5) throw String("cannot parse GCF header: ")+field;
@@ -268,7 +272,7 @@ void Application::parseHeader(const String &line)
     prevPos[chr]=pos;
     const String &ref=fields[3];
     const String &alt=fields[4];
-    Variant variant(id,chr,pos);
+    Variant variant(id,chr,pos,i);
     variant.addAllele(ref);
     Vector<String> altAlleles;
     alt.getFields(altAlleles,",");
@@ -366,33 +370,31 @@ void Application::emit(const String &individualID,const Vector<Genotype> &loci,
       cur!=end ; ++cur) {
     Array1D<int> deltas(PLOIDY); deltas.setAllTo(0); // for indels
     const Region &region=**cur;
-    //cout<<"#variants in region = "<<region.variants.size()<<endl;
-    String tempFile=tmpnam(NULL);
-    if(!wantIndiv.isEmpty()) region.loadSeq(twoBitToFa,genomeFile,tempFile);
-    remove(tempFile.c_str());
+    if(!wantIndiv.isEmpty()) region.loadSeq(twoBitToFa,genomeFile,tempfile);
+    unlink(tempfile.c_str());
     String seq[PLOIDY]; for(int i=0 ; i<PLOIDY ; ++i) seq[i]=region.seq;
     int prevPos=-1;
     for(Vector<Variant>::const_iterator cur=region.variants.begin(), end=
 	  region.variants.end() ; cur!=end ; ++cur) {
-TRACE
       const Variant &variant=*cur;
       if(variant.pos==prevPos) continue;
       prevPos=variant.pos;
       const int localPos=variant.pos-region.begin;
-      Genotype gt=loci[i];
+      const Genotype &gt=loci[variant.i];
       for(int j=0 ; j<PLOIDY ; ++j) {
 	const int allele=gt.alleles[j];
-	cout<<"alleles.size="<<gt.alleles.size()<<endl;
 	if(allele) { // differs from reference
 	  const String &refAllele=variant.alleles[0];
 	  const String &altAllele=variant.alleles[allele];
 	  const int refLen=refAllele.length();
 	  const int altLen=altAllele.length();
 	  deltas[j]+=refLen-altLen;
-	  if(region.seq.substring(localPos,refLen)!=refAllele)
-	    throw String("reference mismatch: ")+refAllele+" vs. "+
-	      region.seq.substring(localPos,refLen);
-	  cout<<"j="<<j<<" allele="<<allele<<" changing "<<seq[j].substring(localPos-deltas[j],refLen)<< " to "<<altAllele<<endl;
+	  const String refCheck=region.seq.substring(localPos,refLen);
+	  const int refCheckLen=refCheck.length();
+	  const String refAlleleSub=refAllele.substring(0,refCheckLen);
+	  if(refCheck!=refAlleleSub)
+	    throw String("reference mismatch: ")+refAlleleSub+" vs. "+
+	      refCheck;
 	  seq[j].replaceSubstring(localPos-deltas[j],refLen,altAllele);
 	}
       }
