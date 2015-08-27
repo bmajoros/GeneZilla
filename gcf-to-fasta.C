@@ -404,12 +404,12 @@ void Application::emit(const String &individualID,const Vector<Genotype> &loci,
 	  const String refCheck=region.seq.substring(localPos,refLen);
 	  const int refCheckLen=refCheck.length();
 	  const String refAlleleSub=refAllele.substring(0,refCheckLen);
-	  if(refCheck!=refAlleleSub)
-	    throw String("reference mismatch: ")+refAlleleSub+" vs. "+
-	      refCheck;
 	  if(localPos-deltas[j]+refLen>seq[j].length())
 	    throw String("Internal error: localPos=")+localPos+" deltas[j]="+
 	      deltas[j]+" refLen="+refLen+" seq[j].length="+seq[j].length();
+	  if(refCheck!=refAlleleSub)
+	    throw String("reference mismatch: ")+refAlleleSub+" vs. "+
+	      refCheck;
 	  //cout<<"localPos="<<localPos<<" deltas[j]="<<deltas[j]<<" refLen="<<refLen<<" altAllele="<<altAllele<<" seq[j].length="<<seq[j].length()<<endl;
 	  seq[j].replaceSubstring(localPos-deltas[j],refLen,altAllele);
 	  deltas[j]+=refLen-altLen;
