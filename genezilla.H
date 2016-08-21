@@ -20,7 +20,7 @@
   however, you *MUST* issue a "make clean" and recompile the entire 
   project!!! 
 */
-#define EXPLICIT_GRAPHS
+//#define EXPLICIT_GRAPHS
 
 
 /****************************************************************
